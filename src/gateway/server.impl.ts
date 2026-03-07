@@ -78,6 +78,7 @@ import {
 import { ExecApprovalManager } from "./exec-approval-manager.js";
 import { createAuthRateLimiter, type AuthRateLimiter } from "./limits/auth.js";
 import { NodeRegistry } from "./node-registry.js";
+import { loadGatewayPlugins } from "./plugins/index.js";
 import type { startBrowserControlServerIfEnabled } from "./server-browser.js";
 import { createChannelManager } from "./server-channels.js";
 import { createAgentEventHandler } from "./server-chat.js";
@@ -94,7 +95,6 @@ import { createSecretsHandlers } from "./server-methods/secrets.js";
 import { hasConnectedMobileNode } from "./server-mobile-nodes.js";
 import { loadGatewayModelCatalog } from "./server-model-catalog.js";
 import { createNodeSubscriptionManager } from "./server-node-subscriptions.js";
-import { loadGatewayPlugins } from "./server-plugins.js";
 import { createGatewayReloadHandlers } from "./server-reload-handlers.js";
 import { resolveGatewayRuntimeConfig } from "./server-runtime-config.js";
 import { createGatewayRuntimeState } from "./server-runtime-state.js";

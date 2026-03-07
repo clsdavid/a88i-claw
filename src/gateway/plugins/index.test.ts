@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
-import type { PluginRegistry } from "../plugins/registry.js";
-import type { PluginDiagnostic } from "../plugins/types.js";
-import { loadGatewayPlugins } from "./server-plugins.js";
+import type { PluginRegistry } from "../../plugins/registry.js";
+import type { PluginDiagnostic } from "../../plugins/types.js";
+import { loadGatewayPlugins } from "./index.js";
 
 const loadAutoCrabPlugins = vi.hoisted(() => vi.fn());
 
-vi.mock("../plugins/loader.js", () => ({
+vi.mock("../../plugins/loader.js", () => ({
   loadAutoCrabPlugins,
 }));
 
