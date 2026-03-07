@@ -1,16 +1,16 @@
 import type { IncomingMessage } from "node:http";
 import {
-  AUTH_RATE_LIMIT_SCOPE_DEVICE_TOKEN,
-  AUTH_RATE_LIMIT_SCOPE_SHARED_SECRET,
-  type AuthRateLimiter,
-  type RateLimitCheckResult,
-} from "../../auth-rate-limit.js";
-import {
   authorizeHttpGatewayConnect,
   authorizeWsControlUiGatewayConnect,
   type GatewayAuthResult,
   type ResolvedGatewayAuth,
-} from "../../auth.js";
+} from "../../auth/index.js";
+import {
+  AUTH_RATE_LIMIT_SCOPE_DEVICE_TOKEN,
+  AUTH_RATE_LIMIT_SCOPE_SHARED_SECRET,
+  type AuthRateLimiter,
+  type RateLimitCheckResult,
+} from "../../limits/auth.js";
 
 type HandshakeConnectAuth = {
   token?: string;

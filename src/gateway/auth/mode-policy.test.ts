@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import type { AutoCrabConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../../config/config.js";
 import {
   assertExplicitGatewayAuthModeWhenBothConfigured,
   EXPLICIT_GATEWAY_AUTH_MODE_REQUIRED_ERROR,
   hasAmbiguousGatewayAuthModeConfig,
-} from "./auth-mode-policy.js";
+} from "./mode-policy.js";
 
 describe("gateway auth mode policy", () => {
   it("does not flag config when auth mode is explicit", () => {

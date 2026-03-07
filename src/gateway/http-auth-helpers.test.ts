@@ -1,9 +1,9 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { ResolvedGatewayAuth } from "./auth.js";
+import type { ResolvedGatewayAuth } from "./auth/index.js";
 import { authorizeGatewayBearerRequestOrReply } from "./http-auth-helpers.js";
 
-vi.mock("./auth.js", () => ({
+vi.mock("./auth/index.js", () => ({
   authorizeHttpGatewayConnect: vi.fn(),
 }));
 
@@ -15,7 +15,7 @@ vi.mock("./http-utils.js", () => ({
   getBearerToken: vi.fn(),
 }));
 
-const { authorizeHttpGatewayConnect } = await import("./auth.js");
+const { authorizeHttpGatewayConnect } = await import("./auth/index.js");
 const { sendGatewayAuthFailure } = await import("./http-common.js");
 const { getBearerToken } = await import("./http-utils.js");
 

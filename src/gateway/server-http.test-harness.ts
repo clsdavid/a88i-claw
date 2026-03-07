@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { expect, vi } from "vitest";
 import type { createSubsystemLogger } from "../logging/subsystem.js";
-import type { ResolvedGatewayAuth } from "./auth.js";
+import type { ResolvedGatewayAuth } from "./auth/index.js";
 import { createGatewayRequest, createHooksConfig } from "./hooks-test-helpers.js";
 import { canonicalizePathVariant, isProtectedPluginRoutePath } from "./security-path.js";
 import { createGatewayHttpServer, createHooksRequestHandler } from "./server-http.js";

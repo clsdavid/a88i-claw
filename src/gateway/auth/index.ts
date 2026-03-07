@@ -3,22 +3,22 @@ import type {
   GatewayAuthConfig,
   GatewayTailscaleMode,
   GatewayTrustedProxyConfig,
-} from "../config/config.js";
-import { resolveSecretInputRef } from "../config/types.secrets.js";
-import { readTailscaleWhoisIdentity, type TailscaleWhoisIdentity } from "../infra/tailscale.js";
-import { safeEqualSecret } from "../security/secret-equal.js";
+} from "../../config/config.js";
+import { resolveSecretInputRef } from "../../config/types.secrets.js";
+import { readTailscaleWhoisIdentity, type TailscaleWhoisIdentity } from "../../infra/tailscale.js";
+import { safeEqualSecret } from "../../security/secret-equal.js";
 import {
   AUTH_RATE_LIMIT_SCOPE_SHARED_SECRET,
   type AuthRateLimiter,
   type RateLimitCheckResult,
-} from "./auth-rate-limit.js";
-import { resolveGatewayCredentialsFromValues } from "./credentials.js";
+} from "../limits/auth.js";
 import {
   isLocalishHost,
   isLoopbackAddress,
   isTrustedProxyAddress,
   resolveClientIp,
-} from "./net.js";
+} from "../net.js";
+import { resolveGatewayCredentialsFromValues } from "./credentials.js";
 
 export type ResolvedGatewayAuthMode = "none" | "token" | "password" | "trusted-proxy";
 export type ResolvedGatewayAuthModeSource =

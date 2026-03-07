@@ -1,6 +1,6 @@
-import type { AutoCrabConfig } from "../config/config.js";
-import { collectConfigServiceEnvVars } from "../config/env-vars.js";
-import { hasConfiguredSecretInput } from "../config/types.secrets.js";
+import type { AutoCrabConfig } from "../../config/config.js";
+import { collectConfigServiceEnvVars } from "../../config/env-vars.js";
+import { hasConfiguredSecretInput } from "../../config/types.secrets.js";
 
 export function shouldRequireGatewayTokenForInstall(
   cfg: AutoCrabConfig,

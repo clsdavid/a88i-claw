@@ -8,7 +8,7 @@ import { isSystemdUserServiceAvailable } from "../../daemon/systemd.js";
 import {
   isGatewaySecretRefUnavailableError,
   resolveGatewayCredentialsFromConfig,
-} from "../../gateway/credentials.js";
+} from "../../gateway/auth/credentials.js";
 import { isWSL } from "../../infra/wsl.js";
 import { defaultRuntime } from "../../runtime.js";
 import {

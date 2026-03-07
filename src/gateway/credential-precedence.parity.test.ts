@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { resolveGatewayProbeAuth as resolveStatusGatewayProbeAuth } from "../commands/status.gateway-probe.js";
 import type { AutoCrabConfig } from "../config/config.js";
-import { resolveGatewayAuth } from "./auth.js";
-import { resolveGatewayCredentialsFromConfig } from "./credentials.js";
-import { resolveGatewayProbeAuth } from "./probe-auth.js";
+import { resolveGatewayCredentialsFromConfig } from "./auth/credentials.js";
+import { resolveGatewayAuth } from "./auth/index.js";
+import { resolveGatewayProbeAuth } from "./auth/probe-auth.js";
 
 type ExpectedCredentialSet = {
   call: { token?: string; password?: string };

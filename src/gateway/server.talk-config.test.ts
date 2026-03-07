@@ -6,7 +6,7 @@ import {
   publicKeyRawBase64UrlFromPem,
   signDevicePayload,
 } from "../infra/device-identity.js";
-import { buildDeviceAuthPayload } from "./device-auth.js";
+import { buildDeviceAuthPayload } from "./auth/device-auth.js";
 import {
   connectOk,
   installGatewayTestHooks,

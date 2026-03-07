@@ -9,9 +9,9 @@ import { formatCliCommand } from "../cli/command-format.js";
 import type { ConfigFileSnapshot, AutoCrabConfig } from "../config/config.js";
 import { resolveConfigPath, resolveStateDir } from "../config/paths.js";
 import { hasConfiguredSecretInput } from "../config/types.secrets.js";
-import { resolveGatewayAuth } from "../gateway/auth.js";
+import { resolveGatewayAuth } from "../gateway/auth/index.js";
+import { resolveGatewayProbeAuthSafe } from "../gateway/auth/probe-auth.js";
 import { buildGatewayConnectionDetails } from "../gateway/call.js";
-import { resolveGatewayProbeAuthSafe } from "../gateway/probe-auth.js";
 import { probeGateway } from "../gateway/probe.js";
 import {
   listInterpreterLikeSafeBins,

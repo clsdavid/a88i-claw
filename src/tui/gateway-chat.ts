@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { loadConfig } from "../config/config.js";
 import { hasConfiguredSecretInput } from "../config/types.secrets.js";
-import { assertExplicitGatewayAuthModeWhenBothConfigured } from "../gateway/auth-mode-policy.js";
+import { assertExplicitGatewayAuthModeWhenBothConfigured } from "../gateway/auth/mode-policy.js";
 import {
   buildGatewayConnectionDetails,
   ensureExplicitGatewayAuth,

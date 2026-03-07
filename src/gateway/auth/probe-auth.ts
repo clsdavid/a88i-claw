@@ -1,4 +1,4 @@
-import type { AutoCrabConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../../config/config.js";
 import {
   isGatewaySecretRefUnavailableError,
   resolveGatewayCredentialsFromConfig,

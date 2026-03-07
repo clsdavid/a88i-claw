@@ -5,9 +5,9 @@ import { isTruthyEnvValue } from "../infra/env.js";
 import { parseNodeList, parsePairingList } from "../shared/node-list-parse.js";
 import type { NodeListNode } from "../shared/node-list-types.js";
 import { GATEWAY_CLIENT_MODES, GATEWAY_CLIENT_NAMES } from "../utils/message-channel.js";
+import { resolveGatewayCredentialsFromConfig } from "./auth/credentials.js";
 import { buildGatewayConnectionDetails } from "./call.js";
 import { GatewayClient } from "./client.js";
-import { resolveGatewayCredentialsFromConfig } from "./credentials.js";
 
 const LIVE = isTruthyEnvValue(process.env.LIVE) || isTruthyEnvValue(process.env.AUTOCRAB_LIVE_TEST);
 const LIVE_ANDROID_NODE = isTruthyEnvValue(process.env.AUTOCRAB_LIVE_ANDROID_NODE);

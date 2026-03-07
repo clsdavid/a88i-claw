@@ -10,7 +10,7 @@ import {
   resolveGatewayPort,
 } from "../../config/config.js";
 import { hasConfiguredSecretInput } from "../../config/types.secrets.js";
-import { resolveGatewayAuth } from "../../gateway/auth.js";
+import { resolveGatewayAuth } from "../../gateway/auth/index.js";
 import { startGatewayServer } from "../../gateway/server.js";
 import type { GatewayWsLogStyle } from "../../gateway/ws-logging.js";
 import { setGatewayWsLogStyle } from "../../gateway/ws-logging.js";

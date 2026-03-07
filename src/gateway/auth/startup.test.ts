@@ -1,23 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { AutoCrabConfig } from "../config/config.js";
-import { expectGeneratedTokenPersistedToGatewayAuth } from "../test-utils/auth-token-assertions.js";
+import type { AutoCrabConfig } from "../../config/config.js";
+import { expectGeneratedTokenPersistedToGatewayAuth } from "../../test-utils/auth-token-assertions.js";
 
 const mocks = vi.hoisted(() => ({
   writeConfigFile: vi.fn(async (_cfg: AutoCrabConfig) => {}),
 }));
 
-vi.mock("../config/config.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../config/config.js")>();
+vi.mock("../../config/config.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../config/config.js")>();
   return {
     ...actual,
     writeConfigFile: mocks.writeConfigFile,
   };
 });
 
-import {
-  assertHooksTokenSeparateFromGatewayAuth,
-  ensureGatewayStartupAuth,
-} from "./startup-auth.js";
+import { assertHooksTokenSeparateFromGatewayAuth, ensureGatewayStartupAuth } from "./startup.js";
 
 describe("ensureGatewayStartupAuth", () => {
   async function expectEphemeralGeneratedTokenWhenOverridden(cfg: AutoCrabConfig) {

@@ -1,6 +1,6 @@
 import type { AutoCrabConfig } from "../config/config.js";
 import { resolveSecretInputRef } from "../config/types.secrets.js";
-export { shouldRequireGatewayTokenForInstall } from "../gateway/auth-install-policy.js";
+export { shouldRequireGatewayTokenForInstall } from "../gateway/auth/install-policy.js";
 import { secretRefKey } from "../secrets/ref-contract.js";
 import { resolveSecretRefValues } from "../secrets/resolve.js";
 

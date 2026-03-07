@@ -24,19 +24,19 @@ import type { createSubsystemLogger } from "../../../logging/subsystem.js";
 import { roleScopesAllow } from "../../../shared/operator-scope-compat.js";
 import { isGatewayCliClient, isWebchatClient } from "../../../utils/message-channel.js";
 import { resolveRuntimeServiceVersion } from "../../../version.js";
-import type { AuthRateLimiter } from "../../auth-rate-limit.js";
-import type { GatewayAuthResult, ResolvedGatewayAuth } from "../../auth.js";
-import { isLocalDirectRequest } from "../../auth.js";
+import {
+  buildDeviceAuthPayload,
+  buildDeviceAuthPayloadV3,
+  normalizeDeviceMetadataForAuth,
+} from "../../auth/device-auth.js";
+import type { GatewayAuthResult, ResolvedGatewayAuth } from "../../auth/index.js";
+import { isLocalDirectRequest } from "../../auth/index.js";
 import {
   buildCanvasScopedHostUrl,
   CANVAS_CAPABILITY_TTL_MS,
   mintCanvasCapabilityToken,
 } from "../../canvas-capability.js";
-import {
-  buildDeviceAuthPayload,
-  buildDeviceAuthPayloadV3,
-  normalizeDeviceMetadataForAuth,
-} from "../../device-auth.js";
+import type { AuthRateLimiter } from "../../limits/auth.js";
 import {
   isLocalishHost,
   isLoopbackAddress,

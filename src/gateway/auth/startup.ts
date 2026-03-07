@@ -3,13 +3,13 @@ import type {
   GatewayAuthConfig,
   GatewayTailscaleConfig,
   AutoCrabConfig,
-} from "../config/config.js";
-import { writeConfigFile } from "../config/config.js";
-import { hasConfiguredSecretInput, resolveSecretInputRef } from "../config/types.secrets.js";
-import { secretRefKey } from "../secrets/ref-contract.js";
-import { resolveSecretRefValues } from "../secrets/resolve.js";
-import { assertExplicitGatewayAuthModeWhenBothConfigured } from "./auth-mode-policy.js";
-import { resolveGatewayAuth, type ResolvedGatewayAuth } from "./auth.js";
+} from "../../config/config.js";
+import { writeConfigFile } from "../../config/config.js";
+import { hasConfiguredSecretInput, resolveSecretInputRef } from "../../config/types.secrets.js";
+import { secretRefKey } from "../../secrets/ref-contract.js";
+import { resolveSecretRefValues } from "../../secrets/resolve.js";
+import { resolveGatewayAuth, type ResolvedGatewayAuth } from "./index.js";
+import { assertExplicitGatewayAuthModeWhenBothConfigured } from "./mode-policy.js";
 
 export function mergeGatewayAuthConfig(
   base?: GatewayAuthConfig,

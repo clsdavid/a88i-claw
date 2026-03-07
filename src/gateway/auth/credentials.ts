@@ -1,5 +1,5 @@
-import type { AutoCrabConfig } from "../config/config.js";
-import { resolveSecretInputRef } from "../config/types.secrets.js";
+import type { AutoCrabConfig } from "../../config/config.js";
+import { resolveSecretInputRef } from "../../config/types.secrets.js";
 
 export type ExplicitGatewayAuth = {
   token?: string;

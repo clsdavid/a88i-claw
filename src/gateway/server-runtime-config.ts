@@ -8,7 +8,8 @@ import {
   assertGatewayAuthConfigured,
   type ResolvedGatewayAuth,
   resolveGatewayAuth,
-} from "./auth.js";
+} from "./auth/index.js";
+import { mergeGatewayTailscaleConfig } from "./auth/startup.js";
 import { normalizeControlUiBasePath } from "./control-ui-shared.js";
 import { resolveHooksConfig } from "./hooks.js";
 import {
@@ -17,7 +18,6 @@ import {
   isValidIPv4,
   resolveGatewayBindHost,
 } from "./net.js";
-import { mergeGatewayTailscaleConfig } from "./startup-auth.js";
 
 export type GatewayRuntimeConfig = {
   bindHost: string;

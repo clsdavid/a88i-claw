@@ -9,7 +9,7 @@ import {
   signDevicePayload,
 } from "../infra/device-identity.js";
 import { GATEWAY_CLIENT_MODES, GATEWAY_CLIENT_NAMES } from "../utils/message-channel.js";
-import { buildDeviceAuthPayload } from "./device-auth.js";
+import { buildDeviceAuthPayload } from "./auth/device-auth.js";
 import {
   connectReq,
   installGatewayTestHooks,

@@ -1,5 +1,5 @@
-import { collectTextContentBlocks } from "../../agents/content-blocks.js";
 import { createAutoCrabTools } from "../../agents/autocrab-tools.js";
+import { collectTextContentBlocks } from "../../agents/content-blocks.js";
 import type { SkillCommandSpec } from "../../agents/skills.js";
 import { applyOwnerOnlyToolPolicy } from "../../agents/tool-policy.js";
 import { getChannelDock } from "../../channels/dock.js";

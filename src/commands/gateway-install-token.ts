@@ -1,9 +1,9 @@
 import { formatCliCommand } from "../cli/command-format.js";
 import { readConfigFileSnapshot, writeConfigFile, type AutoCrabConfig } from "../config/config.js";
 import { resolveSecretInputRef } from "../config/types.secrets.js";
-import { shouldRequireGatewayTokenForInstall } from "../gateway/auth-install-policy.js";
-import { hasAmbiguousGatewayAuthModeConfig } from "../gateway/auth-mode-policy.js";
-import { resolveGatewayAuth } from "../gateway/auth.js";
+import { resolveGatewayAuth } from "../gateway/auth/index.js";
+import { shouldRequireGatewayTokenForInstall } from "../gateway/auth/install-policy.js";
+import { hasAmbiguousGatewayAuthModeConfig } from "../gateway/auth/mode-policy.js";
 import { secretRefKey } from "../secrets/ref-contract.js";
 import { resolveSecretRefValues } from "../secrets/resolve.js";
 import { randomToken } from "./onboard-helpers.js";

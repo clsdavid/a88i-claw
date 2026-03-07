@@ -1,4 +1,4 @@
-import { normalizeDeviceMetadataForAuth } from "./device-metadata-normalization.js";
+import { normalizeDeviceMetadataForAuth } from "../device-metadata-normalization.js";
 export { normalizeDeviceMetadataForAuth };
 
 export type DeviceAuthPayloadParams = {

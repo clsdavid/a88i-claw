@@ -18,8 +18,8 @@ import {
   type GatewayClientName,
 } from "../utils/message-channel.js";
 import { VERSION } from "../version.js";
+import { resolveGatewayCredentialsFromConfig } from "./auth/credentials.js";
 import { GatewayClient } from "./client.js";
-import { resolveGatewayCredentialsFromConfig } from "./credentials.js";
 import {
   CLI_DEFAULT_OPERATOR_SCOPES,
   resolveLeastPrivilegeOperatorScopesForMethod,

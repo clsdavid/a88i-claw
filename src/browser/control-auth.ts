@@ -1,7 +1,7 @@
 import type { AutoCrabConfig } from "../config/config.js";
 import { loadConfig } from "../config/config.js";
-import { resolveGatewayAuth } from "../gateway/auth.js";
-import { ensureGatewayStartupAuth } from "../gateway/startup-auth.js";
+import { resolveGatewayAuth } from "../gateway/auth/index.js";
+import { ensureGatewayStartupAuth } from "../gateway/auth/startup.js";
 
 export type BrowserControlAuth = {
   token?: string;

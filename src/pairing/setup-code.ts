@@ -6,7 +6,7 @@ import {
   normalizeSecretInputString,
   resolveSecretInputRef,
 } from "../config/types.secrets.js";
-import { assertExplicitGatewayAuthModeWhenBothConfigured } from "../gateway/auth-mode-policy.js";
+import { assertExplicitGatewayAuthModeWhenBothConfigured } from "../gateway/auth/mode-policy.js";
 import { secretRefKey } from "../secrets/ref-contract.js";
 import { resolveSecretRefValues } from "../secrets/resolve.js";
 import { resolveGatewayBindUrl } from "../shared/gateway-bind-url.js";

@@ -16,7 +16,7 @@
  *   {@link createAuthRateLimiter} and pass it where needed.
  */
 
-import { isLoopbackAddress, resolveClientIp } from "./net.js";
+import { isLoopbackAddress, resolveClientIp } from "../net.js";
 
 // ---------------------------------------------------------------------------
 // Types

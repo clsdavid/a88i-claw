@@ -1,4 +1,4 @@
-import type { GatewayClient } from "./server-methods/types.js";
+import type { GatewayClient } from "../server-methods/types.js";
 
 const CONTROL_PLANE_RATE_LIMIT_MAX_REQUESTS = 3;
 const CONTROL_PLANE_RATE_LIMIT_WINDOW_MS = 60_000;

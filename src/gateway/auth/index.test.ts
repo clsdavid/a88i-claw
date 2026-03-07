@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AuthRateLimiter } from "./auth-rate-limit.js";
+import type { AuthRateLimiter } from "../limits/auth.js";
 import {
   authorizeGatewayConnect,
   authorizeHttpGatewayConnect,
   authorizeWsControlUiGatewayConnect,
   resolveGatewayAuth,
-} from "./auth.js";
+} from "./index.js";
 
 function createLimiterSpy(): AuthRateLimiter & {
   check: ReturnType<typeof vi.fn>;

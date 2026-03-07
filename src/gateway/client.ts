@@ -22,7 +22,7 @@ import {
   type GatewayClientName,
 } from "../utils/message-channel.js";
 import { VERSION } from "../version.js";
-import { buildDeviceAuthPayloadV3 } from "./device-auth.js";
+import { buildDeviceAuthPayloadV3 } from "./auth/device-auth.js";
 import { isSecureWebSocketUrl } from "./net.js";
 import {
   type ConnectParams,

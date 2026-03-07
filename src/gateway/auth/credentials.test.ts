@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AutoCrabConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../../config/config.js";
 import {
   resolveGatewayCredentialsFromConfig,
   resolveGatewayCredentialsFromValues,
