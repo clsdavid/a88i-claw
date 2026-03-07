@@ -7,6 +7,9 @@
   "dependencies": {
     "google-auth-library": "^10.6.1"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "peerDependencies": {
     "autocrab": ">=2026.3.2"
   },

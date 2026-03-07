@@ -9,6 +9,9 @@
     "ws": "^8.19.0",
     "zod": "^4.3.6"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

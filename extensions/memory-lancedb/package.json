@@ -9,6 +9,9 @@
     "@sinclair/typebox": "0.34.48",
     "openai": "^6.25.0"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

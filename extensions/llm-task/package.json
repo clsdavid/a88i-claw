@@ -8,6 +8,9 @@
     "@sinclair/typebox": "0.34.48",
     "ajv": "^8.18.0"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

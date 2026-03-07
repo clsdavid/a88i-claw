@@ -6,6 +6,9 @@
   "dependencies": {
     "@sinclair/typebox": "0.34.48"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

@@ -12,6 +12,9 @@
     "@sinclair/typebox": "0.34.48",
     "playwright-core": "1.58.2"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

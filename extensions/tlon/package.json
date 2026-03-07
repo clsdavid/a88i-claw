@@ -10,6 +10,9 @@
     "@urbit/http-api": "^3.0.0",
     "zod": "^4.3.6"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

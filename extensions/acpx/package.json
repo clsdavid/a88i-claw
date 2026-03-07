@@ -6,6 +6,9 @@
   "dependencies": {
     "acpx": "0.1.15"
   },
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

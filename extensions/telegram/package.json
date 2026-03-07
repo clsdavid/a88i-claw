@@ -4,6 +4,9 @@
   "private": true,
   "description": "AutoCrab Telegram channel plugin",
   "type": "module",
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "autocrab": {
     "extensions": [
       "./index.ts"

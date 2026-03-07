@@ -4,6 +4,9 @@
   "private": true,
   "description": "AutoCrab core memory search plugin",
   "type": "module",
+  "devDependencies": {
+    "autocrab": "workspace:*"
+  },
   "peerDependencies": {
     "autocrab": ">=2026.3.2"
   },
