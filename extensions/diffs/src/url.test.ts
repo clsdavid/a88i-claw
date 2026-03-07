@@ -38,10 +38,10 @@ describe("diffs viewer URL helpers", () => {
     expect(
       buildViewerUrl({
         config: {},
-        baseUrl: "https://example.com/openclaw",
+        baseUrl: "https://example.com/autocrab",
         viewerPath: "/plugins/diffs/view/id/token",
       }),
-    ).toBe("https://example.com/openclaw/plugins/diffs/view/id/token");
+    ).toBe("https://example.com/autocrab/plugins/diffs/view/id/token");
   });
 
   it("rejects base URLs with query/hash", () => {

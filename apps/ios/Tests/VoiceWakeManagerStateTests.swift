@@ -1,7 +1,7 @@
 import Foundation
 import SwabbleKit
 import Testing
-@testable import OpenClaw
+@testable import AutoCrab
 
 @Suite(.serialized) struct VoiceWakeManagerStateTests {
     @Test @MainActor func suspendAndResumeCycleUpdatesState() async {
@@ -35,7 +35,7 @@ import Testing
 
     @Test @MainActor func handleRecognitionCallbackDispatchesCommand() async {
         let manager = VoiceWakeManager()
-        manager.triggerWords = ["openclaw"]
+        manager.triggerWords = ["autocrab"]
         manager.isEnabled = true
 
         actor CaptureBox {
@@ -47,11 +47,11 @@ import Testing
             await capture.set(cmd)
         }
 
-        let transcript = "openclaw hello"
-        let triggerRange = transcript.range(of: "openclaw")!
+        let transcript = "autocrab hello"
+        let triggerRange = transcript.range(of: "autocrab")!
         let helloRange = transcript.range(of: "hello")!
         let segments = [
-            WakeWordSegment(text: "openclaw", start: 0.0, duration: 0.2, range: triggerRange),
+            WakeWordSegment(text: "autocrab", start: 0.0, duration: 0.2, range: triggerRange),
             WakeWordSegment(text: "hello", start: 0.8, duration: 0.2, range: helloRange),
         ]
 

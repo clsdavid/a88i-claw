@@ -1,12 +1,12 @@
-import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "openclaw/plugin-sdk/account-id";
+import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "autocrab/plugin-sdk/account-id";
 import {
   hasConfiguredSecretInput,
   promptSingleChannelSecretInput,
   type ChannelOnboardingAdapter,
-  type OpenClawConfig,
+  type AutoCrabConfig,
   type SecretInput,
   type WizardPrompter,
-} from "openclaw/plugin-sdk/mattermost";
+} from "autocrab/plugin-sdk/mattermost";
 import {
   listMattermostAccountIds,
   resolveDefaultMattermostAccountId,
@@ -23,7 +23,7 @@ async function noteMattermostSetup(prompter: WizardPrompter): Promise<void> {
       "2) Create a bot + copy its token",
       "3) Use your server base URL (e.g., https://chat.example.com)",
       "Tip: the bot must be a member of any channel you want it to monitor.",
-      "Docs: https://docs.openclaw.ai/channels/mattermost",
+      "Docs: https://docs.autocrab.ai/channels/mattermost",
     ].join("\n"),
     "Mattermost bot token",
   );
@@ -177,7 +177,7 @@ export const mattermostOnboardingAdapter: ChannelOnboardingAdapter = {
 
     return { cfg: next, accountId };
   },
-  disable: (cfg: OpenClawConfig) => ({
+  disable: (cfg: AutoCrabConfig) => ({
     ...cfg,
     channels: {
       ...cfg.channels,

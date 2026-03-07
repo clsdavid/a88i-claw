@@ -3,13 +3,13 @@
  */
 
 import { loadConfig } from "../config/config.js";
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import { resolveSignalAccount } from "./accounts.js";
 import { signalRpcRequest } from "./client.js";
 import { resolveSignalRpcContext } from "./rpc-context.js";
 
 export type SignalReactionOpts = {
-  cfg?: OpenClawConfig;
+  cfg?: AutoCrabConfig;
   baseUrl?: string;
   account?: string;
   accountId?: string;

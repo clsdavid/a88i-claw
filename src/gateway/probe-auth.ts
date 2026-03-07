@@ -1,11 +1,11 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import {
   isGatewaySecretRefUnavailableError,
   resolveGatewayCredentialsFromConfig,
 } from "./credentials.js";
 
 export function resolveGatewayProbeAuth(params: {
-  cfg: OpenClawConfig;
+  cfg: AutoCrabConfig;
   mode: "local" | "remote";
   env?: NodeJS.ProcessEnv;
 }): { token?: string; password?: string } {
@@ -19,7 +19,7 @@ export function resolveGatewayProbeAuth(params: {
 }
 
 export function resolveGatewayProbeAuthSafe(params: {
-  cfg: OpenClawConfig;
+  cfg: AutoCrabConfig;
   mode: "local" | "remote";
   env?: NodeJS.ProcessEnv;
 }): {

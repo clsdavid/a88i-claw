@@ -1,7 +1,7 @@
 import { resolveDefaultAgentId } from "../agents/agent-scope.js";
 import type { ChatType } from "../channels/chat-type.js";
 import { normalizeChatType } from "../channels/chat-type.js";
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import { shouldLogVerbose } from "../globals.js";
 import { logDebug } from "../logger.js";
 import { listBindings } from "./bindings.js";
@@ -24,7 +24,7 @@ export type RoutePeer = {
 };
 
 export type ResolveAgentRouteInput = {
-  cfg: OpenClawConfig;
+  cfg: AutoCrabConfig;
   channel: string;
   accountId?: string | null;
   peer?: RoutePeer | null;
@@ -95,20 +95,20 @@ export function buildAgentSessionKey(params: {
   });
 }
 
-function listAgents(cfg: OpenClawConfig) {
+function listAgents(cfg: AutoCrabConfig) {
   const agents = cfg.agents?.list;
   return Array.isArray(agents) ? agents : [];
 }
 
 type AgentLookupCache = {
-  agentsRef: OpenClawConfig["agents"] | undefined;
+  agentsRef: AutoCrabConfig["agents"] | undefined;
   byNormalizedId: Map<string, string>;
   fallbackDefaultAgentId: string;
 };
 
-const agentLookupCacheByCfg = new WeakMap<OpenClawConfig, AgentLookupCache>();
+const agentLookupCacheByCfg = new WeakMap<AutoCrabConfig, AgentLookupCache>();
 
-function resolveAgentLookupCache(cfg: OpenClawConfig): AgentLookupCache {
+function resolveAgentLookupCache(cfg: AutoCrabConfig): AgentLookupCache {
   const agentsRef = cfg.agents;
   const existing = agentLookupCacheByCfg.get(cfg);
   if (existing && existing.agentsRef === agentsRef) {
@@ -132,7 +132,7 @@ function resolveAgentLookupCache(cfg: OpenClawConfig): AgentLookupCache {
   return next;
 }
 
-export function pickFirstExistingAgentId(cfg: OpenClawConfig, agentId: string): string {
+export function pickFirstExistingAgentId(cfg: AutoCrabConfig, agentId: string): string {
   const lookup = resolveAgentLookupCache(cfg);
   const trimmed = (agentId ?? "").trim();
   if (!trimmed) {
@@ -176,20 +176,20 @@ type BindingScope = {
 };
 
 type EvaluatedBindingsCache = {
-  bindingsRef: OpenClawConfig["bindings"];
+  bindingsRef: AutoCrabConfig["bindings"];
   byChannel: Map<string, EvaluatedBindingsByChannel>;
   byChannelAccount: Map<string, EvaluatedBinding[]>;
   byChannelAccountIndex: Map<string, EvaluatedBindingsIndex>;
 };
 
-const evaluatedBindingsCacheByCfg = new WeakMap<OpenClawConfig, EvaluatedBindingsCache>();
+const evaluatedBindingsCacheByCfg = new WeakMap<AutoCrabConfig, EvaluatedBindingsCache>();
 const MAX_EVALUATED_BINDINGS_CACHE_KEYS = 2000;
 const resolvedRouteCacheByCfg = new WeakMap<
-  OpenClawConfig,
+  AutoCrabConfig,
   {
-    bindingsRef: OpenClawConfig["bindings"];
-    agentsRef: OpenClawConfig["agents"];
-    sessionRef: OpenClawConfig["session"];
+    bindingsRef: AutoCrabConfig["bindings"];
+    agentsRef: AutoCrabConfig["agents"];
+    sessionRef: AutoCrabConfig["session"];
     byKey: Map<string, ResolvedAgentRoute>;
   }
 >();
@@ -217,7 +217,7 @@ function resolveAccountPatternKey(accountPattern: string): string {
 }
 
 function buildEvaluatedBindingsByChannel(
-  cfg: OpenClawConfig,
+  cfg: AutoCrabConfig,
 ): Map<string, EvaluatedBindingsByChannel> {
   const byChannel = new Map<string, EvaluatedBindingsByChannel>();
   let order = 0;
@@ -395,7 +395,7 @@ function buildEvaluatedBindingsIndex(bindings: EvaluatedBinding[]): EvaluatedBin
 }
 
 function getEvaluatedBindingsForChannelAccount(
-  cfg: OpenClawConfig,
+  cfg: AutoCrabConfig,
   channel: string,
   accountId: string,
 ): EvaluatedBinding[] {
@@ -438,7 +438,7 @@ function getEvaluatedBindingsForChannelAccount(
 }
 
 function getEvaluatedBindingIndexForChannelAccount(
-  cfg: OpenClawConfig,
+  cfg: AutoCrabConfig,
   channel: string,
   accountId: string,
 ): EvaluatedBindingsIndex {
@@ -489,7 +489,7 @@ function normalizeBindingMatch(
   };
 }
 
-function resolveRouteCacheForConfig(cfg: OpenClawConfig): Map<string, ResolvedAgentRoute> {
+function resolveRouteCacheForConfig(cfg: AutoCrabConfig): Map<string, ResolvedAgentRoute> {
   const existing = resolvedRouteCacheByCfg.get(cfg);
   if (
     existing &&

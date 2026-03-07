@@ -55,7 +55,7 @@ vi.mock("node:child_process", async (importOriginal) => {
       } else if (
         args[0] === "inspect" &&
         args[1] === "-f" &&
-        args[2]?.includes('index .Config.Labels "openclaw.configHash"')
+        args[2]?.includes('index .Config.Labels "autocrab.configHash"')
       ) {
         stdout = `${spawnState.labelHash}\n`;
       } else if (
@@ -93,9 +93,9 @@ function createSandboxConfig(
     mode: "all",
     scope: "shared",
     workspaceAccess,
-    workspaceRoot: "~/.openclaw/sandboxes",
+    workspaceRoot: "~/.autocrab/sandboxes",
     docker: {
-      image: "openclaw-sandbox:test",
+      image: "autocrab-sandbox:test",
       containerPrefix: "oc-test-",
       workdir: "/workspace",
       readOnlyRoot: true,
@@ -110,9 +110,9 @@ function createSandboxConfig(
     },
     browser: {
       enabled: false,
-      image: "openclaw-browser:test",
+      image: "autocrab-browser:test",
       containerPrefix: "oc-browser-",
-      network: "openclaw-sandbox-browser",
+      network: "autocrab-sandbox-browser",
       cdpPort: 9222,
       vncPort: 5900,
       noVncPort: 6080,
@@ -187,7 +187,7 @@ describe("ensureSandboxContainer config-hash recreation", () => {
     ).toBe(true);
     const createCall = dockerCalls.find((call) => call.args[0] === "create");
     expect(createCall).toBeDefined();
-    expect(createCall?.args).toContain(`openclaw.configHash=${newHash}`);
+    expect(createCall?.args).toContain(`autocrab.configHash=${newHash}`);
     expect(registryMocks.updateRegistry).toHaveBeenCalledWith(
       expect.objectContaining({
         containerName: "oc-test-shared",
@@ -236,7 +236,7 @@ describe("ensureSandboxContainer config-hash recreation", () => {
       (call) => call.command === "docker" && call.args[0] === "create",
     );
     expect(createCall).toBeDefined();
-    expect(createCall?.args).toContain(`openclaw.configHash=${expectedHash}`);
+    expect(createCall?.args).toContain(`autocrab.configHash=${expectedHash}`);
 
     const bindArgs = collectDockerFlagValues(createCall?.args ?? [], "-v");
     const workspaceMountIdx = bindArgs.indexOf("/tmp/workspace:/workspace");

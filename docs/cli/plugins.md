@@ -1,12 +1,12 @@
 ---
-summary: "CLI reference for `openclaw plugins` (list, install, uninstall, enable/disable, doctor)"
+summary: "CLI reference for `autocrab plugins` (list, install, uninstall, enable/disable, doctor)"
 read_when:
   - You want to install or manage in-process Gateway plugins
   - You want to debug plugin load failures
 title: "plugins"
 ---
 
-# `openclaw plugins`
+# `autocrab plugins`
 
 Manage Gateway plugins/extensions (loaded in-process).
 
@@ -19,28 +19,28 @@ Related:
 ## Commands
 
 ```bash
-openclaw plugins list
-openclaw plugins info <id>
-openclaw plugins enable <id>
-openclaw plugins disable <id>
-openclaw plugins uninstall <id>
-openclaw plugins doctor
-openclaw plugins update <id>
-openclaw plugins update --all
+autocrab plugins list
+autocrab plugins info <id>
+autocrab plugins enable <id>
+autocrab plugins disable <id>
+autocrab plugins uninstall <id>
+autocrab plugins doctor
+autocrab plugins update <id>
+autocrab plugins update --all
 ```
 
-Bundled plugins ship with OpenClaw but start disabled. Use `plugins enable` to
+Bundled plugins ship with AutoCrab but start disabled. Use `plugins enable` to
 activate them.
 
-All plugins must ship a `openclaw.plugin.json` file with an inline JSON Schema
+All plugins must ship a `autocrab.plugin.json` file with an inline JSON Schema
 (`configSchema`, even if empty). Missing/invalid manifests or schemas prevent
 the plugin from loading and fail config validation.
 
 ### Install
 
 ```bash
-openclaw plugins install <path-or-spec>
-openclaw plugins install <npm-spec> --pin
+autocrab plugins install <path-or-spec>
+autocrab plugins install <npm-spec> --pin
 ```
 
 Security note: treat plugin installs like running code. Prefer pinned versions.
@@ -48,7 +48,7 @@ Security note: treat plugin installs like running code. Prefer pinned versions.
 Npm specs are **registry-only** (package name + optional version/tag). Git/URL/file
 specs are rejected. Dependency installs run with `--ignore-scripts` for safety.
 
-If a bare install spec matches a bundled plugin id (for example `diffs`), OpenClaw
+If a bare install spec matches a bundled plugin id (for example `diffs`), AutoCrab
 installs the bundled plugin directly. To install an npm package with the same
 name, use an explicit scoped spec (for example `@scope/diffs`).
 
@@ -57,7 +57,7 @@ Supported archives: `.zip`, `.tgz`, `.tar.gz`, `.tar`.
 Use `--link` to avoid copying a local directory (adds to `plugins.load.paths`):
 
 ```bash
-openclaw plugins install -l ./my-plugin
+autocrab plugins install -l ./my-plugin
 ```
 
 Use `--pin` on npm installs to save the resolved exact spec (`name@version`) in
@@ -66,9 +66,9 @@ Use `--pin` on npm installs to save the resolved exact spec (`name@version`) in
 ### Uninstall
 
 ```bash
-openclaw plugins uninstall <id>
-openclaw plugins uninstall <id> --dry-run
-openclaw plugins uninstall <id> --keep-files
+autocrab plugins uninstall <id>
+autocrab plugins uninstall <id> --dry-run
+autocrab plugins uninstall <id> --keep-files
 ```
 
 `uninstall` removes plugin records from `plugins.entries`, `plugins.installs`,
@@ -76,7 +76,7 @@ the plugin allowlist, and linked `plugins.load.paths` entries when applicable.
 For active memory plugins, the memory slot resets to `memory-core`.
 
 By default, uninstall also removes the plugin install directory under the active
-state dir extensions root (`$OPENCLAW_STATE_DIR/extensions/<id>`). Use
+state dir extensions root (`$AUTOCRAB_STATE_DIR/extensions/<id>`). Use
 `--keep-files` to keep files on disk.
 
 `--keep-config` is supported as a deprecated alias for `--keep-files`.
@@ -84,13 +84,13 @@ state dir extensions root (`$OPENCLAW_STATE_DIR/extensions/<id>`). Use
 ### Update
 
 ```bash
-openclaw plugins update <id>
-openclaw plugins update --all
-openclaw plugins update <id> --dry-run
+autocrab plugins update <id>
+autocrab plugins update --all
+autocrab plugins update <id> --dry-run
 ```
 
 Updates only apply to plugins installed from npm (tracked in `plugins.installs`).
 
 When a stored integrity hash exists and the fetched artifact hash changes,
-OpenClaw prints a warning and asks for confirmation before proceeding. Use
+AutoCrab prints a warning and asks for confirmation before proceeding. Use
 global `--yes` to bypass prompts in CI/non-interactive runs.

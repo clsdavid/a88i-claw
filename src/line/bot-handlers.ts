@@ -9,7 +9,7 @@ import type {
 } from "@line/bot-sdk";
 import { hasControlCommand } from "../auto-reply/command-detection.js";
 import { resolveControlCommandGate } from "../channels/command-gating.js";
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import {
   resolveAllowlistProviderRuntimeGroupPolicy,
   resolveDefaultGroupPolicy,
@@ -58,7 +58,7 @@ function isDownloadableLineMessageType(
 }
 
 export interface LineHandlerContext {
-  cfg: OpenClawConfig;
+  cfg: AutoCrabConfig;
   account: ResolvedLineAccount;
   runtime: RuntimeEnv;
   mediaMaxBytes: number;

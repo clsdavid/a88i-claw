@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { OpenClawConfig } from "../../config/types.js";
+import type { AutoCrabConfig } from "../../config/types.js";
 import { createNoopThreadBindingManager } from "./thread-bindings.js";
 
 const preflightDiscordMessageMock = vi.hoisted(() => vi.fn());
@@ -29,7 +29,7 @@ function createHandlerParams(overrides?: {
   abortSignal?: AbortSignal;
   workerRunTimeoutMs?: number;
 }) {
-  const cfg: OpenClawConfig = {
+  const cfg: AutoCrabConfig = {
     channels: {
       discord: {
         enabled: true,

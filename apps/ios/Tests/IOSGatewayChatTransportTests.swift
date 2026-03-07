@@ -1,6 +1,6 @@
-import OpenClawKit
+import AutoCrabKit
 import Testing
-@testable import OpenClaw
+@testable import AutoCrab
 
 @Suite struct IOSGatewayChatTransportTests {
     @Test func requestsFailFastWhenGatewayNotConnected() async {

@@ -16,18 +16,18 @@ Start at [/help/troubleshooting](/help/troubleshooting) if you want the fast tri
 Run these first, in this order:
 
 ```bash
-openclaw status
-openclaw gateway status
-openclaw logs --follow
-openclaw doctor
-openclaw channels status --probe
+autocrab status
+autocrab gateway status
+autocrab logs --follow
+autocrab doctor
+autocrab channels status --probe
 ```
 
 Expected healthy signals:
 
-- `openclaw gateway status` shows `Runtime: running` and `RPC probe: ok`.
-- `openclaw doctor` reports no blocking config/service issues.
-- `openclaw channels status --probe` shows connected/ready channels.
+- `autocrab gateway status` shows `Runtime: running` and `RPC probe: ok`.
+- `autocrab doctor` reports no blocking config/service issues.
+- `autocrab channels status --probe` shows connected/ready channels.
 
 ## Anthropic 429 extra usage required for long context
 
@@ -35,9 +35,9 @@ Use this when logs/errors include:
 `HTTP 429: rate_limit_error: Extra usage is required for long context requests`.
 
 ```bash
-openclaw logs --follow
-openclaw models status
-openclaw config get agents.defaults.models
+autocrab logs --follow
+autocrab models status
+autocrab config get agents.defaults.models
 ```
 
 Look for:
@@ -63,11 +63,11 @@ Related:
 If channels are up but nothing answers, check routing and policy before reconnecting anything.
 
 ```bash
-openclaw status
-openclaw channels status --probe
-openclaw pairing list --channel <channel> [--account <id>]
-openclaw config get channels
-openclaw logs --follow
+autocrab status
+autocrab channels status --probe
+autocrab pairing list --channel <channel> [--account <id>]
+autocrab config get channels
+autocrab logs --follow
 ```
 
 Look for:
@@ -93,11 +93,11 @@ Related:
 When dashboard/control UI will not connect, validate URL, auth mode, and secure context assumptions.
 
 ```bash
-openclaw gateway status
-openclaw status
-openclaw logs --follow
-openclaw doctor
-openclaw gateway status --json
+autocrab gateway status
+autocrab status
+autocrab logs --follow
+autocrab doctor
+autocrab gateway status --json
 ```
 
 Look for:
@@ -119,9 +119,9 @@ Common signatures:
 Device auth v2 migration check:
 
 ```bash
-openclaw --version
-openclaw doctor
-openclaw gateway status
+autocrab --version
+autocrab doctor
+autocrab gateway status
 ```
 
 If logs show nonce/signature errors, update the connecting client and verify it:
@@ -141,11 +141,11 @@ Related:
 Use this when service is installed but process does not stay up.
 
 ```bash
-openclaw gateway status
-openclaw status
-openclaw logs --follow
-openclaw doctor
-openclaw gateway status --deep
+autocrab gateway status
+autocrab status
+autocrab logs --follow
+autocrab doctor
+autocrab gateway status --deep
 ```
 
 Look for:
@@ -156,7 +156,7 @@ Look for:
 
 Common signatures:
 
-- `Gateway start blocked: set gateway.mode=local` → local gateway mode is not enabled. Fix: set `gateway.mode="local"` in your config (or run `openclaw configure`). If you are running OpenClaw via Podman using the dedicated `openclaw` user, the config lives at `~openclaw/.openclaw/openclaw.json`.
+- `Gateway start blocked: set gateway.mode=local` → local gateway mode is not enabled. Fix: set `gateway.mode="local"` in your config (or run `autocrab configure`). If you are running AutoCrab via Podman using the dedicated `autocrab` user, the config lives at `~autocrab/.autocrab/autocrab.json`.
 - `refusing to bind gateway ... without auth` → non-loopback bind without token/password.
 - `another gateway instance is already listening` / `EADDRINUSE` → port conflict.
 
@@ -171,11 +171,11 @@ Related:
 If channel state is connected but message flow is dead, focus on policy, permissions, and channel specific delivery rules.
 
 ```bash
-openclaw channels status --probe
-openclaw pairing list --channel <channel> [--account <id>]
-openclaw status --deep
-openclaw logs --follow
-openclaw config get channels
+autocrab channels status --probe
+autocrab pairing list --channel <channel> [--account <id>]
+autocrab status --deep
+autocrab logs --follow
+autocrab config get channels
 ```
 
 Look for:
@@ -202,11 +202,11 @@ Related:
 If cron or heartbeat did not run or did not deliver, verify scheduler state first, then delivery target.
 
 ```bash
-openclaw cron status
-openclaw cron list
-openclaw cron runs --id <jobId> --limit 20
-openclaw system heartbeat last
-openclaw logs --follow
+autocrab cron status
+autocrab cron list
+autocrab cron runs --id <jobId> --limit 20
+autocrab system heartbeat last
+autocrab logs --follow
 ```
 
 Look for:
@@ -234,11 +234,11 @@ Related:
 If a node is paired but tools fail, isolate foreground, permission, and approval state.
 
 ```bash
-openclaw nodes status
-openclaw nodes describe --node <idOrNameOrIp>
-openclaw approvals get --node <idOrNameOrIp>
-openclaw logs --follow
-openclaw status
+autocrab nodes status
+autocrab nodes describe --node <idOrNameOrIp>
+autocrab approvals get --node <idOrNameOrIp>
+autocrab logs --follow
+autocrab status
 ```
 
 Look for:
@@ -265,11 +265,11 @@ Related:
 Use this when browser tool actions fail even though the gateway itself is healthy.
 
 ```bash
-openclaw browser status
-openclaw browser start --browser-profile openclaw
-openclaw browser profiles
-openclaw logs --follow
-openclaw doctor
+autocrab browser status
+autocrab browser start --browser-profile autocrab
+autocrab browser profiles
+autocrab logs --follow
+autocrab doctor
 ```
 
 Look for:
@@ -298,10 +298,10 @@ Most post-upgrade breakage is config drift or stricter defaults now being enforc
 ### 1) Auth and URL override behavior changed
 
 ```bash
-openclaw gateway status
-openclaw config get gateway.mode
-openclaw config get gateway.remote.url
-openclaw config get gateway.auth.mode
+autocrab gateway status
+autocrab config get gateway.mode
+autocrab config get gateway.remote.url
+autocrab config get gateway.auth.mode
 ```
 
 What to check:
@@ -317,10 +317,10 @@ Common signatures:
 ### 2) Bind and auth guardrails are stricter
 
 ```bash
-openclaw config get gateway.bind
-openclaw config get gateway.auth.token
-openclaw gateway status
-openclaw logs --follow
+autocrab config get gateway.bind
+autocrab config get gateway.auth.token
+autocrab gateway status
+autocrab logs --follow
 ```
 
 What to check:
@@ -336,10 +336,10 @@ Common signatures:
 ### 3) Pairing and device identity state changed
 
 ```bash
-openclaw devices list
-openclaw pairing list --channel <channel> [--account <id>]
-openclaw logs --follow
-openclaw doctor
+autocrab devices list
+autocrab pairing list --channel <channel> [--account <id>]
+autocrab logs --follow
+autocrab doctor
 ```
 
 What to check:
@@ -355,8 +355,8 @@ Common signatures:
 If the service config and runtime still disagree after checks, reinstall service metadata from the same profile/state directory:
 
 ```bash
-openclaw gateway install --force
-openclaw gateway restart
+autocrab gateway install --force
+autocrab gateway restart
 ```
 
 Related:

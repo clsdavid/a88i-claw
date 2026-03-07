@@ -1,5 +1,5 @@
-import type { PluginRuntime } from "openclaw/plugin-sdk/test-utils";
-import { removeAckReactionAfterReply, shouldAckReaction } from "openclaw/plugin-sdk/test-utils";
+import type { PluginRuntime } from "autocrab/plugin-sdk/test-utils";
+import { removeAckReactionAfterReply, shouldAckReaction } from "autocrab/plugin-sdk/test-utils";
 import { vi } from "vitest";
 
 type DeepPartial<T> = {
@@ -240,7 +240,7 @@ export function createPluginRuntimeMock(overrides: DeepPartial<PluginRuntime> = 
       })),
     },
     state: {
-      resolveStateDir: vi.fn(() => "/tmp/openclaw"),
+      resolveStateDir: vi.fn(() => "/tmp/autocrab"),
     },
   };
 

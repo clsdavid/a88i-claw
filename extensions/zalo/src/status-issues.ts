@@ -1,4 +1,4 @@
-import type { ChannelAccountSnapshot, ChannelStatusIssue } from "openclaw/plugin-sdk/zalo";
+import type { ChannelAccountSnapshot, ChannelStatusIssue } from "autocrab/plugin-sdk/zalo";
 
 type ZaloAccountStatus = {
   accountId?: unknown;

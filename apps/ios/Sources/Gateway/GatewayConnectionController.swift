@@ -6,7 +6,7 @@ import CryptoKit
 import EventKit
 import Foundation
 import Darwin
-import OpenClawKit
+import AutoCrabKit
 import Network
 import Observation
 import os
@@ -755,7 +755,7 @@ final class GatewayConnectionController {
         if manualClientId?.isEmpty == false {
             return manualClientId!
         }
-        return "openclaw-ios"
+        return "autocrab-ios"
     }
 
     private func resolveManualPort(host: String, port: Int, useTLS: Bool) -> Int? {
@@ -785,32 +785,32 @@ final class GatewayConnectionController {
     }
 
     private func currentCaps() -> [String] {
-        var caps = [OpenClawCapability.canvas.rawValue, OpenClawCapability.screen.rawValue]
+        var caps = [AutoCrabCapability.canvas.rawValue, AutoCrabCapability.screen.rawValue]
 
         // Default-on: if the key doesn't exist yet, treat it as enabled.
         let cameraEnabled =
             UserDefaults.standard.object(forKey: "camera.enabled") == nil
                 ? true
                 : UserDefaults.standard.bool(forKey: "camera.enabled")
-        if cameraEnabled { caps.append(OpenClawCapability.camera.rawValue) }
+        if cameraEnabled { caps.append(AutoCrabCapability.camera.rawValue) }
 
         let voiceWakeEnabled = UserDefaults.standard.bool(forKey: VoiceWakePreferences.enabledKey)
-        if voiceWakeEnabled { caps.append(OpenClawCapability.voiceWake.rawValue) }
+        if voiceWakeEnabled { caps.append(AutoCrabCapability.voiceWake.rawValue) }
 
         let locationModeRaw = UserDefaults.standard.string(forKey: "location.enabledMode") ?? "off"
-        let locationMode = OpenClawLocationMode(rawValue: locationModeRaw) ?? .off
-        if locationMode != .off { caps.append(OpenClawCapability.location.rawValue) }
+        let locationMode = AutoCrabLocationMode(rawValue: locationModeRaw) ?? .off
+        if locationMode != .off { caps.append(AutoCrabCapability.location.rawValue) }
 
-        caps.append(OpenClawCapability.device.rawValue)
+        caps.append(AutoCrabCapability.device.rawValue)
         if WatchMessagingService.isSupportedOnDevice() {
-            caps.append(OpenClawCapability.watch.rawValue)
+            caps.append(AutoCrabCapability.watch.rawValue)
         }
-        caps.append(OpenClawCapability.photos.rawValue)
-        caps.append(OpenClawCapability.contacts.rawValue)
-        caps.append(OpenClawCapability.calendar.rawValue)
-        caps.append(OpenClawCapability.reminders.rawValue)
+        caps.append(AutoCrabCapability.photos.rawValue)
+        caps.append(AutoCrabCapability.contacts.rawValue)
+        caps.append(AutoCrabCapability.calendar.rawValue)
+        caps.append(AutoCrabCapability.reminders.rawValue)
         if Self.motionAvailable() {
-            caps.append(OpenClawCapability.motion.rawValue)
+            caps.append(AutoCrabCapability.motion.rawValue)
         }
 
         return caps
@@ -818,58 +818,58 @@ final class GatewayConnectionController {
 
     private func currentCommands() -> [String] {
         var commands: [String] = [
-            OpenClawCanvasCommand.present.rawValue,
-            OpenClawCanvasCommand.hide.rawValue,
-            OpenClawCanvasCommand.navigate.rawValue,
-            OpenClawCanvasCommand.evalJS.rawValue,
-            OpenClawCanvasCommand.snapshot.rawValue,
-            OpenClawCanvasA2UICommand.push.rawValue,
-            OpenClawCanvasA2UICommand.pushJSONL.rawValue,
-            OpenClawCanvasA2UICommand.reset.rawValue,
-            OpenClawScreenCommand.record.rawValue,
-            OpenClawSystemCommand.notify.rawValue,
-            OpenClawChatCommand.push.rawValue,
-            OpenClawTalkCommand.pttStart.rawValue,
-            OpenClawTalkCommand.pttStop.rawValue,
-            OpenClawTalkCommand.pttCancel.rawValue,
-            OpenClawTalkCommand.pttOnce.rawValue,
+            AutoCrabCanvasCommand.present.rawValue,
+            AutoCrabCanvasCommand.hide.rawValue,
+            AutoCrabCanvasCommand.navigate.rawValue,
+            AutoCrabCanvasCommand.evalJS.rawValue,
+            AutoCrabCanvasCommand.snapshot.rawValue,
+            AutoCrabCanvasA2UICommand.push.rawValue,
+            AutoCrabCanvasA2UICommand.pushJSONL.rawValue,
+            AutoCrabCanvasA2UICommand.reset.rawValue,
+            AutoCrabScreenCommand.record.rawValue,
+            AutoCrabSystemCommand.notify.rawValue,
+            AutoCrabChatCommand.push.rawValue,
+            AutoCrabTalkCommand.pttStart.rawValue,
+            AutoCrabTalkCommand.pttStop.rawValue,
+            AutoCrabTalkCommand.pttCancel.rawValue,
+            AutoCrabTalkCommand.pttOnce.rawValue,
         ]
 
         let caps = Set(self.currentCaps())
-        if caps.contains(OpenClawCapability.camera.rawValue) {
-            commands.append(OpenClawCameraCommand.list.rawValue)
-            commands.append(OpenClawCameraCommand.snap.rawValue)
-            commands.append(OpenClawCameraCommand.clip.rawValue)
+        if caps.contains(AutoCrabCapability.camera.rawValue) {
+            commands.append(AutoCrabCameraCommand.list.rawValue)
+            commands.append(AutoCrabCameraCommand.snap.rawValue)
+            commands.append(AutoCrabCameraCommand.clip.rawValue)
         }
-        if caps.contains(OpenClawCapability.location.rawValue) {
-            commands.append(OpenClawLocationCommand.get.rawValue)
+        if caps.contains(AutoCrabCapability.location.rawValue) {
+            commands.append(AutoCrabLocationCommand.get.rawValue)
         }
-        if caps.contains(OpenClawCapability.device.rawValue) {
-            commands.append(OpenClawDeviceCommand.status.rawValue)
-            commands.append(OpenClawDeviceCommand.info.rawValue)
+        if caps.contains(AutoCrabCapability.device.rawValue) {
+            commands.append(AutoCrabDeviceCommand.status.rawValue)
+            commands.append(AutoCrabDeviceCommand.info.rawValue)
         }
-        if caps.contains(OpenClawCapability.watch.rawValue) {
-            commands.append(OpenClawWatchCommand.status.rawValue)
-            commands.append(OpenClawWatchCommand.notify.rawValue)
+        if caps.contains(AutoCrabCapability.watch.rawValue) {
+            commands.append(AutoCrabWatchCommand.status.rawValue)
+            commands.append(AutoCrabWatchCommand.notify.rawValue)
         }
-        if caps.contains(OpenClawCapability.photos.rawValue) {
-            commands.append(OpenClawPhotosCommand.latest.rawValue)
+        if caps.contains(AutoCrabCapability.photos.rawValue) {
+            commands.append(AutoCrabPhotosCommand.latest.rawValue)
         }
-        if caps.contains(OpenClawCapability.contacts.rawValue) {
-            commands.append(OpenClawContactsCommand.search.rawValue)
-            commands.append(OpenClawContactsCommand.add.rawValue)
+        if caps.contains(AutoCrabCapability.contacts.rawValue) {
+            commands.append(AutoCrabContactsCommand.search.rawValue)
+            commands.append(AutoCrabContactsCommand.add.rawValue)
         }
-        if caps.contains(OpenClawCapability.calendar.rawValue) {
-            commands.append(OpenClawCalendarCommand.events.rawValue)
-            commands.append(OpenClawCalendarCommand.add.rawValue)
+        if caps.contains(AutoCrabCapability.calendar.rawValue) {
+            commands.append(AutoCrabCalendarCommand.events.rawValue)
+            commands.append(AutoCrabCalendarCommand.add.rawValue)
         }
-        if caps.contains(OpenClawCapability.reminders.rawValue) {
-            commands.append(OpenClawRemindersCommand.list.rawValue)
-            commands.append(OpenClawRemindersCommand.add.rawValue)
+        if caps.contains(AutoCrabCapability.reminders.rawValue) {
+            commands.append(AutoCrabRemindersCommand.list.rawValue)
+            commands.append(AutoCrabRemindersCommand.add.rawValue)
         }
-        if caps.contains(OpenClawCapability.motion.rawValue) {
-            commands.append(OpenClawMotionCommand.activity.rawValue)
-            commands.append(OpenClawMotionCommand.pedometer.rawValue)
+        if caps.contains(AutoCrabCapability.motion.rawValue) {
+            commands.append(AutoCrabMotionCommand.activity.rawValue)
+            commands.append(AutoCrabMotionCommand.pedometer.rawValue)
         }
 
         return commands

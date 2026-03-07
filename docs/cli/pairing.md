@@ -1,11 +1,11 @@
 ---
-summary: "CLI reference for `openclaw pairing` (approve/list pairing requests)"
+summary: "CLI reference for `autocrab pairing` (approve/list pairing requests)"
 read_when:
   - You’re using pairing-mode DMs and need to approve senders
 title: "pairing"
 ---
 
-# `openclaw pairing`
+# `autocrab pairing`
 
 Approve or inspect DM pairing requests (for channels that support pairing).
 
@@ -16,12 +16,12 @@ Related:
 ## Commands
 
 ```bash
-openclaw pairing list telegram
-openclaw pairing list --channel telegram --account work
-openclaw pairing list telegram --json
+autocrab pairing list telegram
+autocrab pairing list --channel telegram --account work
+autocrab pairing list telegram --json
 
-openclaw pairing approve telegram <code>
-openclaw pairing approve --channel telegram --account work <code> --notify
+autocrab pairing approve telegram <code>
+autocrab pairing approve --channel telegram --account work <code> --notify
 ```
 
 ## Notes

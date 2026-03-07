@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { AutoCrabConfig } from "../../config/config.js";
 import type { RuntimeEnv } from "../../runtime.js";
 
 const mocks = vi.hoisted(() => ({
@@ -94,8 +94,8 @@ function withInteractiveStdin() {
 
 describe("modelsAuthLoginCommand", () => {
   let restoreStdin: (() => void) | null = null;
-  let currentConfig: OpenClawConfig;
-  let lastUpdatedConfig: OpenClawConfig | null;
+  let currentConfig: AutoCrabConfig;
+  let lastUpdatedConfig: AutoCrabConfig | null;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -104,12 +104,12 @@ describe("modelsAuthLoginCommand", () => {
     lastUpdatedConfig = null;
 
     mocks.resolveDefaultAgentId.mockReturnValue("main");
-    mocks.resolveAgentDir.mockReturnValue("/tmp/openclaw/agents/main");
-    mocks.resolveAgentWorkspaceDir.mockReturnValue("/tmp/openclaw/workspace");
-    mocks.resolveDefaultAgentWorkspaceDir.mockReturnValue("/tmp/openclaw/workspace");
+    mocks.resolveAgentDir.mockReturnValue("/tmp/autocrab/agents/main");
+    mocks.resolveAgentWorkspaceDir.mockReturnValue("/tmp/autocrab/workspace");
+    mocks.resolveDefaultAgentWorkspaceDir.mockReturnValue("/tmp/autocrab/workspace");
     mocks.loadValidConfigOrThrow.mockImplementation(async () => currentConfig);
     mocks.updateConfig.mockImplementation(
-      async (mutator: (cfg: OpenClawConfig) => OpenClawConfig) => {
+      async (mutator: (cfg: AutoCrabConfig) => AutoCrabConfig) => {
         lastUpdatedConfig = mutator(currentConfig);
         currentConfig = lastUpdatedConfig;
         return lastUpdatedConfig;
@@ -145,7 +145,7 @@ describe("modelsAuthLoginCommand", () => {
     expect(mocks.writeOAuthCredentials).toHaveBeenCalledWith(
       "openai-codex",
       expect.any(Object),
-      "/tmp/openclaw/agents/main",
+      "/tmp/autocrab/agents/main",
       { syncSiblingAgents: true },
     );
     expect(mocks.resolvePluginProviders).not.toHaveBeenCalled();

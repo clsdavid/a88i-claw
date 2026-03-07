@@ -1,4 +1,4 @@
-import type { PluginRuntime } from "openclaw/plugin-sdk/twitch";
+import type { PluginRuntime } from "autocrab/plugin-sdk/twitch";
 
 let runtime: PluginRuntime | null = null;
 

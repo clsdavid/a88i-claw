@@ -1,8 +1,8 @@
 ---
-summary: "Use Kilo Gateway's unified API to access many models in OpenClaw"
+summary: "Use Kilo Gateway's unified API to access many models in AutoCrab"
 read_when:
   - You want a single API key for many LLMs
-  - You want to run models via Kilo Gateway in OpenClaw
+  - You want to run models via Kilo Gateway in AutoCrab
 ---
 
 # Kilo Gateway
@@ -19,7 +19,7 @@ endpoint and API key. It is OpenAI-compatible, so most OpenAI SDKs work by switc
 ## CLI setup
 
 ```bash
-openclaw onboard --kilocode-api-key <key>
+autocrab onboard --kilocode-api-key <key>
 ```
 
 Or set the environment variable:

@@ -1,7 +1,7 @@
 import {
   resolveAllowlistMatchSimple,
   resolveEffectiveAllowFromLists,
-} from "openclaw/plugin-sdk/mattermost";
+} from "autocrab/plugin-sdk/mattermost";
 
 export function normalizeMattermostAllowEntry(entry: string): string {
   const trimmed = entry.trim();

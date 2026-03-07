@@ -1,4 +1,4 @@
-import type { PluginRuntime } from "openclaw/plugin-sdk/matrix";
+import type { PluginRuntime } from "autocrab/plugin-sdk/matrix";
 
 let runtime: PluginRuntime | null = null;
 

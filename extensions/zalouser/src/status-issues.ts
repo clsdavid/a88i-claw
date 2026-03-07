@@ -1,4 +1,4 @@
-import type { ChannelAccountSnapshot, ChannelStatusIssue } from "openclaw/plugin-sdk/zalouser";
+import type { ChannelAccountSnapshot, ChannelStatusIssue } from "autocrab/plugin-sdk/zalouser";
 
 type ZalouserAccountStatus = {
   accountId?: unknown;
@@ -50,7 +50,7 @@ export function collectZalouserStatusIssues(
         accountId,
         kind: "auth",
         message: "Not authenticated (no saved Zalo session).",
-        fix: "Run: openclaw channels login --channel zalouser",
+        fix: "Run: autocrab channels login --channel zalouser",
       });
       continue;
     }

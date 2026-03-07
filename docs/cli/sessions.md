@@ -1,20 +1,20 @@
 ---
-summary: "CLI reference for `openclaw sessions` (list stored sessions + usage)"
+summary: "CLI reference for `autocrab sessions` (list stored sessions + usage)"
 read_when:
   - You want to list stored sessions and see recent activity
 title: "sessions"
 ---
 
-# `openclaw sessions`
+# `autocrab sessions`
 
 List stored conversation sessions.
 
 ```bash
-openclaw sessions
-openclaw sessions --agent work
-openclaw sessions --all-agents
-openclaw sessions --active 120
-openclaw sessions --json
+autocrab sessions
+autocrab sessions --agent work
+autocrab sessions --all-agents
+autocrab sessions --active 120
+autocrab sessions --json
 ```
 
 Scope selection:
@@ -26,14 +26,14 @@ Scope selection:
 
 JSON examples:
 
-`openclaw sessions --all-agents --json`:
+`autocrab sessions --all-agents --json`:
 
 ```json
 {
   "path": null,
   "stores": [
-    { "agentId": "main", "path": "/home/user/.openclaw/agents/main/sessions/sessions.json" },
-    { "agentId": "work", "path": "/home/user/.openclaw/agents/work/sessions/sessions.json" }
+    { "agentId": "main", "path": "/home/user/.autocrab/agents/main/sessions/sessions.json" },
+    { "agentId": "work", "path": "/home/user/.autocrab/agents/work/sessions/sessions.json" }
   ],
   "allAgents": true,
   "count": 2,
@@ -50,17 +50,17 @@ JSON examples:
 Run maintenance now (instead of waiting for the next write cycle):
 
 ```bash
-openclaw sessions cleanup --dry-run
-openclaw sessions cleanup --agent work --dry-run
-openclaw sessions cleanup --all-agents --dry-run
-openclaw sessions cleanup --enforce
-openclaw sessions cleanup --enforce --active-key "agent:main:telegram:dm:123"
-openclaw sessions cleanup --json
+autocrab sessions cleanup --dry-run
+autocrab sessions cleanup --agent work --dry-run
+autocrab sessions cleanup --all-agents --dry-run
+autocrab sessions cleanup --enforce
+autocrab sessions cleanup --enforce --active-key "agent:main:telegram:dm:123"
+autocrab sessions cleanup --json
 ```
 
-`openclaw sessions cleanup` uses `session.maintenance` settings from config:
+`autocrab sessions cleanup` uses `session.maintenance` settings from config:
 
-- Scope note: `openclaw sessions cleanup` maintains session stores/transcripts only. It does not prune cron run logs (`cron/runs/<jobId>.jsonl`), which are managed by `cron.runLog.maxBytes` and `cron.runLog.keepLines` in [Cron configuration](/automation/cron-jobs#configuration) and explained in [Cron maintenance](/automation/cron-jobs#maintenance).
+- Scope note: `autocrab sessions cleanup` maintains session stores/transcripts only. It does not prune cron run logs (`cron/runs/<jobId>.jsonl`), which are managed by `cron.runLog.maxBytes` and `cron.runLog.keepLines` in [Cron configuration](/automation/cron-jobs#configuration) and explained in [Cron maintenance](/automation/cron-jobs#maintenance).
 
 - `--dry-run`: preview how many entries would be pruned/capped without writing.
   - In text mode, dry-run prints a per-session action table (`Action`, `Key`, `Age`, `Model`, `Flags`) so you can see what would be kept vs removed.
@@ -71,7 +71,7 @@ openclaw sessions cleanup --json
 - `--store <path>`: run against a specific `sessions.json` file.
 - `--json`: print a JSON summary. With `--all-agents`, output includes one summary per store.
 
-`openclaw sessions cleanup --all-agents --dry-run --json`:
+`autocrab sessions cleanup --all-agents --dry-run --json`:
 
 ```json
 {
@@ -81,7 +81,7 @@ openclaw sessions cleanup --json
   "stores": [
     {
       "agentId": "main",
-      "storePath": "/home/user/.openclaw/agents/main/sessions/sessions.json",
+      "storePath": "/home/user/.autocrab/agents/main/sessions/sessions.json",
       "beforeCount": 120,
       "afterCount": 80,
       "pruned": 40,
@@ -89,7 +89,7 @@ openclaw sessions cleanup --json
     },
     {
       "agentId": "work",
-      "storePath": "/home/user/.openclaw/agents/work/sessions/sessions.json",
+      "storePath": "/home/user/.autocrab/agents/work/sessions/sessions.json",
       "beforeCount": 18,
       "afterCount": 18,
       "pruned": 0,

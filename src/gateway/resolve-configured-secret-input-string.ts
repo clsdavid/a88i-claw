@@ -1,4 +1,4 @@
-import type { OpenClawConfig } from "../config/types.js";
+import type { AutoCrabConfig } from "../config/types.js";
 import { resolveSecretInputRef } from "../config/types.secrets.js";
 import { secretRefKey } from "../secrets/ref-contract.js";
 import { resolveSecretRefValues } from "../secrets/resolve.js";
@@ -32,7 +32,7 @@ function buildUnresolvedReason(params: {
 }
 
 export async function resolveConfiguredSecretInputString(params: {
-  config: OpenClawConfig;
+  config: AutoCrabConfig;
   env: NodeJS.ProcessEnv;
   value: unknown;
   path: string;

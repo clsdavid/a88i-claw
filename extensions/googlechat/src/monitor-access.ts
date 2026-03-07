@@ -7,8 +7,8 @@ import {
   resolveDmGroupAccessWithLists,
   resolveMentionGatingWithBypass,
   warnMissingProviderGroupPolicyFallbackOnce,
-} from "openclaw/plugin-sdk/googlechat";
-import type { OpenClawConfig } from "openclaw/plugin-sdk/googlechat";
+} from "autocrab/plugin-sdk/googlechat";
+import type { AutoCrabConfig } from "autocrab/plugin-sdk/googlechat";
 import type { ResolvedGoogleChatAccount } from "./accounts.js";
 import { sendGoogleChatMessage } from "./api.js";
 import type { GoogleChatCoreRuntime } from "./monitor-types.js";
@@ -127,7 +127,7 @@ function warnDeprecatedUsersEmailEntries(logVerbose: (message: string) => void, 
 
 export async function applyGoogleChatInboundAccessPolicy(params: {
   account: ResolvedGoogleChatAccount;
-  config: OpenClawConfig;
+  config: AutoCrabConfig;
   core: GoogleChatCoreRuntime;
   space: GoogleChatSpace;
   message: GoogleChatMessage;

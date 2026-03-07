@@ -160,12 +160,12 @@ describe("resolveInteractionCallbackUrl", () => {
       channels: {
         mattermost: {
           interactions: {
-            callbackBaseUrl: "https://gateway.example.com/openclaw",
+            callbackBaseUrl: "https://gateway.example.com/autocrab",
           },
         },
       },
     });
-    expect(url).toBe("https://gateway.example.com/openclaw/mattermost/interactions/default");
+    expect(url).toBe("https://gateway.example.com/autocrab/mattermost/interactions/default");
   });
 
   it("trims trailing slashes from callbackBaseUrl", () => {

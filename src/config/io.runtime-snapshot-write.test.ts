@@ -9,13 +9,13 @@ import {
   setRuntimeConfigSnapshot,
   writeConfigFile,
 } from "./io.js";
-import type { OpenClawConfig } from "./types.js";
+import type { AutoCrabConfig } from "./types.js";
 
 describe("runtime config snapshot writes", () => {
   it("preserves source secret refs when writeConfigFile receives runtime-resolved config", async () => {
-    await withTempHome("openclaw-config-runtime-write-", async (home) => {
-      const configPath = path.join(home, ".openclaw", "openclaw.json");
-      const sourceConfig: OpenClawConfig = {
+    await withTempHome("autocrab-config-runtime-write-", async (home) => {
+      const configPath = path.join(home, ".autocrab", "autocrab.json");
+      const sourceConfig: AutoCrabConfig = {
         models: {
           providers: {
             openai: {
@@ -26,7 +26,7 @@ describe("runtime config snapshot writes", () => {
           },
         },
       };
-      const runtimeConfig: OpenClawConfig = {
+      const runtimeConfig: AutoCrabConfig = {
         models: {
           providers: {
             openai: {

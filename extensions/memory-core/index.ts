@@ -1,5 +1,5 @@
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk/memory-core";
-import { emptyPluginConfigSchema } from "openclaw/plugin-sdk/memory-core";
+import type { AutoCrabPluginApi } from "autocrab/plugin-sdk/memory-core";
+import { emptyPluginConfigSchema } from "autocrab/plugin-sdk/memory-core";
 
 const memoryCorePlugin = {
   id: "memory-core",
@@ -7,7 +7,7 @@ const memoryCorePlugin = {
   description: "File-backed memory search tools and CLI",
   kind: "memory",
   configSchema: emptyPluginConfigSchema(),
-  register(api: OpenClawPluginApi) {
+  register(api: AutoCrabPluginApi) {
     api.registerTool(
       (ctx) => {
         const memorySearchTool = api.runtime.tools.createMemorySearchTool({

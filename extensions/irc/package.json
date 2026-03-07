@@ -1,12 +1,12 @@
 {
-  "name": "@openclaw/irc",
+  "name": "@autocrab/irc",
   "version": "2026.3.2",
-  "description": "OpenClaw IRC channel plugin",
+  "description": "AutoCrab IRC channel plugin",
   "type": "module",
   "dependencies": {
     "zod": "^4.3.6"
   },
-  "openclaw": {
+  "autocrab": {
     "extensions": [
       "./index.ts"
     ]

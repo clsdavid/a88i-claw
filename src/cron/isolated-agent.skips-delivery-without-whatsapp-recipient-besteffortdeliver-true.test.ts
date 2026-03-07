@@ -20,8 +20,8 @@ type HomeEnvSnapshot = {
   USERPROFILE: string | undefined;
   HOMEDRIVE: string | undefined;
   HOMEPATH: string | undefined;
-  OPENCLAW_HOME: string | undefined;
-  OPENCLAW_STATE_DIR: string | undefined;
+  AUTOCRAB_HOME: string | undefined;
+  AUTOCRAB_STATE_DIR: string | undefined;
 };
 
 const TELEGRAM_TARGET = { mode: "announce", channel: "telegram", to: "123" } as const;
@@ -34,8 +34,8 @@ function snapshotHomeEnv(): HomeEnvSnapshot {
     USERPROFILE: process.env.USERPROFILE,
     HOMEDRIVE: process.env.HOMEDRIVE,
     HOMEPATH: process.env.HOMEPATH,
-    OPENCLAW_HOME: process.env.OPENCLAW_HOME,
-    OPENCLAW_STATE_DIR: process.env.OPENCLAW_STATE_DIR,
+    AUTOCRAB_HOME: process.env.AUTOCRAB_HOME,
+    AUTOCRAB_STATE_DIR: process.env.AUTOCRAB_STATE_DIR,
   };
 }
 
@@ -52,18 +52,18 @@ function restoreHomeEnv(snapshot: HomeEnvSnapshot) {
   restoreValue("USERPROFILE");
   restoreValue("HOMEDRIVE");
   restoreValue("HOMEPATH");
-  restoreValue("OPENCLAW_HOME");
-  restoreValue("OPENCLAW_STATE_DIR");
+  restoreValue("AUTOCRAB_HOME");
+  restoreValue("AUTOCRAB_STATE_DIR");
 }
 
 async function withTempHome<T>(fn: (home: string) => Promise<T>): Promise<T> {
   const home = path.join(suiteTempHomeRoot, `case-${suiteTempHomeCaseId++}`);
-  await fs.mkdir(path.join(home, ".openclaw", "agents", "main", "sessions"), { recursive: true });
+  await fs.mkdir(path.join(home, ".autocrab", "agents", "main", "sessions"), { recursive: true });
   const snapshot = snapshotHomeEnv();
   process.env.HOME = home;
   process.env.USERPROFILE = home;
-  delete process.env.OPENCLAW_HOME;
-  process.env.OPENCLAW_STATE_DIR = path.join(home, ".openclaw");
+  delete process.env.AUTOCRAB_HOME;
+  process.env.AUTOCRAB_STATE_DIR = path.join(home, ".autocrab");
   if (process.platform === "win32") {
     const parsed = path.parse(home);
     if (parsed.root) {
@@ -265,7 +265,7 @@ async function assertExplicitTelegramTargetAnnounce(params: {
 
 describe("runCronIsolatedAgentTurn", () => {
   beforeAll(async () => {
-    suiteTempHomeRoot = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-cron-delivery-suite-"));
+    suiteTempHomeRoot = await fs.mkdtemp(path.join(os.tmpdir(), "autocrab-cron-delivery-suite-"));
   });
 
   afterAll(async () => {

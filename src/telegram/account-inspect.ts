@@ -1,5 +1,5 @@
 import fs from "node:fs";
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import { hasConfiguredSecretInput, normalizeSecretInputString } from "../config/types.secrets.js";
 import type { TelegramAccountConfig } from "../config/types.telegram.js";
 import { resolveAccountWithDefaultFallback } from "../plugin-sdk/account-resolution.js";
@@ -21,14 +21,14 @@ export type InspectedTelegramAccount = {
 };
 
 function resolveTelegramAccountConfig(
-  cfg: OpenClawConfig,
+  cfg: AutoCrabConfig,
   accountId: string,
 ): TelegramAccountConfig | undefined {
   const normalized = normalizeAccountId(accountId);
   return resolveAccountEntry(cfg.channels?.telegram?.accounts, normalized);
 }
 
-function mergeTelegramAccountConfig(cfg: OpenClawConfig, accountId: string): TelegramAccountConfig {
+function mergeTelegramAccountConfig(cfg: AutoCrabConfig, accountId: string): TelegramAccountConfig {
   const {
     accounts: _ignored,
     defaultAccount: _ignoredDefaultAccount,
@@ -101,7 +101,7 @@ function inspectTokenValue(value: unknown): {
 }
 
 function inspectTelegramAccountPrimary(params: {
-  cfg: OpenClawConfig;
+  cfg: AutoCrabConfig;
   accountId: string;
   envToken?: string | null;
 }): InspectedTelegramAccount {
@@ -194,7 +194,7 @@ function inspectTelegramAccountPrimary(params: {
 }
 
 export function inspectTelegramAccount(params: {
-  cfg: OpenClawConfig;
+  cfg: AutoCrabConfig;
   accountId?: string | null;
   envToken?: string | null;
 }): InspectedTelegramAccount {

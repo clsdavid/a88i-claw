@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import { withEnvAsync } from "../test-utils/env.js";
 import {
   resolveGatewayAuthTokenForService,
@@ -15,7 +15,7 @@ describe("resolveGatewayAuthTokenForService", () => {
             token: "config-token",
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {} as NodeJS.ProcessEnv,
     );
 
@@ -35,7 +35,7 @@ describe("resolveGatewayAuthTokenForService", () => {
             default: { source: "env" },
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {
         CUSTOM_GATEWAY_TOKEN: "resolved-token",
       } as NodeJS.ProcessEnv,
@@ -57,7 +57,7 @@ describe("resolveGatewayAuthTokenForService", () => {
             default: { source: "env" },
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {
         CUSTOM_GATEWAY_TOKEN: "resolved-token",
       } as NodeJS.ProcessEnv,
@@ -66,7 +66,7 @@ describe("resolveGatewayAuthTokenForService", () => {
     expect(resolved).toEqual({ token: "resolved-token" });
   });
 
-  it("falls back to OPENCLAW_GATEWAY_TOKEN when SecretRef is unresolved", async () => {
+  it("falls back to AUTOCRAB_GATEWAY_TOKEN when SecretRef is unresolved", async () => {
     const resolved = await resolveGatewayAuthTokenForService(
       {
         gateway: {
@@ -79,16 +79,16 @@ describe("resolveGatewayAuthTokenForService", () => {
             default: { source: "env" },
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {
-        OPENCLAW_GATEWAY_TOKEN: "env-fallback-token",
+        AUTOCRAB_GATEWAY_TOKEN: "env-fallback-token",
       } as NodeJS.ProcessEnv,
     );
 
     expect(resolved).toEqual({ token: "env-fallback-token" });
   });
 
-  it("falls back to OPENCLAW_GATEWAY_TOKEN when SecretRef resolves to empty", async () => {
+  it("falls back to AUTOCRAB_GATEWAY_TOKEN when SecretRef resolves to empty", async () => {
     const resolved = await resolveGatewayAuthTokenForService(
       {
         gateway: {
@@ -101,10 +101,10 @@ describe("resolveGatewayAuthTokenForService", () => {
             default: { source: "env" },
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {
         CUSTOM_GATEWAY_TOKEN: "   ",
-        OPENCLAW_GATEWAY_TOKEN: "env-fallback-token",
+        AUTOCRAB_GATEWAY_TOKEN: "env-fallback-token",
       } as NodeJS.ProcessEnv,
     );
 
@@ -124,7 +124,7 @@ describe("resolveGatewayAuthTokenForService", () => {
             default: { source: "env" },
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {} as NodeJS.ProcessEnv,
     );
 
@@ -142,7 +142,7 @@ describe("shouldRequireGatewayTokenForInstall", () => {
             mode: "token",
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {} as NodeJS.ProcessEnv,
     );
     expect(required).toBe(true);
@@ -156,20 +156,20 @@ describe("shouldRequireGatewayTokenForInstall", () => {
             mode: "password",
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {} as NodeJS.ProcessEnv,
     );
     expect(required).toBe(false);
   });
 
   it("requires token in inferred mode when password env exists only in shell", async () => {
-    await withEnvAsync({ OPENCLAW_GATEWAY_PASSWORD: "password-from-env" }, async () => {
+    await withEnvAsync({ AUTOCRAB_GATEWAY_PASSWORD: "password-from-env" }, async () => {
       const required = shouldRequireGatewayTokenForInstall(
         {
           gateway: {
             auth: {},
           },
-        } as OpenClawConfig,
+        } as AutoCrabConfig,
         process.env,
       );
       expect(required).toBe(true);
@@ -189,7 +189,7 @@ describe("shouldRequireGatewayTokenForInstall", () => {
             default: { source: "env" },
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {} as NodeJS.ProcessEnv,
     );
     expect(required).toBe(false);
@@ -203,10 +203,10 @@ describe("shouldRequireGatewayTokenForInstall", () => {
         },
         env: {
           vars: {
-            OPENCLAW_GATEWAY_PASSWORD: "configured-password",
+            AUTOCRAB_GATEWAY_PASSWORD: "configured-password",
           },
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {} as NodeJS.ProcessEnv,
     );
     expect(required).toBe(false);
@@ -218,7 +218,7 @@ describe("shouldRequireGatewayTokenForInstall", () => {
         gateway: {
           auth: {},
         },
-      } as OpenClawConfig,
+      } as AutoCrabConfig,
       {} as NodeJS.ProcessEnv,
     );
     expect(required).toBe(true);

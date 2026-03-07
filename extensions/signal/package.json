@@ -1,10 +1,10 @@
 {
-  "name": "@openclaw/signal",
+  "name": "@autocrab/signal",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw Signal channel plugin",
+  "description": "AutoCrab Signal channel plugin",
   "type": "module",
-  "openclaw": {
+  "autocrab": {
     "extensions": [
       "./index.ts"
     ]

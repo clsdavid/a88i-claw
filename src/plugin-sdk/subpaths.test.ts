@@ -1,52 +1,52 @@
-import * as compatSdk from "openclaw/plugin-sdk/compat";
-import * as discordSdk from "openclaw/plugin-sdk/discord";
-import * as imessageSdk from "openclaw/plugin-sdk/imessage";
-import * as lineSdk from "openclaw/plugin-sdk/line";
-import * as msteamsSdk from "openclaw/plugin-sdk/msteams";
-import * as signalSdk from "openclaw/plugin-sdk/signal";
-import * as slackSdk from "openclaw/plugin-sdk/slack";
-import * as telegramSdk from "openclaw/plugin-sdk/telegram";
-import * as whatsappSdk from "openclaw/plugin-sdk/whatsapp";
+import * as compatSdk from "autocrab/plugin-sdk/compat";
+import * as discordSdk from "autocrab/plugin-sdk/discord";
+import * as imessageSdk from "autocrab/plugin-sdk/imessage";
+import * as lineSdk from "autocrab/plugin-sdk/line";
+import * as msteamsSdk from "autocrab/plugin-sdk/msteams";
+import * as signalSdk from "autocrab/plugin-sdk/signal";
+import * as slackSdk from "autocrab/plugin-sdk/slack";
+import * as telegramSdk from "autocrab/plugin-sdk/telegram";
+import * as whatsappSdk from "autocrab/plugin-sdk/whatsapp";
 import { describe, expect, it } from "vitest";
 
 const bundledExtensionSubpathLoaders = [
-  { id: "acpx", load: () => import("openclaw/plugin-sdk/acpx") },
-  { id: "bluebubbles", load: () => import("openclaw/plugin-sdk/bluebubbles") },
-  { id: "copilot-proxy", load: () => import("openclaw/plugin-sdk/copilot-proxy") },
-  { id: "device-pair", load: () => import("openclaw/plugin-sdk/device-pair") },
-  { id: "diagnostics-otel", load: () => import("openclaw/plugin-sdk/diagnostics-otel") },
-  { id: "diffs", load: () => import("openclaw/plugin-sdk/diffs") },
-  { id: "feishu", load: () => import("openclaw/plugin-sdk/feishu") },
+  { id: "acpx", load: () => import("autocrab/plugin-sdk/acpx") },
+  { id: "bluebubbles", load: () => import("autocrab/plugin-sdk/bluebubbles") },
+  { id: "copilot-proxy", load: () => import("autocrab/plugin-sdk/copilot-proxy") },
+  { id: "device-pair", load: () => import("autocrab/plugin-sdk/device-pair") },
+  { id: "diagnostics-otel", load: () => import("autocrab/plugin-sdk/diagnostics-otel") },
+  { id: "diffs", load: () => import("autocrab/plugin-sdk/diffs") },
+  { id: "feishu", load: () => import("autocrab/plugin-sdk/feishu") },
   {
     id: "google-gemini-cli-auth",
-    load: () => import("openclaw/plugin-sdk/google-gemini-cli-auth"),
+    load: () => import("autocrab/plugin-sdk/google-gemini-cli-auth"),
   },
-  { id: "googlechat", load: () => import("openclaw/plugin-sdk/googlechat") },
-  { id: "irc", load: () => import("openclaw/plugin-sdk/irc") },
-  { id: "llm-task", load: () => import("openclaw/plugin-sdk/llm-task") },
-  { id: "lobster", load: () => import("openclaw/plugin-sdk/lobster") },
-  { id: "matrix", load: () => import("openclaw/plugin-sdk/matrix") },
-  { id: "mattermost", load: () => import("openclaw/plugin-sdk/mattermost") },
-  { id: "memory-core", load: () => import("openclaw/plugin-sdk/memory-core") },
-  { id: "memory-lancedb", load: () => import("openclaw/plugin-sdk/memory-lancedb") },
+  { id: "googlechat", load: () => import("autocrab/plugin-sdk/googlechat") },
+  { id: "irc", load: () => import("autocrab/plugin-sdk/irc") },
+  { id: "llm-task", load: () => import("autocrab/plugin-sdk/llm-task") },
+  { id: "lobster", load: () => import("autocrab/plugin-sdk/lobster") },
+  { id: "matrix", load: () => import("autocrab/plugin-sdk/matrix") },
+  { id: "mattermost", load: () => import("autocrab/plugin-sdk/mattermost") },
+  { id: "memory-core", load: () => import("autocrab/plugin-sdk/memory-core") },
+  { id: "memory-lancedb", load: () => import("autocrab/plugin-sdk/memory-lancedb") },
   {
     id: "minimax-portal-auth",
-    load: () => import("openclaw/plugin-sdk/minimax-portal-auth"),
+    load: () => import("autocrab/plugin-sdk/minimax-portal-auth"),
   },
-  { id: "nextcloud-talk", load: () => import("openclaw/plugin-sdk/nextcloud-talk") },
-  { id: "nostr", load: () => import("openclaw/plugin-sdk/nostr") },
-  { id: "open-prose", load: () => import("openclaw/plugin-sdk/open-prose") },
-  { id: "phone-control", load: () => import("openclaw/plugin-sdk/phone-control") },
-  { id: "qwen-portal-auth", load: () => import("openclaw/plugin-sdk/qwen-portal-auth") },
-  { id: "synology-chat", load: () => import("openclaw/plugin-sdk/synology-chat") },
-  { id: "talk-voice", load: () => import("openclaw/plugin-sdk/talk-voice") },
-  { id: "test-utils", load: () => import("openclaw/plugin-sdk/test-utils") },
-  { id: "thread-ownership", load: () => import("openclaw/plugin-sdk/thread-ownership") },
-  { id: "tlon", load: () => import("openclaw/plugin-sdk/tlon") },
-  { id: "twitch", load: () => import("openclaw/plugin-sdk/twitch") },
-  { id: "voice-call", load: () => import("openclaw/plugin-sdk/voice-call") },
-  { id: "zalo", load: () => import("openclaw/plugin-sdk/zalo") },
-  { id: "zalouser", load: () => import("openclaw/plugin-sdk/zalouser") },
+  { id: "nextcloud-talk", load: () => import("autocrab/plugin-sdk/nextcloud-talk") },
+  { id: "nostr", load: () => import("autocrab/plugin-sdk/nostr") },
+  { id: "open-prose", load: () => import("autocrab/plugin-sdk/open-prose") },
+  { id: "phone-control", load: () => import("autocrab/plugin-sdk/phone-control") },
+  { id: "qwen-portal-auth", load: () => import("autocrab/plugin-sdk/qwen-portal-auth") },
+  { id: "synology-chat", load: () => import("autocrab/plugin-sdk/synology-chat") },
+  { id: "talk-voice", load: () => import("autocrab/plugin-sdk/talk-voice") },
+  { id: "test-utils", load: () => import("autocrab/plugin-sdk/test-utils") },
+  { id: "thread-ownership", load: () => import("autocrab/plugin-sdk/thread-ownership") },
+  { id: "tlon", load: () => import("autocrab/plugin-sdk/tlon") },
+  { id: "twitch", load: () => import("autocrab/plugin-sdk/twitch") },
+  { id: "voice-call", load: () => import("autocrab/plugin-sdk/voice-call") },
+  { id: "zalo", load: () => import("autocrab/plugin-sdk/zalo") },
+  { id: "zalouser", load: () => import("autocrab/plugin-sdk/zalouser") },
 ] as const;
 
 describe("plugin-sdk subpath exports", () => {

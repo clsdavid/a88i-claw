@@ -41,7 +41,7 @@ function readDevicePairPublicUrlFromConfig(cfg: ReturnType<typeof loadConfig>): 
 }
 
 function readGatewayTokenEnv(env: NodeJS.ProcessEnv): string | undefined {
-  const primary = typeof env.OPENCLAW_GATEWAY_TOKEN === "string" ? env.OPENCLAW_GATEWAY_TOKEN : "";
+  const primary = typeof env.AUTOCRAB_GATEWAY_TOKEN === "string" ? env.AUTOCRAB_GATEWAY_TOKEN : "";
   if (primary.trim().length > 0) {
     return primary.trim();
   }
@@ -54,7 +54,7 @@ function readGatewayTokenEnv(env: NodeJS.ProcessEnv): string | undefined {
 
 function readGatewayPasswordEnv(env: NodeJS.ProcessEnv): string | undefined {
   const primary =
-    typeof env.OPENCLAW_GATEWAY_PASSWORD === "string" ? env.OPENCLAW_GATEWAY_PASSWORD : "";
+    typeof env.AUTOCRAB_GATEWAY_PASSWORD === "string" ? env.AUTOCRAB_GATEWAY_PASSWORD : "";
   if (primary.trim().length > 0) {
     return primary.trim();
   }
@@ -134,7 +134,7 @@ export function registerQrCli(program: Command) {
     .description("Generate an iOS pairing QR code and setup code")
     .addHelpText(
       "after",
-      () => `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/qr", "docs.openclaw.ai/cli/qr")}\n`,
+      () => `\n${theme.muted("Docs:")} ${formatDocsLink("/cli/qr", "docs.autocrab.ai/cli/qr")}\n`,
     )
     .option(
       "--remote",
@@ -275,7 +275,7 @@ export function registerQrCli(program: Command) {
 
         const lines: string[] = [
           theme.heading("Pairing QR"),
-          "Scan this with the OpenClaw iOS app (Onboarding -> Scan QR).",
+          "Scan this with the AutoCrab iOS app (Onboarding -> Scan QR).",
           "",
         ];
 
@@ -291,8 +291,8 @@ export function registerQrCli(program: Command) {
           `${theme.muted("Source:")} ${resolved.urlSource}`,
           "",
           "Approve after scan with:",
-          `  ${theme.command("openclaw devices list")}`,
-          `  ${theme.command("openclaw devices approve <requestId>")}`,
+          `  ${theme.command("autocrab devices list")}`,
+          `  ${theme.command("autocrab devices approve <requestId>")}`,
         );
 
         defaultRuntime.log(lines.join("\n"));

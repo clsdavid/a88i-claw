@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import { captureEnv } from "../test-utils/env.js";
 import {
   loadConfigMock as loadConfig,
@@ -99,9 +99,9 @@ function makeRemotePasswordGatewayConfig(remotePassword: string, localPassword =
 
 describe("callGateway url resolution", () => {
   const envSnapshot = captureEnv([
-    "OPENCLAW_ALLOW_INSECURE_PRIVATE_WS",
-    "OPENCLAW_GATEWAY_URL",
-    "OPENCLAW_GATEWAY_TOKEN",
+    "AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS",
+    "AUTOCRAB_GATEWAY_URL",
+    "AUTOCRAB_GATEWAY_TOKEN",
     "CLAWDBOT_GATEWAY_TOKEN",
   ]);
 
@@ -197,14 +197,14 @@ describe("callGateway url resolution", () => {
     expect(lastClientOptions?.token).toBe("explicit-token");
   });
 
-  it("uses OPENCLAW_GATEWAY_URL env override in remote mode when remote URL is missing", async () => {
+  it("uses AUTOCRAB_GATEWAY_URL env override in remote mode when remote URL is missing", async () => {
     loadConfig.mockReturnValue({
       gateway: { mode: "remote", bind: "loopback", remote: {} },
     });
     resolveGatewayPort.mockReturnValue(18789);
     pickPrimaryTailnetIPv4.mockReturnValue(undefined);
-    process.env.OPENCLAW_GATEWAY_URL = "wss://gateway-in-container.internal:9443/ws";
-    process.env.OPENCLAW_GATEWAY_TOKEN = "env-token";
+    process.env.AUTOCRAB_GATEWAY_URL = "wss://gateway-in-container.internal:9443/ws";
+    process.env.AUTOCRAB_GATEWAY_TOKEN = "env-token";
 
     await callGateway({
       method: "health",
@@ -229,11 +229,11 @@ describe("callGateway url resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
     resolveGatewayPort.mockReturnValue(18789);
     pickPrimaryTailnetIPv4.mockReturnValue(undefined);
-    process.env.OPENCLAW_GATEWAY_URL = "wss://gateway-in-container.internal:9443/ws";
-    process.env.OPENCLAW_GATEWAY_TOKEN = "env-token";
+    process.env.AUTOCRAB_GATEWAY_URL = "wss://gateway-in-container.internal:9443/ws";
+    process.env.AUTOCRAB_GATEWAY_TOKEN = "env-token";
 
     await callGateway({
       method: "health",
@@ -256,8 +256,8 @@ describe("callGateway url resolution", () => {
     });
     setGatewayNetworkDefaults(18789);
     pickPrimaryTailnetIPv4.mockReturnValue(undefined);
-    process.env.OPENCLAW_GATEWAY_URL = "wss://gateway-in-container.internal:9443/ws";
-    process.env.OPENCLAW_GATEWAY_TOKEN = "env-token";
+    process.env.AUTOCRAB_GATEWAY_URL = "wss://gateway-in-container.internal:9443/ws";
+    process.env.AUTOCRAB_GATEWAY_TOKEN = "env-token";
 
     await callGateway({
       method: "health",
@@ -404,24 +404,24 @@ describe("buildGatewayConnectionDetails", () => {
     expect(details.remoteFallbackNote).toBeUndefined();
   });
 
-  it("uses env OPENCLAW_GATEWAY_URL when set", () => {
+  it("uses env AUTOCRAB_GATEWAY_URL when set", () => {
     loadConfig.mockReturnValue({ gateway: { mode: "local", bind: "loopback" } });
     resolveGatewayPort.mockReturnValue(18800);
     pickPrimaryTailnetIPv4.mockReturnValue(undefined);
-    const prevUrl = process.env.OPENCLAW_GATEWAY_URL;
+    const prevUrl = process.env.AUTOCRAB_GATEWAY_URL;
     try {
-      process.env.OPENCLAW_GATEWAY_URL = "wss://browser-gateway.local:9443/ws";
+      process.env.AUTOCRAB_GATEWAY_URL = "wss://browser-gateway.local:9443/ws";
 
       const details = buildGatewayConnectionDetails();
 
       expect(details.url).toBe("wss://browser-gateway.local:9443/ws");
-      expect(details.urlSource).toBe("env OPENCLAW_GATEWAY_URL");
+      expect(details.urlSource).toBe("env AUTOCRAB_GATEWAY_URL");
       expect(details.bindDetail).toBeUndefined();
     } finally {
       if (prevUrl === undefined) {
-        delete process.env.OPENCLAW_GATEWAY_URL;
+        delete process.env.AUTOCRAB_GATEWAY_URL;
       } else {
-        process.env.OPENCLAW_GATEWAY_URL = prevUrl;
+        process.env.AUTOCRAB_GATEWAY_URL = prevUrl;
       }
     }
   });
@@ -448,11 +448,11 @@ describe("buildGatewayConnectionDetails", () => {
     expect((thrown as Error).message).toContain("plaintext ws://");
     expect((thrown as Error).message).toContain("wss://");
     expect((thrown as Error).message).toContain("Tailscale Serve/Funnel");
-    expect((thrown as Error).message).toContain("openclaw doctor --fix");
+    expect((thrown as Error).message).toContain("autocrab doctor --fix");
   });
 
-  it("allows ws:// private remote URLs only when OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1", () => {
-    process.env.OPENCLAW_ALLOW_INSECURE_PRIVATE_WS = "1";
+  it("allows ws:// private remote URLs only when AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS=1", () => {
+    process.env.AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS = "1";
     loadConfig.mockReturnValue({
       gateway: {
         mode: "remote",
@@ -468,20 +468,20 @@ describe("buildGatewayConnectionDetails", () => {
     expect(details.urlSource).toBe("config gateway.remote.url");
   });
 
-  it("allows ws:// hostname remote URLs when OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1", () => {
-    process.env.OPENCLAW_ALLOW_INSECURE_PRIVATE_WS = "1";
+  it("allows ws:// hostname remote URLs when AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS=1", () => {
+    process.env.AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS = "1";
     loadConfig.mockReturnValue({
       gateway: {
         mode: "remote",
         bind: "loopback",
-        remote: { url: "ws://openclaw-gateway.ai:18789" },
+        remote: { url: "ws://autocrab-gateway.ai:18789" },
       },
     });
     resolveGatewayPort.mockReturnValue(18789);
 
     const details = buildGatewayConnectionDetails();
 
-    expect(details.url).toBe("ws://openclaw-gateway.ai:18789");
+    expect(details.url).toBe("ws://autocrab-gateway.ai:18789");
     expect(details.urlSource).toBe("config gateway.remote.url");
   });
 
@@ -589,9 +589,9 @@ describe("callGateway url override auth requirements", () => {
 
   beforeEach(() => {
     envSnapshot = captureEnv([
-      "OPENCLAW_GATEWAY_TOKEN",
-      "OPENCLAW_GATEWAY_PASSWORD",
-      "OPENCLAW_GATEWAY_URL",
+      "AUTOCRAB_GATEWAY_TOKEN",
+      "AUTOCRAB_GATEWAY_PASSWORD",
+      "AUTOCRAB_GATEWAY_URL",
       "CLAWDBOT_GATEWAY_URL",
     ]);
     resetGatewayCallMocks();
@@ -603,8 +603,8 @@ describe("callGateway url override auth requirements", () => {
   });
 
   it("throws when url override is set without explicit credentials", async () => {
-    process.env.OPENCLAW_GATEWAY_TOKEN = "env-token";
-    process.env.OPENCLAW_GATEWAY_PASSWORD = "env-password";
+    process.env.AUTOCRAB_GATEWAY_TOKEN = "env-token";
+    process.env.AUTOCRAB_GATEWAY_PASSWORD = "env-password";
     loadConfig.mockReturnValue({
       gateway: {
         mode: "local",
@@ -618,7 +618,7 @@ describe("callGateway url override auth requirements", () => {
   });
 
   it("throws when env URL override is set without env credentials", async () => {
-    process.env.OPENCLAW_GATEWAY_URL = "wss://override.example/ws";
+    process.env.AUTOCRAB_GATEWAY_URL = "wss://override.example/ws";
     loadConfig.mockReturnValue({
       gateway: {
         mode: "local",
@@ -636,7 +636,7 @@ describe("callGateway password resolution", () => {
     {
       label: "password",
       authKey: "password",
-      envKey: "OPENCLAW_GATEWAY_PASSWORD",
+      envKey: "AUTOCRAB_GATEWAY_PASSWORD",
       envValue: "from-env",
       configValue: "from-config",
       explicitValue: "explicit-password",
@@ -644,7 +644,7 @@ describe("callGateway password resolution", () => {
     {
       label: "token",
       authKey: "token",
-      envKey: "OPENCLAW_GATEWAY_TOKEN",
+      envKey: "AUTOCRAB_GATEWAY_TOKEN",
       envValue: "env-token",
       configValue: "local-token",
       explicitValue: "explicit-token",
@@ -653,15 +653,15 @@ describe("callGateway password resolution", () => {
 
   beforeEach(() => {
     envSnapshot = captureEnv([
-      "OPENCLAW_GATEWAY_PASSWORD",
-      "OPENCLAW_GATEWAY_TOKEN",
+      "AUTOCRAB_GATEWAY_PASSWORD",
+      "AUTOCRAB_GATEWAY_TOKEN",
       "LOCAL_REF_PASSWORD",
       "REMOTE_REF_TOKEN",
       "REMOTE_REF_PASSWORD",
     ]);
     resetGatewayCallMocks();
-    delete process.env.OPENCLAW_GATEWAY_PASSWORD;
-    delete process.env.OPENCLAW_GATEWAY_TOKEN;
+    delete process.env.AUTOCRAB_GATEWAY_PASSWORD;
+    delete process.env.AUTOCRAB_GATEWAY_TOKEN;
     delete process.env.LOCAL_REF_PASSWORD;
     delete process.env.REMOTE_REF_TOKEN;
     delete process.env.REMOTE_REF_PASSWORD;
@@ -711,7 +711,7 @@ describe("callGateway password resolution", () => {
     },
   ])("$label", async ({ envPassword, config, expectedPassword }) => {
     if (envPassword !== undefined) {
-      process.env.OPENCLAW_GATEWAY_PASSWORD = envPassword;
+      process.env.AUTOCRAB_GATEWAY_PASSWORD = envPassword;
     }
     loadConfig.mockReturnValue(config);
 
@@ -736,7 +736,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -744,7 +744,7 @@ describe("callGateway password resolution", () => {
   });
 
   it("does not resolve local password ref when env password takes precedence", async () => {
-    process.env.OPENCLAW_GATEWAY_PASSWORD = "from-env";
+    process.env.AUTOCRAB_GATEWAY_PASSWORD = "from-env";
     loadConfig.mockReturnValue({
       gateway: {
         mode: "local",
@@ -759,7 +759,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -782,7 +782,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -806,7 +806,7 @@ describe("callGateway password resolution", () => {
             default: { source: "env" },
           },
         },
-      } as unknown as OpenClawConfig);
+      } as unknown as AutoCrabConfig);
 
       await callGateway({ method: "health" });
 
@@ -834,7 +834,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -858,7 +858,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -882,7 +882,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -906,7 +906,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -932,7 +932,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -957,7 +957,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -982,7 +982,7 @@ describe("callGateway password resolution", () => {
           default: { source: "env" },
         },
       },
-    } as unknown as OpenClawConfig);
+    } as unknown as AutoCrabConfig);
 
     await callGateway({ method: "health" });
 
@@ -1009,7 +1009,7 @@ describe("callGateway password resolution", () => {
             default: { source: "env" },
           },
         },
-      } as unknown as OpenClawConfig);
+      } as unknown as AutoCrabConfig);
 
       await callGateway({ method: "health" });
 

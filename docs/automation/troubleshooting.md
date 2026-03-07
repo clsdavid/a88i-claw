@@ -14,28 +14,28 @@ Use this page for scheduler and delivery issues (`cron` + `heartbeat`).
 ## Command ladder
 
 ```bash
-openclaw status
-openclaw gateway status
-openclaw logs --follow
-openclaw doctor
-openclaw channels status --probe
+autocrab status
+autocrab gateway status
+autocrab logs --follow
+autocrab doctor
+autocrab channels status --probe
 ```
 
 Then run automation checks:
 
 ```bash
-openclaw cron status
-openclaw cron list
-openclaw system heartbeat last
+autocrab cron status
+autocrab cron list
+autocrab system heartbeat last
 ```
 
 ## Cron not firing
 
 ```bash
-openclaw cron status
-openclaw cron list
-openclaw cron runs --id <jobId> --limit 20
-openclaw logs --follow
+autocrab cron status
+autocrab cron list
+autocrab cron runs --id <jobId> --limit 20
+autocrab logs --follow
 ```
 
 Good output looks like:
@@ -53,10 +53,10 @@ Common signatures:
 ## Cron fired but no delivery
 
 ```bash
-openclaw cron runs --id <jobId> --limit 20
-openclaw cron list
-openclaw channels status --probe
-openclaw logs --follow
+autocrab cron runs --id <jobId> --limit 20
+autocrab cron list
+autocrab channels status --probe
+autocrab logs --follow
 ```
 
 Good output looks like:
@@ -74,10 +74,10 @@ Common signatures:
 ## Heartbeat suppressed or skipped
 
 ```bash
-openclaw system heartbeat last
-openclaw logs --follow
-openclaw config get agents.defaults.heartbeat
-openclaw channels status --probe
+autocrab system heartbeat last
+autocrab logs --follow
+autocrab config get agents.defaults.heartbeat
+autocrab channels status --probe
 ```
 
 Good output looks like:
@@ -95,11 +95,11 @@ Common signatures:
 ## Timezone and activeHours gotchas
 
 ```bash
-openclaw config get agents.defaults.heartbeat.activeHours
-openclaw config get agents.defaults.heartbeat.activeHours.timezone
-openclaw config get agents.defaults.userTimezone || echo "agents.defaults.userTimezone not set"
-openclaw cron list
-openclaw logs --follow
+autocrab config get agents.defaults.heartbeat.activeHours
+autocrab config get agents.defaults.heartbeat.activeHours.timezone
+autocrab config get agents.defaults.userTimezone || echo "agents.defaults.userTimezone not set"
+autocrab cron list
+autocrab logs --follow
 ```
 
 Quick rules:

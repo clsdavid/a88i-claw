@@ -1,13 +1,13 @@
 {
-  "name": "@openclaw/zalo",
+  "name": "@autocrab/zalo",
   "version": "2026.3.2",
-  "description": "OpenClaw Zalo channel plugin",
+  "description": "AutoCrab Zalo channel plugin",
   "type": "module",
   "dependencies": {
     "undici": "7.22.0",
     "zod": "^4.3.6"
   },
-  "openclaw": {
+  "autocrab": {
     "extensions": [
       "./index.ts"
     ],
@@ -25,7 +25,7 @@
       "quickstartAllowFrom": true
     },
     "install": {
-      "npmSpec": "@openclaw/zalo",
+      "npmSpec": "@autocrab/zalo",
       "localPath": "extensions/zalo",
       "defaultChoice": "npm"
     }

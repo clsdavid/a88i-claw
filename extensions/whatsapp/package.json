@@ -1,10 +1,10 @@
 {
-  "name": "@openclaw/whatsapp",
+  "name": "@autocrab/whatsapp",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw WhatsApp channel plugin",
+  "description": "AutoCrab WhatsApp channel plugin",
   "type": "module",
-  "openclaw": {
+  "autocrab": {
     "extensions": [
       "./index.ts"
     ]

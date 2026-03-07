@@ -1,6 +1,6 @@
-# @openclaw/voice-call
+# @autocrab/voice-call
 
-Official Voice Call plugin for **OpenClaw**.
+Official Voice Call plugin for **AutoCrab**.
 
 Providers:
 
@@ -9,15 +9,15 @@ Providers:
 - **Plivo** (Voice API + XML transfer + GetInput speech)
 - **Mock** (dev/no network)
 
-Docs: `https://docs.openclaw.ai/plugins/voice-call`
-Plugin system: `https://docs.openclaw.ai/plugin`
+Docs: `https://docs.autocrab.ai/plugins/voice-call`
+Plugin system: `https://docs.autocrab.ai/plugin`
 
 ## Install (local dev)
 
-### Option A: install via OpenClaw (recommended)
+### Option A: install via AutoCrab (recommended)
 
 ```bash
-openclaw plugins install @openclaw/voice-call
+autocrab plugins install @autocrab/voice-call
 ```
 
 Restart the Gateway afterwards.
@@ -25,9 +25,9 @@ Restart the Gateway afterwards.
 ### Option B: copy into your global extensions folder (dev)
 
 ```bash
-mkdir -p ~/.openclaw/extensions
-cp -R extensions/voice-call ~/.openclaw/extensions/voice-call
-cd ~/.openclaw/extensions/voice-call && pnpm install
+mkdir -p ~/.autocrab/extensions
+cp -R extensions/voice-call ~/.autocrab/extensions/voice-call
+cd ~/.autocrab/extensions/voice-call && pnpm install
 ```
 
 ## Config
@@ -143,13 +143,13 @@ Notes:
 ## CLI
 
 ```bash
-openclaw voicecall call --to "+15555550123" --message "Hello from OpenClaw"
-openclaw voicecall continue --call-id <id> --message "Any questions?"
-openclaw voicecall speak --call-id <id> --message "One moment"
-openclaw voicecall end --call-id <id>
-openclaw voicecall status --call-id <id>
-openclaw voicecall tail
-openclaw voicecall expose --mode funnel
+autocrab voicecall call --to "+15555550123" --message "Hello from AutoCrab"
+autocrab voicecall continue --call-id <id> --message "Any questions?"
+autocrab voicecall speak --call-id <id> --message "One moment"
+autocrab voicecall end --call-id <id>
+autocrab voicecall status --call-id <id>
+autocrab voicecall tail
+autocrab voicecall expose --mode funnel
 ```
 
 ## Tool

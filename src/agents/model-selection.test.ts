@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import type { OpenClawConfig } from "../config/config.js";
+import type { AutoCrabConfig } from "../config/config.js";
 import { resetLogger, setLoggerOverride } from "../logging/logger.js";
 import {
   buildAllowedModelSet,
@@ -25,7 +25,7 @@ const EXPLICIT_ALLOWLIST_CONFIG = {
       },
     },
   },
-} as OpenClawConfig;
+} as AutoCrabConfig;
 
 const BUNDLED_ALLOWLIST_CATALOG = [
   { provider: "anthropic", id: "claude-sonnet-4-5", name: "Claude Sonnet 4.5" },
@@ -41,7 +41,7 @@ const ANTHROPIC_OPUS_CATALOG = [
   },
 ];
 
-function resolveAnthropicOpusThinking(cfg: OpenClawConfig) {
+function resolveAnthropicOpusThinking(cfg: AutoCrabConfig) {
   return resolveThinkingDefault({
     cfg,
     provider: "anthropic",
@@ -190,7 +190,7 @@ describe("model-selection", () => {
             },
           },
         },
-      } as OpenClawConfig;
+      } as AutoCrabConfig;
 
       expect(
         inferUniqueProviderFromConfiguredModels({
@@ -210,7 +210,7 @@ describe("model-selection", () => {
             },
           },
         },
-      } as OpenClawConfig;
+      } as AutoCrabConfig;
 
       expect(
         inferUniqueProviderFromConfiguredModels({
@@ -229,7 +229,7 @@ describe("model-selection", () => {
             },
           },
         },
-      } as OpenClawConfig;
+      } as AutoCrabConfig;
 
       expect(
         inferUniqueProviderFromConfiguredModels({
@@ -248,7 +248,7 @@ describe("model-selection", () => {
             },
           },
         },
-      } as OpenClawConfig;
+      } as AutoCrabConfig;
 
       expect(
         inferUniqueProviderFromConfiguredModels({
@@ -261,7 +261,7 @@ describe("model-selection", () => {
 
   describe("buildModelAliasIndex", () => {
     it("should build alias index from config", () => {
-      const cfg: Partial<OpenClawConfig> = {
+      const cfg: Partial<AutoCrabConfig> = {
         agents: {
           defaults: {
             models: {
@@ -273,7 +273,7 @@ describe("model-selection", () => {
       };
 
       const index = buildModelAliasIndex({
-        cfg: cfg as OpenClawConfig,
+        cfg: cfg as AutoCrabConfig,
         defaultProvider: "anthropic",
       });
 
@@ -319,7 +319,7 @@ describe("model-selection", () => {
     });
 
     it("strips trailing auth profile suffix before allowlist matching", () => {
-      const cfg: OpenClawConfig = {
+      const cfg: AutoCrabConfig = {
         agents: {
           defaults: {
             models: {
@@ -327,7 +327,7 @@ describe("model-selection", () => {
             },
           },
         },
-      } as OpenClawConfig;
+      } as AutoCrabConfig;
 
       const result = resolveAllowedModelRef({
         cfg,
@@ -448,7 +448,7 @@ describe("model-selection", () => {
       setLoggerOverride({ level: "silent", consoleLevel: "warn" });
       const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       try {
-        const cfg: Partial<OpenClawConfig> = {
+        const cfg: Partial<AutoCrabConfig> = {
           agents: {
             defaults: {
               model: { primary: "claude-3-5-sonnet" },
@@ -457,7 +457,7 @@ describe("model-selection", () => {
         };
 
         const result = resolveConfiguredModelRef({
-          cfg: cfg as OpenClawConfig,
+          cfg: cfg as AutoCrabConfig,
           defaultProvider: "google",
           defaultModel: "gemini-pro",
         });
@@ -473,9 +473,9 @@ describe("model-selection", () => {
     });
 
     it("should use default provider/model if config is empty", () => {
-      const cfg: Partial<OpenClawConfig> = {};
+      const cfg: Partial<AutoCrabConfig> = {};
       const result = resolveConfiguredModelRef({
-        cfg: cfg as OpenClawConfig,
+        cfg: cfg as AutoCrabConfig,
         defaultProvider: "openai",
         defaultModel: "gpt-4",
       });
@@ -496,7 +496,7 @@ describe("model-selection", () => {
             },
           },
         },
-      } as OpenClawConfig;
+      } as AutoCrabConfig;
 
       expect(resolveAnthropicOpusThinking(cfg)).toBe("high");
     });
@@ -512,13 +512,13 @@ describe("model-selection", () => {
             },
           },
         },
-      } as OpenClawConfig;
+      } as AutoCrabConfig;
 
       expect(resolveAnthropicOpusThinking(cfg)).toBe("adaptive");
     });
 
     it("defaults Anthropic Claude 4.6 models to adaptive", () => {
-      const cfg = {} as OpenClawConfig;
+      const cfg = {} as AutoCrabConfig;
 
       expect(resolveAnthropicOpusThinking(cfg)).toBe("adaptive");
 

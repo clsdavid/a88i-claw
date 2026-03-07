@@ -1,10 +1,10 @@
 {
-  "name": "@openclaw/line",
+  "name": "@autocrab/line",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw LINE channel plugin",
+  "description": "AutoCrab LINE channel plugin",
   "type": "module",
-  "openclaw": {
+  "autocrab": {
     "extensions": [
       "./index.ts"
     ],
@@ -19,7 +19,7 @@
       "quickstartAllowFrom": true
     },
     "install": {
-      "npmSpec": "@openclaw/line",
+      "npmSpec": "@autocrab/line",
       "localPath": "extensions/line",
       "defaultChoice": "npm"
     }

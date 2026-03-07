@@ -1,10 +1,10 @@
 {
-  "name": "@openclaw/slack",
+  "name": "@autocrab/slack",
   "version": "2026.3.2",
   "private": true,
-  "description": "OpenClaw Slack channel plugin",
+  "description": "AutoCrab Slack channel plugin",
   "type": "module",
-  "openclaw": {
+  "autocrab": {
     "extensions": [
       "./index.ts"
     ]

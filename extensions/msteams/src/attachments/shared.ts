@@ -4,8 +4,8 @@ import {
   isHttpsUrlAllowedByHostnameSuffixAllowlist,
   isPrivateIpAddress,
   normalizeHostnameSuffixAllowlist,
-} from "openclaw/plugin-sdk/msteams";
-import type { SsrFPolicy } from "openclaw/plugin-sdk/msteams";
+} from "autocrab/plugin-sdk/msteams";
+import type { SsrFPolicy } from "autocrab/plugin-sdk/msteams";
 import type { MSTeamsAttachmentLike } from "./types.js";
 
 type InlineImageCandidate =

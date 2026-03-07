@@ -5,7 +5,7 @@ import {
   readNumberParam,
   readReactionParams,
   readStringParam,
-} from "openclaw/plugin-sdk/matrix";
+} from "autocrab/plugin-sdk/matrix";
 import {
   deleteMatrixMessage,
   editMatrixMessage,
