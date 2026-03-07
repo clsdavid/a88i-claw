@@ -8,7 +8,26 @@ import {
   resolveSlackStreamingMode,
   resolveTelegramPreviewStreamMode,
 } from "../config/discord-preview-streaming.js";
+import { STATE_DIR } from "../config/paths.js";
 import { DEFAULT_ACCOUNT_ID } from "../routing/session-key.js";
+import { note } from "../terminal/note.js";
+import { shortenHomePath } from "../utils.js";
+
+export function noteLegacyStateDirUsage() {
+  const legacyNames = [".openclaw", ".clawdbot", ".moldbot", ".moltbot"];
+  const currentDir = STATE_DIR;
+  const isLegacy = legacyNames.some((name) => currentDir.endsWith(name));
+
+  if (isLegacy) {
+    const lines = [
+      "- Legacy state directory detected:",
+      `  ${shortenHomePath(currentDir)}`,
+      "- Recommended: Rename to .autocrab",
+      `  mv ${shortenHomePath(currentDir)} ~/.autocrab`,
+    ];
+    note(lines.join("\n"), "Legacy Configuration");
+  }
+}
 
 export function normalizeCompatibilityConfigValues(cfg: AutoCrabConfig): {
   config: AutoCrabConfig;

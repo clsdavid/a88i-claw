@@ -125,7 +125,10 @@ export function noteDeprecatedLegacyEnvVars(
   deps?: { noteFn?: typeof note },
 ) {
   const entries = Object.entries(env)
-    .filter(([key, value]) => key.startsWith("CLAWDBOT_") && value?.trim())
+    .filter(
+      ([key, value]) =>
+        (key.startsWith("CLAWDBOT_") || key.startsWith("OPENCLAW_")) && value?.trim(),
+    )
     .map(([key]) => key);
   if (entries.length === 0) {
     return;

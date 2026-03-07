@@ -1,4 +1,4 @@
-# OpenClaw Codebase Patterns
+# AutoCrab Codebase Patterns
 
 **Always reuse existing code - no redundancy!**
 
