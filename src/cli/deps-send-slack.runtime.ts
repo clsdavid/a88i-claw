@@ -1,1 +1,1 @@
-export { sendMessageSlack } from "../../extensions/slack/src/send.js";
+export { sendMessageSlack } from "@autocrab/slack/send.js";

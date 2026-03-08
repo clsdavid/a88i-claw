@@ -1,1 +1,1 @@
-export { sendMessageSignal } from "../../../../extensions/signal/src/send.js";
+export { sendMessageSignal } from "@autocrab/signal/send.js";

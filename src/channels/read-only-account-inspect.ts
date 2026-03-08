@@ -1,15 +1,15 @@
 import {
   inspectDiscordAccount,
   type InspectedDiscordAccount,
-} from "../../extensions/discord/src/account-inspect.js";
+} from "@autocrab/discord/account-inspect.js";
 import {
   inspectSlackAccount,
   type InspectedSlackAccount,
-} from "../../extensions/slack/src/account-inspect.js";
+} from "@autocrab/slack/account-inspect.js";
 import {
   inspectTelegramAccount,
   type InspectedTelegramAccount,
-} from "../../extensions/telegram/src/account-inspect.js";
+} from "@autocrab/telegram/account-inspect.js";
 import type { AutoCrabConfig } from "../config/config.js";
 import type { ChannelId } from "./plugins/types.js";
 

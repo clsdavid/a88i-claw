@@ -1,11 +1,11 @@
-import { inspectSlackAccount } from "../../../../extensions/slack/src/account-inspect.js";
+import { inspectSlackAccount } from "@autocrab/slack/account-inspect.js";
 import {
   listSlackAccountIds,
   resolveDefaultSlackAccountId,
   resolveSlackAccount,
-} from "../../../../extensions/slack/src/accounts.js";
-import { resolveSlackChannelAllowlist } from "../../../../extensions/slack/src/resolve-channels.js";
-import { resolveSlackUserAllowlist } from "../../../../extensions/slack/src/resolve-users.js";
+} from "@autocrab/slack/accounts.js";
+import { resolveSlackChannelAllowlist } from "@autocrab/slack/resolve-channels.js";
+import { resolveSlackUserAllowlist } from "@autocrab/slack/resolve-users.js";
 import type { AutoCrabConfig } from "../../../config/config.js";
 import { hasConfiguredSecretInput } from "../../../config/types.secrets.js";
 import { DEFAULT_ACCOUNT_ID } from "../../../routing/session-key.js";

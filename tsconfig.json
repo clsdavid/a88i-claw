@@ -20,7 +20,11 @@
     "paths": {
       "autocrab/plugin-sdk": ["./src/plugin-sdk/index.ts"],
       "autocrab/plugin-sdk/*": ["./src/plugin-sdk/*.ts"],
-      "autocrab/plugin-sdk/account-id": ["./src/plugin-sdk/account-id.ts"]
+      "autocrab/plugin-sdk/account-id": ["./src/plugin-sdk/account-id.ts"],
+      "@autocrab/discord/*": ["./extensions/discord/src/*"],
+      "@autocrab/slack/*": ["./extensions/slack/src/*"],
+      "@autocrab/telegram/*": ["./extensions/telegram/src/*"],
+      "@autocrab/signal/*": ["./extensions/signal/src/*"]
     }
   },
   "include": ["src/**/*", "ui/**/*", "extensions/**/*"],

@@ -1,17 +1,16 @@
-import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import {
   createTelegramActionGate,
   resolveTelegramPollActionGateState,
-} from "../../../../extensions/telegram/src/accounts.js";
+} from "@autocrab/telegram/accounts.js";
 import type {
   TelegramButtonStyle,
   TelegramInlineButtons,
-} from "../../../../extensions/telegram/src/button-types.js";
+} from "@autocrab/telegram/button-types.js";
 import {
   resolveTelegramInlineButtonsScope,
   resolveTelegramTargetChatType,
-} from "../../../../extensions/telegram/src/inline-buttons.js";
-import { resolveTelegramReactionLevel } from "../../../../extensions/telegram/src/reaction-level.js";
+} from "@autocrab/telegram/inline-buttons.js";
+import { resolveTelegramReactionLevel } from "@autocrab/telegram/reaction-level.js";
 import {
   createForumTopicTelegram,
   deleteMessageTelegram,
@@ -20,12 +19,10 @@ import {
   sendMessageTelegram,
   sendPollTelegram,
   sendStickerTelegram,
-} from "../../../../extensions/telegram/src/send.js";
-import {
-  getCacheStats,
-  searchStickers,
-} from "../../../../extensions/telegram/src/sticker-cache.js";
-import { resolveTelegramToken } from "../../../../extensions/telegram/src/token.js";
+} from "@autocrab/telegram/send.js";
+import { getCacheStats, searchStickers } from "@autocrab/telegram/sticker-cache.js";
+import { resolveTelegramToken } from "@autocrab/telegram/token.js";
+import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { AutoCrabConfig } from "../../config/config.js";
 import { readBooleanParam } from "../../plugin-sdk/boolean-param.js";
 import { resolvePollMaxSelections } from "../../polls.js";

@@ -2,7 +2,7 @@ import {
   listSignalAccountIds,
   resolveDefaultSignalAccountId,
   resolveSignalAccount,
-} from "../../../../extensions/signal/src/accounts.js";
+} from "@autocrab/signal/accounts.js";
 import { formatCliCommand } from "../../../cli/command-format.js";
 import { detectBinary } from "../../../commands/onboard-helpers.js";
 import { installSignalCli } from "../../../commands/signal-install.js";

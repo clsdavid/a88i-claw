@@ -1,11 +1,8 @@
-import type { sendMessageDiscord } from "../../../../extensions/discord/src/send.js";
-import {
-  markdownToSignalTextChunks,
-  type SignalTextStyleRange,
-} from "../../../../extensions/signal/src/format.js";
-import { sendMessageSignal } from "../../../../extensions/signal/src/send.js";
-import type { sendMessageSlack } from "../../../../extensions/slack/src/send.js";
-import type { sendMessageTelegram } from "../../../../extensions/telegram/src/send.js";
+import type { sendMessageDiscord } from "@autocrab/discord/send.js";
+import { markdownToSignalTextChunks, type SignalTextStyleRange } from "@autocrab/signal/format.js";
+import { sendMessageSignal } from "@autocrab/signal/send.js";
+import type { sendMessageSlack } from "@autocrab/slack/send.js";
+import type { sendMessageTelegram } from "@autocrab/telegram/send.js";
 import {
   chunkByParagraph,
   chunkMarkdownTextWithMode,

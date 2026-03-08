@@ -6,7 +6,7 @@ import type {
   ResolvedTelegramAccount,
 } from "autocrab/plugin-sdk/telegram";
 import { describe, expect, it, vi } from "vitest";
-import { createRuntimeEnv } from "../../../src/../test-utils/runtime-env.js";
+import { createRuntimeEnv } from "../../test-utils/runtime-env.js";
 import { telegramPlugin } from "./channel.js";
 import { setTelegramRuntime } from "./runtime.js";
 

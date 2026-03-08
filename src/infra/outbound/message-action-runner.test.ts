@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { slackPlugin } from "@autocrab/slack/channel.js";
+import { telegramPlugin } from "@autocrab/telegram/channel.js";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { slackPlugin } from "../../../../extensions/slack/src/channel.js";
-import { telegramPlugin } from "../../../../extensions/telegram/src/channel.js";
 import { whatsappPlugin } from "../../../../extensions/whatsapp/src/channel.js";
 import { jsonResult } from "../../agents/tools/common.js";
 import type { ChannelPlugin } from "../../channels/plugins/types.js";

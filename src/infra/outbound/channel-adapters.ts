@@ -1,5 +1,5 @@
+import { DiscordUiContainer } from "@autocrab/discord/ui.js";
 import { Separator, TextDisplay, type TopLevelComponents } from "@buape/carbon";
-import { DiscordUiContainer } from "../../../../extensions/discord/src/ui.js";
 import type { ChannelId } from "../../channels/plugins/types.js";
 import type { AutoCrabConfig } from "../../config/config.js";
 

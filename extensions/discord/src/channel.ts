@@ -210,7 +210,7 @@ export const discordPlugin: ChannelPlugin<ResolvedDiscordAccount> = {
           token,
           entries: inputs,
         });
-        return resolved.map((entry) => ({
+        return resolved.map((entry: any) => ({
           input: entry.input,
           resolved: entry.resolved,
           id: entry.channelId ?? entry.guildId,
@@ -225,7 +225,7 @@ export const discordPlugin: ChannelPlugin<ResolvedDiscordAccount> = {
         token,
         entries: inputs,
       });
-      return resolved.map((entry) => ({
+      return resolved.map((entry: any) => ({
         input: entry.input,
         resolved: entry.resolved,
         id: entry.id,
@@ -464,7 +464,7 @@ export const discordPlugin: ChannelPlugin<ResolvedDiscordAccount> = {
         abortSignal: ctx.abortSignal,
         mediaMaxMb: account.config.mediaMaxMb,
         historyLimit: account.config.historyLimit,
-        setStatus: (patch) => ctx.setStatus({ accountId: account.accountId, ...patch }),
+        setStatus: (patch: any) => ctx.setStatus({ accountId: account.accountId, ...patch }),
       });
     },
   },

@@ -252,7 +252,7 @@ export const slackPlugin: ChannelPlugin<ResolvedSlackAccount> = {
           token,
           entries: inputs,
         });
-        return resolved.map((entry) => ({
+        return resolved.map((entry: any) => ({
           input: entry.input,
           resolved: entry.resolved,
           id: entry.id,
@@ -264,7 +264,7 @@ export const slackPlugin: ChannelPlugin<ResolvedSlackAccount> = {
         token,
         entries: inputs,
       });
-      return resolved.map((entry) => ({
+      return resolved.map((entry: any) => ({
         input: entry.input,
         resolved: entry.resolved,
         id: entry.id,

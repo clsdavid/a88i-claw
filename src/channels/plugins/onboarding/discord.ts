@@ -1,15 +1,15 @@
-import { inspectDiscordAccount } from "../../../../extensions/discord/src/account-inspect.js";
+import { inspectDiscordAccount } from "@autocrab/discord/account-inspect.js";
 import {
   listDiscordAccountIds,
   resolveDefaultDiscordAccountId,
   resolveDiscordAccount,
-} from "../../../../extensions/discord/src/accounts.js";
-import { normalizeDiscordSlug } from "../../../../extensions/discord/src/monitor/allow-list.js";
+} from "@autocrab/discord/accounts.js";
+import { normalizeDiscordSlug } from "@autocrab/discord/monitor/allow-list.js";
 import {
   resolveDiscordChannelAllowlist,
   type DiscordChannelResolution,
-} from "../../../../extensions/discord/src/resolve-channels.js";
-import { resolveDiscordUserAllowlist } from "../../../../extensions/discord/src/resolve-users.js";
+} from "@autocrab/discord/resolve-channels.js";
+import { resolveDiscordUserAllowlist } from "@autocrab/discord/resolve-users.js";
 import type { AutoCrabConfig } from "../../../config/config.js";
 import type { DiscordGuildEntry } from "../../../config/types.discord.js";
 import { hasConfiguredSecretInput } from "../../../config/types.secrets.js";

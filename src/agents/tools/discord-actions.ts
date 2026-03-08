@@ -1,5 +1,5 @@
+import { createDiscordActionGate } from "@autocrab/discord/accounts.js";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
-import { createDiscordActionGate } from "../../../../extensions/discord/src/accounts.js";
 import type { AutoCrabConfig } from "../../config/config.js";
 import { readStringParam } from "./common.js";
 import { handleDiscordGuildAction } from "./discord-actions-guild.js";

@@ -1,1 +1,1 @@
-export { sendMessageTelegram } from "../../extensions/telegram/src/send.js";
+export { sendMessageTelegram } from "@autocrab/telegram/send.js";

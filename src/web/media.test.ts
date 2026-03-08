@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { sendVoiceMessageDiscord } from "@autocrab/discord/send.js";
 import sharp from "sharp";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { sendVoiceMessageDiscord } from "../../extensions/discord/src/send.js";
 import { resolveStateDir } from "../config/paths.js";
 import { resolvePreferredAutoCrabTmpDir } from "../infra/tmp-autocrab-dir.js";
 import { optimizeImageToPng } from "../media/image-ops.js";

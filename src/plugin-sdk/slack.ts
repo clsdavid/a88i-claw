@@ -1,7 +1,7 @@
 export type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
 export type { AutoCrabConfig } from "../config/config.js";
-export type { InspectedSlackAccount } from "../../extensions/slack/src/account-inspect.js";
-export type { ResolvedSlackAccount } from "../../extensions/slack/src/accounts.js";
+export type { InspectedSlackAccount } from "@autocrab/slack/account-inspect.js";
+export type { ResolvedSlackAccount } from "@autocrab/slack/accounts.js";
 export type { PluginRuntime } from "../plugins/runtime/types.js";
 export type { AutoCrabPluginApi } from "../plugins/types.js";
 
@@ -27,8 +27,8 @@ export {
   resolveDefaultSlackAccountId,
   resolveSlackAccount,
   resolveSlackReplyToMode,
-} from "../../extensions/slack/src/accounts.js";
-export { inspectSlackAccount } from "../../extensions/slack/src/account-inspect.js";
+} from "@autocrab/slack/accounts.js";
+export { inspectSlackAccount } from "@autocrab/slack/account-inspect.js";
 export {
   projectCredentialSnapshotFields,
   resolveConfiguredFromCredentialStatuses,
@@ -42,11 +42,8 @@ export {
   looksLikeSlackTargetId,
   normalizeSlackMessagingTarget,
 } from "../channels/plugins/normalize/slack.js";
-export {
-  extractSlackToolSend,
-  listSlackMessageActions,
-} from "../../extensions/slack/src/message-actions.js";
-export { buildSlackThreadingToolContext } from "../../extensions/slack/src/threading-tool-context.js";
+export { extractSlackToolSend, listSlackMessageActions } from "@autocrab/slack/message-actions.js";
+export { buildSlackThreadingToolContext } from "@autocrab/slack/threading-tool-context.js";
 
 export {
   resolveDefaultGroupPolicy,

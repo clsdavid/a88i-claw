@@ -1,10 +1,10 @@
-import type { TelegramInlineButtons } from "../../../../extensions/telegram/src/button-types.js";
-import { markdownToTelegramHtmlChunks } from "../../../../extensions/telegram/src/format.js";
+import type { TelegramInlineButtons } from "@autocrab/telegram/button-types.js";
+import { markdownToTelegramHtmlChunks } from "@autocrab/telegram/format.js";
 import {
   parseTelegramReplyToMessageId,
   parseTelegramThreadId,
-} from "../../../../extensions/telegram/src/outbound-params.js";
-import { sendMessageTelegram } from "../../../../extensions/telegram/src/send.js";
+} from "@autocrab/telegram/outbound-params.js";
+import { sendMessageTelegram } from "@autocrab/telegram/send.js";
 import type { OutboundSendDeps } from "../../../infra/outbound/deliver.js";
 import type { ChannelOutboundAdapter } from "../types.js";
 

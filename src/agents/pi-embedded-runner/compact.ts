@@ -1,5 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
+import { resolveSignalReactionLevel } from "@autocrab/signal/reaction-level.js";
+import { resolveTelegramInlineButtonsScope } from "@autocrab/telegram/inline-buttons.js";
+import { resolveTelegramReactionLevel } from "@autocrab/telegram/reaction-level.js";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import {
   createAgentSession,
@@ -7,9 +10,6 @@ import {
   estimateTokens,
   SessionManager,
 } from "@mariozechner/pi-coding-agent";
-import { resolveSignalReactionLevel } from "../../../../extensions/signal/src/reaction-level.js";
-import { resolveTelegramInlineButtonsScope } from "../../../../extensions/telegram/src/inline-buttons.js";
-import { resolveTelegramReactionLevel } from "../../../../extensions/telegram/src/reaction-level.js";
 import { resolveHeartbeatPrompt } from "../../auto-reply/heartbeat.js";
 import type { ReasoningLevel, ThinkLevel } from "../../auto-reply/thinking.js";
 import { resolveChannelCapabilities } from "../../config/channel-capabilities.js";

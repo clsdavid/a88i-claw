@@ -1,8 +1,8 @@
 export type { ChannelMessageActionAdapter } from "../channels/plugins/types.js";
 export type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
 export type { AutoCrabConfig } from "../config/config.js";
-export type { InspectedDiscordAccount } from "../../extensions/discord/src/account-inspect.js";
-export type { ResolvedDiscordAccount } from "../../extensions/discord/src/accounts.js";
+export type { InspectedDiscordAccount } from "@autocrab/discord/account-inspect.js";
+export type { ResolvedDiscordAccount } from "@autocrab/discord/accounts.js";
 export type { PluginRuntime } from "../plugins/runtime/types.js";
 export type { AutoCrabPluginApi } from "../plugins/types.js";
 
@@ -28,8 +28,8 @@ export {
   listDiscordAccountIds,
   resolveDefaultDiscordAccountId,
   resolveDiscordAccount,
-} from "../../extensions/discord/src/accounts.js";
-export { inspectDiscordAccount } from "../../extensions/discord/src/account-inspect.js";
+} from "@autocrab/discord/accounts.js";
+export { inspectDiscordAccount } from "@autocrab/discord/account-inspect.js";
 export {
   projectCredentialSnapshotFields,
   resolveConfiguredFromCredentialStatuses,
@@ -43,7 +43,7 @@ export {
   normalizeDiscordMessagingTarget,
   normalizeDiscordOutboundTarget,
 } from "../channels/plugins/normalize/discord.js";
-export { collectDiscordAuditChannelIds } from "../../extensions/discord/src/audit.js";
+export { collectDiscordAuditChannelIds } from "@autocrab/discord/audit.js";
 export { collectDiscordStatusIssues } from "../channels/plugins/status-issues/discord.js";
 
 export {
@@ -61,6 +61,6 @@ export {
   autoBindSpawnedDiscordSubagent,
   listThreadBindingsBySessionKey,
   unbindThreadBindingsBySessionKey,
-} from "../../extensions/discord/src/monitor/thread-bindings.js";
+} from "@autocrab/discord/monitor/thread-bindings.js";
 
 export { buildTokenChannelStatusSummary } from "./status-helpers.js";

@@ -87,34 +87,34 @@ export type PluginRuntimeChannel = {
   };
   discord: {
     messageActions: typeof import("../../channels/plugins/actions/discord.js").discordMessageActions;
-    auditChannelPermissions: typeof import("../../discord/audit.js").auditDiscordChannelPermissions;
-    listDirectoryGroupsLive: typeof import("../../discord/directory-live.js").listDiscordDirectoryGroupsLive;
-    listDirectoryPeersLive: typeof import("../../discord/directory-live.js").listDiscordDirectoryPeersLive;
-    probeDiscord: typeof import("../../discord/probe.js").probeDiscord;
-    resolveChannelAllowlist: typeof import("../../discord/resolve-channels.js").resolveDiscordChannelAllowlist;
-    resolveUserAllowlist: typeof import("../../discord/resolve-users.js").resolveDiscordUserAllowlist;
-    sendMessageDiscord: typeof import("../../discord/send.js").sendMessageDiscord;
-    sendPollDiscord: typeof import("../../discord/send.js").sendPollDiscord;
-    monitorDiscordProvider: typeof import("../../discord/monitor.js").monitorDiscordProvider;
+    auditChannelPermissions: typeof import("@autocrab/discord/src/audit.js").auditDiscordChannelPermissions;
+    listDirectoryGroupsLive: typeof import("@autocrab/discord/src/directory-live.js").listDiscordDirectoryGroupsLive;
+    listDirectoryPeersLive: typeof import("@autocrab/discord/src/directory-live.js").listDiscordDirectoryPeersLive;
+    probeDiscord: typeof import("@autocrab/discord/src/probe.js").probeDiscord;
+    resolveChannelAllowlist: typeof import("@autocrab/discord/src/resolve-channels.js").resolveDiscordChannelAllowlist;
+    resolveUserAllowlist: typeof import("@autocrab/discord/src/resolve-users.js").resolveDiscordUserAllowlist;
+    sendMessageDiscord: typeof import("@autocrab/discord/src/send.js").sendMessageDiscord;
+    sendPollDiscord: typeof import("@autocrab/discord/src/send.js").sendPollDiscord;
+    monitorDiscordProvider: typeof import("@autocrab/discord/src/monitor.js").monitorDiscordProvider;
   };
   slack: {
-    listDirectoryGroupsLive: typeof import("../../slack/directory-live.js").listSlackDirectoryGroupsLive;
-    listDirectoryPeersLive: typeof import("../../slack/directory-live.js").listSlackDirectoryPeersLive;
-    probeSlack: typeof import("../../slack/probe.js").probeSlack;
-    resolveChannelAllowlist: typeof import("../../slack/resolve-channels.js").resolveSlackChannelAllowlist;
-    resolveUserAllowlist: typeof import("../../slack/resolve-users.js").resolveSlackUserAllowlist;
-    sendMessageSlack: typeof import("../../slack/send.js").sendMessageSlack;
-    monitorSlackProvider: typeof import("../../slack/index.js").monitorSlackProvider;
+    listDirectoryGroupsLive: typeof import("@autocrab/slack/src/directory-live.js").listSlackDirectoryGroupsLive;
+    listDirectoryPeersLive: typeof import("@autocrab/slack/src/directory-live.js").listSlackDirectoryPeersLive;
+    probeSlack: typeof import("@autocrab/slack/src/probe.js").probeSlack;
+    resolveChannelAllowlist: typeof import("@autocrab/slack/src/resolve-channels.js").resolveSlackChannelAllowlist;
+    resolveUserAllowlist: typeof import("@autocrab/slack/src/resolve-users.js").resolveSlackUserAllowlist;
+    sendMessageSlack: typeof import("@autocrab/slack/src/send.js").sendMessageSlack;
+    monitorSlackProvider: typeof import("@autocrab/slack/src/index.js").monitorSlackProvider;
     handleSlackAction: typeof import("../../agents/tools/slack-actions.js").handleSlackAction;
   };
   telegram: {
-    auditGroupMembership: typeof import("../../telegram/audit.js").auditTelegramGroupMembership;
-    collectUnmentionedGroupIds: typeof import("../../telegram/audit.js").collectTelegramUnmentionedGroupIds;
-    probeTelegram: typeof import("../../telegram/probe.js").probeTelegram;
-    resolveTelegramToken: typeof import("../../telegram/token.js").resolveTelegramToken;
-    sendMessageTelegram: typeof import("../../telegram/send.js").sendMessageTelegram;
-    sendPollTelegram: typeof import("../../telegram/send.js").sendPollTelegram;
-    monitorTelegramProvider: typeof import("../../telegram/monitor.js").monitorTelegramProvider;
+    auditGroupMembership: typeof import("@autocrab/telegram/src/audit.js").auditTelegramGroupMembership;
+    collectUnmentionedGroupIds: typeof import("@autocrab/telegram/src/audit.js").collectTelegramUnmentionedGroupIds;
+    probeTelegram: typeof import("@autocrab/telegram/src/probe.js").probeTelegram;
+    resolveTelegramToken: typeof import("@autocrab/telegram/src/token.js").resolveTelegramToken;
+    sendMessageTelegram: typeof import("@autocrab/telegram/src/send.js").sendMessageTelegram;
+    sendPollTelegram: typeof import("@autocrab/telegram/src/send.js").sendPollTelegram;
+    monitorTelegramProvider: typeof import("@autocrab/telegram/src/monitor.js").monitorTelegramProvider;
     messageActions: typeof import("../../channels/plugins/actions/telegram.js").telegramMessageActions;
   };
   signal: {

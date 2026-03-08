@@ -1,5 +1,4 @@
-import type { AgentToolResult } from "@mariozechner/pi-agent-core";
-import { readDiscordComponentSpec } from "../../../../extensions/discord/src/components.js";
+import { readDiscordComponentSpec } from "@autocrab/discord/components.js";
 import {
   createThreadDiscord,
   deleteMessageDiscord,
@@ -21,12 +20,10 @@ import {
   sendStickerDiscord,
   sendVoiceMessageDiscord,
   unpinMessageDiscord,
-} from "../../../../extensions/discord/src/send.js";
-import type {
-  DiscordSendComponents,
-  DiscordSendEmbeds,
-} from "../../../../extensions/discord/src/send.shared.js";
-import { resolveDiscordChannelId } from "../../../../extensions/discord/src/targets.js";
+} from "@autocrab/discord/send.js";
+import type { DiscordSendComponents, DiscordSendEmbeds } from "@autocrab/discord/send.shared.js";
+import { resolveDiscordChannelId } from "@autocrab/discord/targets.js";
+import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { DiscordActionConfig } from "../../config/config.js";
 import type { AutoCrabConfig } from "../../config/config.js";
 import { readBooleanParam } from "../../plugin-sdk/boolean-param.js";

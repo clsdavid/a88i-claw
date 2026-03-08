@@ -20,7 +20,8 @@ const hoisted = vi.hoisted(() => {
 });
 
 vi.mock("../../discord/monitor/thread-bindings.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../discord/monitor/thread-bindings.js")>();
+  const actual =
+    await importOriginal<typeof import("@autocrab/discord/src/monitor/thread-bindings.js")>();
   return {
     ...actual,
     getThreadBindingManager: hoisted.getThreadBindingManagerMock,
@@ -30,7 +31,7 @@ vi.mock("../../discord/monitor/thread-bindings.js", async (importOriginal) => {
 });
 
 vi.mock("../../telegram/thread-bindings.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../telegram/thread-bindings.js")>();
+  const actual = await importOriginal<typeof import("@autocrab/telegram/src/thread-bindings.js")>();
   return {
     ...actual,
     setTelegramThreadBindingIdleTimeoutBySessionKey:

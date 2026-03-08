@@ -1,11 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { inspectTelegramAccount } from "@autocrab/telegram/account-inspect.js";
+import { listTelegramAccountIds, resolveTelegramAccount } from "@autocrab/telegram/accounts.js";
 import type { ZodIssue } from "zod";
-import { inspectTelegramAccount } from "../../extensions/telegram/src/account-inspect.js";
-import {
-  listTelegramAccountIds,
-  resolveTelegramAccount,
-} from "../../extensions/telegram/src/accounts.js";
 import { normalizeChatChannelId } from "../channels/registry.js";
 import {
   isNumericTelegramUserId,

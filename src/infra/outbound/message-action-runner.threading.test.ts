@@ -1,6 +1,6 @@
+import { slackPlugin } from "@autocrab/slack/channel.js";
+import { telegramPlugin } from "@autocrab/telegram/channel.js";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { slackPlugin } from "../../../../extensions/slack/src/channel.js";
-import { telegramPlugin } from "../../../../extensions/telegram/src/channel.js";
 import type { AutoCrabConfig } from "../../config/config.js";
 import { setActivePluginRegistry } from "../../plugins/runtime.js";
 import { createTestRegistry } from "../../test-utils/channel-plugins.js";

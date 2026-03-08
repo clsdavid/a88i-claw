@@ -65,12 +65,12 @@ export type {
   ThreadBindingManager,
   ThreadBindingRecord,
   ThreadBindingTargetKind,
-} from "../../extensions/discord/src/monitor/thread-bindings.js";
+} from "@autocrab/discord/monitor/thread-bindings.js";
 export {
   autoBindSpawnedDiscordSubagent,
   listThreadBindingsBySessionKey,
   unbindThreadBindingsBySessionKey,
-} from "../../extensions/discord/src/monitor/thread-bindings.js";
+} from "@autocrab/discord/monitor/thread-bindings.js";
 export type {
   AcpRuntimeCapabilities,
   AcpRuntimeControl,
@@ -552,10 +552,10 @@ export {
   resolveDefaultDiscordAccountId,
   resolveDiscordAccount,
   type ResolvedDiscordAccount,
-} from "../../extensions/discord/src/accounts.js";
-export { inspectDiscordAccount } from "../../extensions/discord/src/account-inspect.js";
-export type { InspectedDiscordAccount } from "../../extensions/discord/src/account-inspect.js";
-export { collectDiscordAuditChannelIds } from "../../extensions/discord/src/audit.js";
+} from "@autocrab/discord/accounts.js";
+export { inspectDiscordAccount } from "@autocrab/discord/account-inspect.js";
+export type { InspectedDiscordAccount } from "@autocrab/discord/account-inspect.js";
+export { collectDiscordAuditChannelIds } from "@autocrab/discord/audit.js";
 export { discordOnboardingAdapter } from "../channels/plugins/onboarding/discord.js";
 export {
   looksLikeDiscordTargetId,
@@ -592,19 +592,16 @@ export {
   resolveSlackAccount,
   resolveSlackReplyToMode,
   type ResolvedSlackAccount,
-} from "../../extensions/slack/src/accounts.js";
-export { inspectSlackAccount } from "../../extensions/slack/src/account-inspect.js";
-export type { InspectedSlackAccount } from "../../extensions/slack/src/account-inspect.js";
-export {
-  extractSlackToolSend,
-  listSlackMessageActions,
-} from "../../extensions/slack/src/message-actions.js";
+} from "@autocrab/slack/accounts.js";
+export { inspectSlackAccount } from "@autocrab/slack/account-inspect.js";
+export type { InspectedSlackAccount } from "@autocrab/slack/account-inspect.js";
+export { extractSlackToolSend, listSlackMessageActions } from "@autocrab/slack/message-actions.js";
 export { slackOnboardingAdapter } from "../channels/plugins/onboarding/slack.js";
 export {
   looksLikeSlackTargetId,
   normalizeSlackMessagingTarget,
 } from "../channels/plugins/normalize/slack.js";
-export { buildSlackThreadingToolContext } from "../../extensions/slack/src/threading-tool-context.js";
+export { buildSlackThreadingToolContext } from "@autocrab/slack/threading-tool-context.js";
 
 // Channel: Telegram
 export {
@@ -612,9 +609,9 @@ export {
   resolveDefaultTelegramAccountId,
   resolveTelegramAccount,
   type ResolvedTelegramAccount,
-} from "../../extensions/telegram/src/accounts.js";
-export { inspectTelegramAccount } from "../../extensions/telegram/src/account-inspect.js";
-export type { InspectedTelegramAccount } from "../../extensions/telegram/src/account-inspect.js";
+} from "@autocrab/telegram/accounts.js";
+export { inspectTelegramAccount } from "@autocrab/telegram/account-inspect.js";
+export type { InspectedTelegramAccount } from "@autocrab/telegram/account-inspect.js";
 export { telegramOnboardingAdapter } from "../channels/plugins/onboarding/telegram.js";
 export {
   looksLikeTelegramTargetId,
@@ -624,8 +621,8 @@ export { collectTelegramStatusIssues } from "../channels/plugins/status-issues/t
 export {
   parseTelegramReplyToMessageId,
   parseTelegramThreadId,
-} from "../../extensions/telegram/src/outbound-params.js";
-export { type TelegramProbe } from "../../extensions/telegram/src/probe.js";
+} from "@autocrab/telegram/outbound-params.js";
+export { type TelegramProbe } from "@autocrab/telegram/probe.js";
 
 // Channel: Signal
 export {
@@ -633,7 +630,7 @@ export {
   resolveDefaultSignalAccountId,
   resolveSignalAccount,
   type ResolvedSignalAccount,
-} from "../../../../extensions/signal/src/accounts.js";
+} from "@autocrab/signal/accounts.js";
 export { signalOnboardingAdapter } from "../channels/plugins/onboarding/signal.js";
 export {
   looksLikeSignalTargetId,

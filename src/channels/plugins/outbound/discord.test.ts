@@ -15,7 +15,7 @@ const hoisted = vi.hoisted(() => {
 });
 
 vi.mock("../../../discord/send.js", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("../../../discord/send.js")>();
+  const actual = await importOriginal<typeof import("@autocrab/discord/src/send.js")>();
   return {
     ...actual,
     sendMessageDiscord: (...args: unknown[]) => hoisted.sendMessageDiscordMock(...args),
@@ -27,7 +27,7 @@ vi.mock("../../../discord/send.js", async (importOriginal) => {
 
 vi.mock("../../../discord/monitor/thread-bindings.js", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("../../../discord/monitor/thread-bindings.js")>();
+    await importOriginal<typeof import("@autocrab/discord/src/monitor/thread-bindings.js")>();
   return {
     ...actual,
     getThreadBindingManager: (...args: unknown[]) => hoisted.getThreadBindingManagerMock(...args),

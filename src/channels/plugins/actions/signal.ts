@@ -1,12 +1,6 @@
-import {
-  listEnabledSignalAccounts,
-  resolveSignalAccount,
-} from "../../../../extensions/signal/src/accounts.js";
-import { resolveSignalReactionLevel } from "../../../../extensions/signal/src/reaction-level.js";
-import {
-  sendReactionSignal,
-  removeReactionSignal,
-} from "../../../../extensions/signal/src/send-reactions.js";
+import { listEnabledSignalAccounts, resolveSignalAccount } from "@autocrab/signal/accounts.js";
+import { resolveSignalReactionLevel } from "@autocrab/signal/reaction-level.js";
+import { sendReactionSignal, removeReactionSignal } from "@autocrab/signal/send-reactions.js";
 import { createActionGate, jsonResult, readStringParam } from "../../../agents/tools/common.js";
 import type { ChannelMessageActionAdapter, ChannelMessageActionName } from "../types.js";
 import { resolveReactionMessageId } from "./reaction-message-id.js";
