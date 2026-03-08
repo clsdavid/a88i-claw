@@ -10,7 +10,7 @@ import type { GatewayService } from "../daemon/service.js";
 import { resolveGatewayService } from "../daemon/service.js";
 import { resolveGatewayProbeAuthSafe } from "../gateway/auth/probe-auth.js";
 import { buildGatewayConnectionDetails, callGateway } from "../gateway/call.js";
-import { normalizeControlUiBasePath } from "../gateway/control-ui-shared.js";
+import { normalizeControlUiBasePath } from "../gateway/http/control-ui-shared.js";
 import { probeGateway } from "../gateway/probe.js";
 import { resolveAutoCrabPackageRoot } from "../infra/autocrab-root.js";
 import { collectChannelStatusIssues } from "../infra/channels-status-issues.js";

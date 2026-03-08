@@ -7,7 +7,7 @@ import type { AutoCrabConfig } from "../config/config.js";
 import { readJsonBodyWithLimit, requestBodyErrorToText } from "../infra/http-body.js";
 import { normalizeAgentId, parseAgentSessionKey } from "../routing/session-key.js";
 import { normalizeMessageChannel } from "../utils/message-channel.js";
-import { type HookMappingResolved, resolveHookMappings } from "./hooks-mapping.js";
+import { type HookMappingResolved, resolveHookMappings } from "./http/hooks-mapping.js";
 
 const DEFAULT_HOOKS_PATH = "/hooks";
 const DEFAULT_HOOKS_MAX_BODY_BYTES = 256 * 1024;

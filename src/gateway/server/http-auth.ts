@@ -7,9 +7,9 @@ import {
   type GatewayAuthResult,
   type ResolvedGatewayAuth,
 } from "../auth/index.js";
-import { CANVAS_CAPABILITY_TTL_MS } from "../canvas-capability.js";
-import { authorizeGatewayBearerRequestOrReply } from "../http-auth-helpers.js";
-import { getBearerToken } from "../http-utils.js";
+import { authorizeGatewayBearerRequestOrReply } from "../http/auth-helpers.js";
+import { CANVAS_CAPABILITY_TTL_MS } from "../http/canvas-capability.js";
+import { getBearerToken } from "../http/utils.js";
 import type { AuthRateLimiter } from "../limits/auth.js";
 import { GATEWAY_CLIENT_MODES, normalizeGatewayClientMode } from "../protocol/client-info.js";
 import type { GatewayWsClient } from "./ws-types.js";

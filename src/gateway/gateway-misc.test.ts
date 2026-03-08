@@ -5,7 +5,7 @@ import * as path from "node:path";
 import { describe, expect, it, test, vi } from "vitest";
 import { defaultVoiceWakeTriggers } from "../infra/voicewake.js";
 import { GatewayClient } from "./client.js";
-import { handleControlUiHttpRequest } from "./control-ui.js";
+import { handleControlUiHttpRequest } from "./http/control-ui.js";
 import {
   DEFAULT_DANGEROUS_NODE_COMMANDS,
   resolveNodeCommandAllowlist,

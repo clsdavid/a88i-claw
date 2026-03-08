@@ -10,8 +10,8 @@ import {
   resolveGatewayAuth,
 } from "./auth/index.js";
 import { mergeGatewayTailscaleConfig } from "./auth/startup.js";
-import { normalizeControlUiBasePath } from "./control-ui-shared.js";
 import { resolveHooksConfig } from "./hooks.js";
+import { normalizeControlUiBasePath } from "./http/control-ui-shared.js";
 import {
   isLoopbackHost,
   isTrustedProxyAddress,

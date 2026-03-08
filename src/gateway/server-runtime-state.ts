@@ -8,10 +8,16 @@ import type { PluginRegistry } from "../plugins/registry.js";
 import type { RuntimeEnv } from "../runtime.js";
 import type { ResolvedGatewayAuth } from "./auth/index.js";
 import type { ChatAbortControllerEntry } from "./chat-abort.js";
-import type { ControlUiRootState } from "./control-ui.js";
 import type { HooksConfigResolved } from "./hooks.js";
+import type { ControlUiRootState } from "./http/control-ui.js";
+import { attachGatewayUpgradeHandler, createGatewayHttpServer } from "./http/server.js";
 import type { AuthRateLimiter } from "./limits/auth.js";
 import { isLoopbackHost, resolveGatewayListenHosts } from "./net.js";
+import {
+  createGatewayPluginRequestHandler,
+  shouldEnforceGatewayAuthForPluginPath,
+  type PluginRoutePathContext,
+} from "./plugins/http.js";
 import {
   createGatewayBroadcaster,
   type GatewayBroadcastFn,
@@ -23,15 +29,9 @@ import {
   createToolEventRecipientRegistry,
 } from "./server-chat.js";
 import { MAX_PAYLOAD_BYTES } from "./server-constants.js";
-import { attachGatewayUpgradeHandler, createGatewayHttpServer } from "./server-http.js";
 import type { DedupeEntry } from "./server-shared.js";
 import { createGatewayHooksRequestHandler } from "./server/hooks.js";
 import { listenGatewayHttpServer } from "./server/http-listen.js";
-import {
-  createGatewayPluginRequestHandler,
-  shouldEnforceGatewayAuthForPluginPath,
-  type PluginRoutePathContext,
-} from "./server/plugins-http.js";
 import type { GatewayTlsRuntime } from "./server/tls.js";
 import type { GatewayWsClient } from "./server/ws-types.js";
 

@@ -55,7 +55,7 @@
 ## Stack & Commands
 
 - **Package manager**: pnpm (`pnpm install`)
-- **Dev**: `pnpm openclaw ...` or `pnpm dev`
+- Run CLI in dev: `pnpm autocrab ...` (bun) or `pnpm dev`.
 - **Type-check**: `pnpm tsgo`
 - **Lint/format**: `pnpm check`
 - **Tests**: `pnpm test`

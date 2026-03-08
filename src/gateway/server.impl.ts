@@ -70,12 +70,12 @@ import {
 } from "./auth/startup.js";
 import { startChannelHealthMonitor } from "./channel-health-monitor.js";
 import { startGatewayConfigReloader } from "./config-reload.js";
-import type { ControlUiRootState } from "./control-ui.js";
 import {
   GATEWAY_EVENT_UPDATE_AVAILABLE,
   type GatewayUpdateAvailableEventPayload,
 } from "./events.js";
 import { ExecApprovalManager } from "./exec-approval-manager.js";
+import type { ControlUiRootState } from "./http/control-ui.js";
 import { createAuthRateLimiter, type AuthRateLimiter } from "./limits/auth.js";
 import { NodeRegistry } from "./node-registry.js";
 import { loadGatewayPlugins } from "./plugins/index.js";
