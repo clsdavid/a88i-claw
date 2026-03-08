@@ -1,7 +1,7 @@
+import { inspectDiscordAccount } from "../../../../extensions/discord/src/account-inspect.js";
+import { inspectSlackAccount } from "../../../../extensions/slack/src/account-inspect.js";
+import { inspectTelegramAccount } from "../../../../extensions/telegram/src/account-inspect.js";
 import type { AutoCrabConfig } from "../../config/types.js";
-import { inspectDiscordAccount } from "../../discord/account-inspect.js";
-import { inspectSlackAccount } from "../../slack/account-inspect.js";
-import { inspectTelegramAccount } from "../../telegram/account-inspect.js";
 import { resolveWhatsAppAccount } from "../../web/accounts.js";
 import { isWhatsAppGroupJid, normalizeWhatsAppTarget } from "../../whatsapp/normalize.js";
 import { normalizeSlackMessagingTarget } from "./normalize/slack.js";

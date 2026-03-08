@@ -4,6 +4,9 @@
   "private": true,
   "description": "AutoCrab Signal channel plugin",
   "type": "module",
+  "exports": {
+    "./src/*": "./src/*.js"
+  },
   "devDependencies": {
     "autocrab": "workspace:*"
   },

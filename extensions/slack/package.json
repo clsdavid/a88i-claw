@@ -4,6 +4,9 @@
   "private": true,
   "description": "AutoCrab Slack channel plugin",
   "type": "module",
+  "exports": {
+    "./src/*": "./src/*.js"
+  },
   "devDependencies": {
     "autocrab": "workspace:*"
   },

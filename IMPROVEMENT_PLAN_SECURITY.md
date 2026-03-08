@@ -59,16 +59,18 @@ The AutoCrab project (formerly OpenClaw) has a strong foundational security post
     - Document the existing rate-limiting logic in `src/security/`.
     - Ensure "Trusted Proxy" mode has explicit warnings about `X-Real-IP` spoofing risks if misconfigured (added to code comments).
 
-### Phase 3: Developer Experience & Standardization (Medium-Term - 3 Months)
+### Phase 3: Developer Experience & Standardization (In Progress)
 
 **Goal:** Reduce human error during extension development.
 
 1.  **Extension Scaffolding Tool** (Done):
     - Create `scripts/create-extension.ts`.
-    - **Security Benefit**: Ensures new extensions start with secure defaults (e.g., correct `package.json` permissions, pre-configured test harnesses) rather than copy-pasting potentially insecure boilerplate.
-2.  **Standardize Channel Architecture**:
-    - Move _all_ channels (Discord, Telegram, Signal) out of `src/` and into `extensions/`.
-    - **Security Benefit**: Forces the Core to expose a strict, secure API for _all_ channels, preventing "privileged" core channels accessing internal state that extensions cannot.
+    - **Security Benefit**: Ensures new extensions start with secure defaults.
+2.  **Standardize Channel Architecture** (In Progress):
+    - Moved core channels (`src/discord`, `src/slack`, `src/telegram`, `src/signal`) to `extensions/`.
+    - **Current Status**: Code moved, imports updated.
+    - **Pending Issue**: High-strictness TypeScript lint errors (`no-redundant-type-constituents`) due to cross-workspace type resolution failures for complex types (`DiscordSendComponents`, `TelegramInlineButtons`) when imported from `extensions/` back into `src/`.
+    - **Next Step**: Resolve workspace type boundaries, likely by using proper workspace package imports (`@autocrab/discord`) in `src/` instead of relative paths, or suppressing lint errors temporarily to unblock critical path.
 
 ### Phase 4: Long-Term audit (Ongoing)
 

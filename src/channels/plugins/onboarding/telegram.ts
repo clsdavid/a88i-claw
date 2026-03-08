@@ -1,16 +1,16 @@
-import { formatCliCommand } from "../../../cli/command-format.js";
-import type { AutoCrabConfig } from "../../../config/config.js";
-import { hasConfiguredSecretInput } from "../../../config/types.secrets.js";
-import { DEFAULT_ACCOUNT_ID } from "../../../routing/session-key.js";
-import { inspectTelegramAccount } from "../../../telegram/account-inspect.js";
+import { inspectTelegramAccount } from "../../../../extensions/telegram/src/account-inspect.js";
 import {
   listTelegramAccountIds,
   resolveDefaultTelegramAccountId,
   resolveTelegramAccount,
-} from "../../../telegram/accounts.js";
+} from "../../../../extensions/telegram/src/accounts.js";
+import { fetchTelegramChatId } from "../../../../extensions/telegram/src/api.js";
+import { formatCliCommand } from "../../../cli/command-format.js";
+import type { AutoCrabConfig } from "../../../config/config.js";
+import { hasConfiguredSecretInput } from "../../../config/types.secrets.js";
+import { DEFAULT_ACCOUNT_ID } from "../../../routing/session-key.js";
 import { formatDocsLink } from "../../../terminal/links.js";
 import type { WizardPrompter } from "../../../wizard/prompts.js";
-import { fetchTelegramChatId } from "../../telegram/api.js";
 import type { ChannelOnboardingAdapter, ChannelOnboardingDmPolicy } from "../onboarding-types.js";
 import {
   applySingleTokenPromptResult,

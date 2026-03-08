@@ -9,8 +9,8 @@ vi.mock("../../../plugins/hook-runner-global.js", () => ({
   getGlobalHookRunner: vi.fn(),
 }));
 
+import { sendMessageSlack } from "../../../../extensions/slack/src/send.js";
 import { getGlobalHookRunner } from "../../../plugins/hook-runner-global.js";
-import { sendMessageSlack } from "../../../slack/send.js";
 import { slackOutbound } from "./slack.js";
 
 type SlackSendTextCtx = {

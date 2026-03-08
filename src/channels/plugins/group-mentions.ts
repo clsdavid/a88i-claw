@@ -1,3 +1,4 @@
+import { inspectSlackAccount } from "../../../../extensions/slack/src/account-inspect.js";
 import type { AutoCrabConfig } from "../../config/config.js";
 import {
   resolveChannelGroupRequireMention,
@@ -10,7 +11,6 @@ import type {
   GroupToolPolicyConfig,
 } from "../../config/types.tools.js";
 import { normalizeAtHashSlug, normalizeHyphenSlug } from "../../shared/string-normalization.js";
-import { inspectSlackAccount } from "../../slack/account-inspect.js";
 import type { ChannelGroupContext } from "./types.js";
 
 type GroupMentionParams = ChannelGroupContext;

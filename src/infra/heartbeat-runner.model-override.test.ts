@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { telegramPlugin } from "../../extensions/telegram/src/channel.js";
-import { setTelegramRuntime } from "../../extensions/telegram/src/runtime.js";
-import { whatsappPlugin } from "../../extensions/whatsapp/src/channel.js";
-import { setWhatsAppRuntime } from "../../extensions/whatsapp/src/runtime.js";
+import { telegramPlugin } from "../../../../extensions/telegram/src/channel.js";
+import { setTelegramRuntime } from "../../../../extensions/telegram/src/runtime.js";
+import { whatsappPlugin } from "../../../../extensions/whatsapp/src/channel.js";
+import { setWhatsAppRuntime } from "../../../../extensions/whatsapp/src/runtime.js";
 import * as replyModule from "../auto-reply/reply.js";
 import type { AutoCrabConfig } from "../config/config.js";
 import { resolveAgentMainSessionKey, resolveMainSessionKey } from "../config/sessions.js";
