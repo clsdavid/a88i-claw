@@ -72,7 +72,15 @@ export type AuthorizeGatewayConnectParams = {
   clientIp?: string;
   /** Optional limiter scope; defaults to shared-secret auth scope. */
   rateLimitScope?: string;
-  /** Trust X-Real-IP only when explicitly enabled. */
+  /**
+   * Trust X-Real-IP only when explicitly enabled.
+   *
+   * @security WARNING: If trusted proxies are configured, this enables trust for
+   * X-Real-IP / X-Forwarded-For headers. If the gateway is exposed directly to the
+   * internet, attackers can spoof these headers to bypass IP restrictions.
+   * Ensure the gateway is bound to a private interface (e.g. 127.0.0.1) or strictly
+   * firewalled to only accept traffic from the trusted proxy.
+   */
   allowRealIpFallback?: boolean;
 };
 

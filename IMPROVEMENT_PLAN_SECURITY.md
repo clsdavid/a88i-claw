@@ -49,21 +49,21 @@ The AutoCrab project (formerly OpenClaw) has a strong foundational security post
 
 **Goal:** Reduce the attack surface of the core Gateway.
 
-1.  **Refactor `src/gateway`**:
+1.  **Refactor `src/gateway`** (Done):
     - Split the 150+ file directory into strict modules:
       - `src/gateway/auth/`: Only authentication logic.
       - `src/gateway/http/`: Server handling.
       - `src/gateway/plugins/`: Extension loading.
     - **Security Benefit**: Easier to audit `auth/` in isolation.
-2.  **Auth Rate Limiting Documentation**:
+2.  **Auth Rate Limiting Documentation** (Done):
     - Document the existing rate-limiting logic in `src/security/`.
-    - Ensure "Trusted Proxy" mode has explicit warnings about `X-Real-IP` spoofing risks if misconfigured.
+    - Ensure "Trusted Proxy" mode has explicit warnings about `X-Real-IP` spoofing risks if misconfigured (added to code comments).
 
 ### Phase 3: Developer Experience & Standardization (Medium-Term - 3 Months)
 
 **Goal:** Reduce human error during extension development.
 
-1.  **Extension Scaffolding Tool**:
+1.  **Extension Scaffolding Tool** (Done):
     - Create `scripts/create-extension.ts`.
     - **Security Benefit**: Ensures new extensions start with secure defaults (e.g., correct `package.json` permissions, pre-configured test harnesses) rather than copy-pasting potentially insecure boilerplate.
 2.  **Standardize Channel Architecture**:

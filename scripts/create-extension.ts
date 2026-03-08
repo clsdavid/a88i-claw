@@ -12,14 +12,15 @@ const TEMPLATE_PACKAGE_JSON = (name: string) =>
       type: "module",
       scripts: {
         build: "tsc",
+        check: "tsc --noEmit",
         test: "vitest run",
       },
       dependencies: {},
       devDependencies: {
         autocrab: "workspace:*",
-        typescript: "^5.0.0",
-        vitest: "^1.0.0",
-        "@types/node": "^20.0.0",
+        typescript: "^5.3.3",
+        vitest: "^1.2.0",
+        "@types/node": "^22.0.0",
       },
       autocrab: {
         extensions: ["./index.ts"],
@@ -47,17 +48,49 @@ const TEMPLATE_TSCONFIG = JSON.stringify(
   2,
 );
 
-const TEMPLATE_INDEX_TS = (name: string) => `
-import { defineExtension } from "autocrab/plugin-sdk";
+const TEMPLATE_README_MD = (name: string) => `# AutoCrab Extension: ${name}
+
+This extension provides integration with ${name} for AutoCrab.
+
+## Security Guidelines
+
+1.  **Input Validation**: Ensure all external data is validated against a schema (e.g. Zod) before use.
+2.  **Secret Management**: Never commit secrets to git. Use \`process.env\` or AutoCrab's configuration system.
+3.  **Least Privilege**: Avoid requesting permissions or importing modules that are not strictly necessary.
+
+## Development
+
+- \`pnpm check\`: Run type checking
+- \`pnpm test\`: Run unit tests
+`;
+
+const TEMPLATE_INDEX_TS = (name: string) =>
+  `import { defineExtension } from "autocrab/plugin-sdk";
 
 export default defineExtension({
   name: "${name}",
   async setup(context) {
     context.log.info("Extension ${name} loaded");
     
+    // SECURITY NOTICE:
+    // Always validate inputs from external sources (webhooks, API responses) before processing.
+    // Avoid executing arbitrary code or shell commands with untrusted input.
+    
     // Register your channel capability here
     // context.gateway.registerChannel(...)
   }
+});
+`;
+
+const TEMPLATE_INDEX_TEST_TS = (name: string) =>
+  `import { describe, it, expect } from "vitest";
+
+// Note: In a real test, you might import the extension definition to test its logic.
+
+describe("Extension ${name}", () => {
+  it("should have a valid test environment", () => {
+    expect(true).toBe(true);
+  });
 });
 `;
 
@@ -75,7 +108,7 @@ async function main() {
   const extensionDir = path.join(process.cwd(), "extensions", name);
 
   try {
-    await fs.mkdir(extensionDir);
+    await fs.mkdir(extensionDir, { recursive: true });
   } catch (err) {
     if (
       (err instanceof Error || typeof err === "object") &&
@@ -90,6 +123,8 @@ async function main() {
   await fs.writeFile(path.join(extensionDir, "package.json"), TEMPLATE_PACKAGE_JSON(name));
   await fs.writeFile(path.join(extensionDir, "tsconfig.json"), TEMPLATE_TSCONFIG);
   await fs.writeFile(path.join(extensionDir, "index.ts"), TEMPLATE_INDEX_TS(name));
+  await fs.writeFile(path.join(extensionDir, "index.test.ts"), TEMPLATE_INDEX_TEST_TS(name));
+  await fs.writeFile(path.join(extensionDir, "README.md"), TEMPLATE_README_MD(name));
 
   console.log(`Extension ${name} created at extensions/${name}`);
   console.log(`Don't forget to run 'pnpm install' to link dependencies.`);
