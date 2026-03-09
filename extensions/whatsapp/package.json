@@ -4,6 +4,12 @@
   "private": true,
   "description": "AutoCrab WhatsApp channel plugin",
   "type": "module",
+  "exports": {
+    "./src/*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.js"
+    }
+  },
   "devDependencies": {
     "autocrab": "workspace:*"
   },

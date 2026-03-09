@@ -1,14 +1,14 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { inspectTelegramAccount } from "@autocrab/telegram/account-inspect.js";
-import { listTelegramAccountIds, resolveTelegramAccount } from "@autocrab/telegram/accounts.js";
-import type { ZodIssue } from "zod";
-import { normalizeChatChannelId } from "../channels/registry.js";
+import { inspectTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
+import { listTelegramAccountIds, resolveTelegramAccount } from "@autocrab/telegram/src/accounts.js";
 import {
   isNumericTelegramUserId,
   normalizeTelegramAllowFromEntry,
-} from "../channels/telegram/allow-from.js";
-import { fetchTelegramChatId } from "../channels/telegram/api.js";
+} from "@autocrab/telegram/src/allow-from.js";
+import { fetchTelegramChatId } from "@autocrab/telegram/src/api.js";
+import type { ZodIssue } from "zod";
+import { normalizeChatChannelId } from "../channels/registry.js";
 import { formatCliCommand } from "../cli/command-format.js";
 import { resolveCommandSecretRefsViaGateway } from "../cli/command-secret-gateway.js";
 import { getChannelsCommandSecretTargetIds } from "../cli/command-secret-targets.js";

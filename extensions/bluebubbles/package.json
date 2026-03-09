@@ -3,6 +3,12 @@
   "version": "2026.3.2",
   "description": "AutoCrab BlueBubbles channel plugin",
   "type": "module",
+  "exports": {
+    "./*": {
+      "types": "./*.ts",
+      "default": "./*.js"
+    }
+  },
   "dependencies": {
     "zod": "^4.3.6"
   },

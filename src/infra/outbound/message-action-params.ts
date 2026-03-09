@@ -1,7 +1,7 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parseSlackTarget } from "@autocrab/slack/targets.js";
-import { parseTelegramTarget } from "@autocrab/telegram/targets.js";
+import { parseSlackTarget } from "@autocrab/slack/src/targets.js";
+import { parseTelegramTarget } from "@autocrab/telegram/src/targets.js";
 import { assertMediaNotDataUrl, resolveSandboxedMediaSource } from "../../agents/sandbox-paths.js";
 import { readStringParam } from "../../agents/tools/common.js";
 import type {

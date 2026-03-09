@@ -1,4 +1,4 @@
-import { sendMessageSlack, type SlackSendIdentity } from "@autocrab/slack/send.js";
+import { sendMessageSlack, type SlackSendIdentity } from "@autocrab/slack/src/send.js";
 import type { OutboundIdentity } from "../../../infra/outbound/identity.js";
 import { getGlobalHookRunner } from "../../../plugins/hook-runner-global.js";
 import type { ChannelOutboundAdapter } from "../types.js";

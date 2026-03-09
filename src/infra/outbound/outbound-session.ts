@@ -1,18 +1,18 @@
-import { parseDiscordTarget } from "@autocrab/discord/targets.js";
+import { parseDiscordTarget } from "@autocrab/discord/src/targets.js";
 import {
   looksLikeUuid,
   resolveSignalPeerId,
   resolveSignalRecipient,
   resolveSignalSender,
-} from "@autocrab/signal/identity.js";
-import { resolveSlackAccount } from "@autocrab/slack/accounts.js";
-import { createSlackWebClient } from "@autocrab/slack/client.js";
-import { normalizeAllowListLower } from "@autocrab/slack/monitor/allow-list.js";
-import { parseSlackTarget } from "@autocrab/slack/targets.js";
-import { buildTelegramGroupPeerId } from "@autocrab/telegram/bot/helpers.js";
-import { resolveTelegramTargetChatType } from "@autocrab/telegram/inline-buttons.js";
-import { parseTelegramThreadId } from "@autocrab/telegram/outbound-params.js";
-import { parseTelegramTarget } from "@autocrab/telegram/targets.js";
+} from "@autocrab/signal/src/identity.js";
+import { resolveSlackAccount } from "@autocrab/slack/src/accounts.js";
+import { createSlackWebClient } from "@autocrab/slack/src/client.js";
+import { normalizeAllowListLower } from "@autocrab/slack/src/monitor/allow-list.js";
+import { parseSlackTarget } from "@autocrab/slack/src/targets.js";
+import { buildTelegramGroupPeerId } from "@autocrab/telegram/src/bot/helpers.js";
+import { resolveTelegramTargetChatType } from "@autocrab/telegram/src/inline-buttons.js";
+import { parseTelegramThreadId } from "@autocrab/telegram/src/outbound-params.js";
+import { parseTelegramTarget } from "@autocrab/telegram/src/targets.js";
 import type { MsgContext } from "../../auto-reply/templating.js";
 import type { ChatType } from "../../channels/chat-type.js";
 import { getChannelPlugin } from "../../channels/plugins/index.js";

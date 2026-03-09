@@ -1,9 +1,9 @@
-import { inspectDiscordAccount } from "@autocrab/discord/account-inspect.js";
-import { resolveSignalAccount } from "@autocrab/signal/accounts.js";
-import { inspectSlackAccount } from "@autocrab/slack/account-inspect.js";
-import { resolveSlackReplyToMode } from "@autocrab/slack/accounts.js";
-import { buildSlackThreadingToolContext } from "@autocrab/slack/threading-tool-context.js";
-import { inspectTelegramAccount } from "@autocrab/telegram/account-inspect.js";
+import { inspectDiscordAccount } from "@autocrab/discord/src/account-inspect.js";
+import { resolveSignalAccount } from "@autocrab/signal/src/accounts.js";
+import { inspectSlackAccount } from "@autocrab/slack/src/account-inspect.js";
+import { resolveSlackReplyToMode } from "@autocrab/slack/src/accounts.js";
+import { buildSlackThreadingToolContext } from "@autocrab/slack/src/threading-tool-context.js";
+import { inspectTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
 import {
   resolveChannelGroupRequireMention,
   resolveChannelGroupToolsPolicy,

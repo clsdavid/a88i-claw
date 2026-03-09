@@ -1,33 +1,33 @@
-import { auditDiscordChannelPermissions } from "@autocrab/discord/audit.js";
+import { auditDiscordChannelPermissions } from "@autocrab/discord/src/audit.js";
 import {
   listDiscordDirectoryGroupsLive,
   listDiscordDirectoryPeersLive,
-} from "@autocrab/discord/directory-live.js";
-import { monitorDiscordProvider } from "@autocrab/discord/monitor.js";
-import { probeDiscord } from "@autocrab/discord/probe.js";
-import { resolveDiscordChannelAllowlist } from "@autocrab/discord/resolve-channels.js";
-import { resolveDiscordUserAllowlist } from "@autocrab/discord/resolve-users.js";
-import { sendMessageDiscord, sendPollDiscord } from "@autocrab/discord/send.js";
-import { monitorSignalProvider } from "@autocrab/signal/index.js";
-import { probeSignal } from "@autocrab/signal/probe.js";
-import { sendMessageSignal } from "@autocrab/signal/send.js";
+} from "@autocrab/discord/src/directory-live.js";
+import { monitorDiscordProvider } from "@autocrab/discord/src/monitor.js";
+import { probeDiscord } from "@autocrab/discord/src/probe.js";
+import { resolveDiscordChannelAllowlist } from "@autocrab/discord/src/resolve-channels.js";
+import { resolveDiscordUserAllowlist } from "@autocrab/discord/src/resolve-users.js";
+import { sendMessageDiscord, sendPollDiscord } from "@autocrab/discord/src/send.js";
+import { monitorSignalProvider } from "@autocrab/signal/src/index.js";
+import { probeSignal } from "@autocrab/signal/src/probe.js";
+import { sendMessageSignal } from "@autocrab/signal/src/send.js";
 import {
   listSlackDirectoryGroupsLive,
   listSlackDirectoryPeersLive,
-} from "@autocrab/slack/directory-live.js";
-import { monitorSlackProvider } from "@autocrab/slack/index.js";
-import { probeSlack } from "@autocrab/slack/probe.js";
-import { resolveSlackChannelAllowlist } from "@autocrab/slack/resolve-channels.js";
-import { resolveSlackUserAllowlist } from "@autocrab/slack/resolve-users.js";
-import { sendMessageSlack } from "@autocrab/slack/send.js";
+} from "@autocrab/slack/src/directory-live.js";
+import { monitorSlackProvider } from "@autocrab/slack/src/index.js";
+import { probeSlack } from "@autocrab/slack/src/probe.js";
+import { resolveSlackChannelAllowlist } from "@autocrab/slack/src/resolve-channels.js";
+import { resolveSlackUserAllowlist } from "@autocrab/slack/src/resolve-users.js";
+import { sendMessageSlack } from "@autocrab/slack/src/send.js";
 import {
   auditTelegramGroupMembership,
   collectTelegramUnmentionedGroupIds,
-} from "@autocrab/telegram/audit.js";
-import { monitorTelegramProvider } from "@autocrab/telegram/monitor.js";
-import { probeTelegram } from "@autocrab/telegram/probe.js";
-import { sendMessageTelegram, sendPollTelegram } from "@autocrab/telegram/send.js";
-import { resolveTelegramToken } from "@autocrab/telegram/token.js";
+} from "@autocrab/telegram/src/audit.js";
+import { monitorTelegramProvider } from "@autocrab/telegram/src/monitor.js";
+import { probeTelegram } from "@autocrab/telegram/src/probe.js";
+import { sendMessageTelegram, sendPollTelegram } from "@autocrab/telegram/src/send.js";
+import { resolveTelegramToken } from "@autocrab/telegram/src/token.js";
 import { resolveEffectiveMessagesConfig, resolveHumanDelayConfig } from "../../agents/identity.js";
 import { handleSlackAction } from "../../agents/tools/slack-actions.js";
 import {

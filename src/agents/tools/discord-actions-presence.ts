@@ -1,4 +1,4 @@
-import { getGateway } from "@autocrab/discord/monitor/gateway-registry.js";
+import { getGateway } from "@autocrab/discord/src/monitor/gateway-registry.js";
 import type { Activity, UpdatePresenceData } from "@buape/carbon/gateway";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { DiscordActionConfig } from "../../config/config.js";

@@ -1,4 +1,4 @@
-import { readDiscordComponentSpec } from "@autocrab/discord/components.js";
+import { readDiscordComponentSpec } from "@autocrab/discord/src/components.js";
 import {
   createThreadDiscord,
   deleteMessageDiscord,
@@ -20,9 +20,12 @@ import {
   sendStickerDiscord,
   sendVoiceMessageDiscord,
   unpinMessageDiscord,
-} from "@autocrab/discord/send.js";
-import type { DiscordSendComponents, DiscordSendEmbeds } from "@autocrab/discord/send.shared.js";
-import { resolveDiscordChannelId } from "@autocrab/discord/targets.js";
+} from "@autocrab/discord/src/send.js";
+import type {
+  DiscordSendComponents,
+  DiscordSendEmbeds,
+} from "@autocrab/discord/src/send.shared.js";
+import { resolveDiscordChannelId } from "@autocrab/discord/src/targets.js";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { DiscordActionConfig } from "../../config/config.js";
 import type { AutoCrabConfig } from "../../config/config.js";

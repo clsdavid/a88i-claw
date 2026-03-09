@@ -1,4 +1,4 @@
-import { parseTelegramTarget } from "@autocrab/telegram/targets.js";
+import { parseTelegramTarget } from "@autocrab/telegram/src/targets.js";
 
 type TelegramConversationParams = {
   ctx: {

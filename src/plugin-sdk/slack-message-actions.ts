@@ -1,4 +1,4 @@
-import { parseSlackBlocksInput } from "@autocrab/slack/blocks-input.js";
+import { parseSlackBlocksInput } from "@autocrab/slack/src/blocks-input.js";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import { readNumberParam, readStringParam } from "../agents/tools/common.js";
 import type { ChannelMessageActionContext } from "../channels/plugins/types.js";

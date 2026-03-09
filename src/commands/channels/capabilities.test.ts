@@ -1,6 +1,6 @@
 process.env.NO_COLOR = "1";
 
-import { fetchSlackScopes } from "@autocrab/slack/scopes.js";
+import { fetchSlackScopes } from "@autocrab/slack/src/scopes.js";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getChannelPlugin, listChannelPlugins } from "../../channels/plugins/index.js";
 import type { ChannelPlugin } from "../../channels/plugins/types.js";

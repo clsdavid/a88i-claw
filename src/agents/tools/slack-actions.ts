@@ -1,4 +1,4 @@
-import { resolveSlackAccount } from "@autocrab/slack/accounts.js";
+import { resolveSlackAccount } from "@autocrab/slack/src/accounts.js";
 import {
   deleteSlackMessage,
   downloadSlackFile,
@@ -14,10 +14,10 @@ import {
   removeSlackReaction,
   sendSlackMessage,
   unpinSlackMessage,
-} from "@autocrab/slack/actions.js";
-import { parseSlackBlocksInput } from "@autocrab/slack/blocks-input.js";
-import { recordSlackThreadParticipation } from "@autocrab/slack/sent-thread-cache.js";
-import { parseSlackTarget, resolveSlackChannelId } from "@autocrab/slack/targets.js";
+} from "@autocrab/slack/src/actions.js";
+import { parseSlackBlocksInput } from "@autocrab/slack/src/blocks-input.js";
+import { recordSlackThreadParticipation } from "@autocrab/slack/src/sent-thread-cache.js";
+import { parseSlackTarget, resolveSlackChannelId } from "@autocrab/slack/src/targets.js";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { AutoCrabConfig } from "../../config/config.js";
 import { withNormalizedTimestamp } from "../date-time.js";

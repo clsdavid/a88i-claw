@@ -1,4 +1,4 @@
-import { deleteTelegramUpdateOffset } from "@autocrab/telegram/update-offset-store.js";
+import { deleteTelegramUpdateOffset } from "@autocrab/telegram/src/update-offset-store.js";
 import { resolveChannelDefaultAccountId } from "../../channels/plugins/helpers.js";
 import {
   getChannelPlugin,

@@ -1,4 +1,4 @@
-import { sendMessageSignal } from "@autocrab/signal/send.js";
+import { sendMessageSignal } from "@autocrab/signal/src/send.js";
 import type { OutboundSendDeps } from "../../../infra/outbound/deliver.js";
 import {
   createScopedChannelMediaMaxBytesResolver,

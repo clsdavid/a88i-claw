@@ -1,9 +1,9 @@
-import { inspectTelegramAccount } from "@autocrab/telegram/account-inspect.js";
+import { inspectTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
 import {
   listTelegramAccountIds,
   resolveDefaultTelegramAccountId,
   resolveTelegramAccount,
-} from "@autocrab/telegram/accounts.js";
+} from "@autocrab/telegram/src/accounts.js";
 import { fetchTelegramChatId } from "@autocrab/telegram/src/api.js";
 import { formatCliCommand } from "../../../cli/command-format.js";
 import type { AutoCrabConfig } from "../../../config/config.js";

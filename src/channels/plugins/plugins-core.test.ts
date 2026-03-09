@@ -1,12 +1,12 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import type { DiscordProbe } from "@autocrab/discord/probe.js";
-import type { DiscordTokenResolution } from "@autocrab/discord/token.js";
-import type { SignalProbe } from "@autocrab/signal/probe.js";
-import type { SlackProbe } from "@autocrab/slack/probe.js";
-import type { TelegramProbe } from "@autocrab/telegram/probe.js";
-import type { TelegramTokenResolution } from "@autocrab/telegram/token.js";
+import type { DiscordProbe } from "@autocrab/discord/src/probe.js";
+import type { DiscordTokenResolution } from "@autocrab/discord/src/token.js";
+import type { SignalProbe } from "@autocrab/signal/src/probe.js";
+import type { SlackProbe } from "@autocrab/slack/src/probe.js";
+import type { TelegramProbe } from "@autocrab/telegram/src/probe.js";
+import type { TelegramTokenResolution } from "@autocrab/telegram/src/token.js";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it } from "vitest";
 import type { AutoCrabConfig } from "../../config/config.js";
 import type { IMessageProbe } from "../../imessage/probe.js";

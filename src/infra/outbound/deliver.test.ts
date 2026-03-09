@@ -1,5 +1,5 @@
 import path from "node:path";
-import { markdownToSignalTextChunks } from "@autocrab/signal/format.js";
+import { markdownToSignalTextChunks } from "@autocrab/signal/src/format.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { signalOutbound } from "../../channels/plugins/outbound/signal.js";
 import { telegramOutbound } from "../../channels/plugins/outbound/telegram.js";

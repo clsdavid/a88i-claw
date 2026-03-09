@@ -9,7 +9,7 @@ vi.mock("../../../plugins/hook-runner-global.js", () => ({
   getGlobalHookRunner: vi.fn(),
 }));
 
-import { sendMessageSlack } from "@autocrab/slack/send.js";
+import { sendMessageSlack } from "@autocrab/slack/src/send.js";
 import { getGlobalHookRunner } from "../../../plugins/hook-runner-global.js";
 import { slackOutbound } from "./slack.js";
 

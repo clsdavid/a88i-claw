@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { telegramPlugin } from "@autocrab/telegram/channel.js";
-import { setTelegramRuntime } from "@autocrab/telegram/runtime.js";
+import { telegramPlugin } from "@autocrab/telegram/src/channel.js";
+import { setTelegramRuntime } from "@autocrab/telegram/src/runtime.js";
 import { vi } from "vitest";
 import * as replyModule from "../auto-reply/reply.js";
 import type { AutoCrabConfig } from "../config/config.js";

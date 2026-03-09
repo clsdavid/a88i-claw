@@ -21,10 +21,15 @@
       "autocrab/plugin-sdk": ["./src/plugin-sdk/index.ts"],
       "autocrab/plugin-sdk/*": ["./src/plugin-sdk/*.ts"],
       "autocrab/plugin-sdk/account-id": ["./src/plugin-sdk/account-id.ts"],
-      "@autocrab/discord/*": ["./extensions/discord/src/*"],
-      "@autocrab/slack/*": ["./extensions/slack/src/*"],
-      "@autocrab/telegram/*": ["./extensions/telegram/src/*"],
-      "@autocrab/signal/*": ["./extensions/signal/src/*"]
+      "@autocrab/discord/*": ["./extensions/discord/*"],
+      "@autocrab/slack/*": ["./extensions/slack/*"],
+      "@autocrab/telegram/*": ["./extensions/telegram/*"],
+      "@autocrab/signal/*": ["./extensions/signal/*"],
+      "@autocrab/imessage/*": ["./extensions/imessage/*"],
+      "@autocrab/whatsapp/*": ["./extensions/whatsapp/*"],
+      "@autocrab/voice-call/*": ["./extensions/voice-call/*"],
+      "@autocrab/bluebubbles/*": ["./extensions/bluebubbles/*"],
+      "@autocrab/mattermost/*": ["./extensions/mattermost/*"]
     }
   },
   "include": ["src/**/*", "ui/**/*", "extensions/**/*"],

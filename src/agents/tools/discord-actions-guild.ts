@@ -1,4 +1,4 @@
-import { getPresence } from "@autocrab/discord/monitor/presence-cache.js";
+import { getPresence } from "@autocrab/discord/src/monitor/presence-cache.js";
 import {
   addRoleDiscord,
   createChannelDiscord,
@@ -18,7 +18,7 @@ import {
   setChannelPermissionDiscord,
   uploadEmojiDiscord,
   uploadStickerDiscord,
-} from "@autocrab/discord/send.js";
+} from "@autocrab/discord/src/send.js";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { DiscordActionConfig } from "../../config/config.js";
 import {

@@ -7,9 +7,9 @@ export type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
 export type { AutoCrabConfig } from "../config/config.js";
 export type { PluginRuntime } from "../plugins/runtime/types.js";
 export type { AutoCrabPluginApi } from "../plugins/types.js";
-export type { InspectedTelegramAccount } from "@autocrab/telegram/account-inspect.js";
-export type { ResolvedTelegramAccount } from "@autocrab/telegram/accounts.js";
-export type { TelegramProbe } from "@autocrab/telegram/probe.js";
+export type { InspectedTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
+export type { ResolvedTelegramAccount } from "@autocrab/telegram/src/accounts.js";
+export type { TelegramProbe } from "@autocrab/telegram/src/probe.js";
 
 export { emptyPluginConfigSchema } from "../plugins/config-schema.js";
 
@@ -33,8 +33,8 @@ export {
   listTelegramAccountIds,
   resolveDefaultTelegramAccountId,
   resolveTelegramAccount,
-} from "@autocrab/telegram/accounts.js";
-export { inspectTelegramAccount } from "@autocrab/telegram/account-inspect.js";
+} from "@autocrab/telegram/src/accounts.js";
+export { inspectTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
 export {
   projectCredentialSnapshotFields,
   resolveConfiguredFromCredentialStatuses,
@@ -50,7 +50,7 @@ export {
 export {
   parseTelegramReplyToMessageId,
   parseTelegramThreadId,
-} from "@autocrab/telegram/outbound-params.js";
+} from "@autocrab/telegram/src/outbound-params.js";
 export { collectTelegramStatusIssues } from "../channels/plugins/status-issues/telegram.js";
 
 export {

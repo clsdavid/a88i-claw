@@ -1,10 +1,10 @@
-import { slackPlugin } from "@autocrab/slack/channel.js";
-import { setSlackRuntime } from "@autocrab/slack/runtime.js";
-import { telegramPlugin } from "@autocrab/telegram/channel.js";
-import { setTelegramRuntime } from "@autocrab/telegram/runtime.js";
+import { slackPlugin } from "@autocrab/slack/src/channel.js";
+import { setSlackRuntime } from "@autocrab/slack/src/runtime.js";
+import { telegramPlugin } from "@autocrab/telegram/src/channel.js";
+import { setTelegramRuntime } from "@autocrab/telegram/src/runtime.js";
+import { whatsappPlugin } from "@autocrab/whatsapp/src/channel.js";
+import { setWhatsAppRuntime } from "@autocrab/whatsapp/src/runtime.js";
 import { beforeEach } from "vitest";
-import { whatsappPlugin } from "../../../../extensions/whatsapp/src/channel.js";
-import { setWhatsAppRuntime } from "../../../../extensions/whatsapp/src/runtime.js";
 import type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
 import { setActivePluginRegistry } from "../plugins/runtime.js";
 import { createPluginRuntime } from "../plugins/runtime/index.js";

@@ -1,4 +1,4 @@
-import { telegramPlugin } from "@autocrab/telegram/channel.js";
+import { telegramPlugin } from "@autocrab/telegram/src/channel.js";
 import { beforeEach, describe, expect, it } from "vitest";
 import { setActivePluginRegistry } from "../plugins/runtime.js";
 import { createTestRegistry } from "../test-utils/channel-plugins.js";

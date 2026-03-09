@@ -3,6 +3,12 @@
   "version": "2026.3.2",
   "description": "AutoCrab Mattermost channel plugin",
   "type": "module",
+  "exports": {
+    "./*": {
+      "types": "./*.ts",
+      "default": "./*.js"
+    }
+  },
   "dependencies": {
     "ws": "^8.19.0",
     "zod": "^4.3.6"

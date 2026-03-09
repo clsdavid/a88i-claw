@@ -21,7 +21,7 @@ vi.mock("../../extensions/voice-call/src/runtime.js", () => ({
   createVoiceCallRuntime: vi.fn(async () => runtimeStub),
 }));
 
-import plugin from "../../../../extensions/voice-call/index.js";
+import plugin from "@autocrab/voice-call/index.js";
 
 const noopLogger = {
   info: vi.fn(),

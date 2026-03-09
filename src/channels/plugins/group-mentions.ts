@@ -1,4 +1,4 @@
-import { inspectSlackAccount } from "@autocrab/slack/account-inspect.js";
+import { inspectSlackAccount } from "@autocrab/slack/src/account-inspect.js";
 import type { AutoCrabConfig } from "../../config/config.js";
 import {
   resolveChannelGroupRequireMention,

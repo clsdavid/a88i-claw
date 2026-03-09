@@ -1,6 +1,9 @@
-import { parseDiscordTarget } from "@autocrab/discord/targets.js";
-import { parseSlackTarget } from "@autocrab/slack/targets.js";
-import { parseTelegramTarget, resolveTelegramTargetChatType } from "@autocrab/telegram/targets.js";
+import { parseDiscordTarget } from "@autocrab/discord/src/targets.js";
+import { parseSlackTarget } from "@autocrab/slack/src/targets.js";
+import {
+  parseTelegramTarget,
+  resolveTelegramTargetChatType,
+} from "@autocrab/telegram/src/targets.js";
 import { normalizeChatType, type ChatType } from "../../channels/chat-type.js";
 import type { ChannelOutboundTargetMode } from "../../channels/plugins/types.js";
 import { formatCliCommand } from "../../cli/command-format.js";

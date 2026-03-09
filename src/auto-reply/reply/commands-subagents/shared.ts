@@ -1,4 +1,4 @@
-import { parseDiscordTarget } from "@autocrab/discord/targets.js";
+import { parseDiscordTarget } from "@autocrab/discord/src/targets.js";
 import {
   countPendingDescendantRuns,
   type SubagentRunRecord,

@@ -1,16 +1,16 @@
 import {
   createTelegramActionGate,
   resolveTelegramPollActionGateState,
-} from "@autocrab/telegram/accounts.js";
+} from "@autocrab/telegram/src/accounts.js";
 import type {
   TelegramButtonStyle,
   TelegramInlineButtons,
-} from "@autocrab/telegram/button-types.js";
+} from "@autocrab/telegram/src/button-types.js";
 import {
   resolveTelegramInlineButtonsScope,
   resolveTelegramTargetChatType,
-} from "@autocrab/telegram/inline-buttons.js";
-import { resolveTelegramReactionLevel } from "@autocrab/telegram/reaction-level.js";
+} from "@autocrab/telegram/src/inline-buttons.js";
+import { resolveTelegramReactionLevel } from "@autocrab/telegram/src/reaction-level.js";
 import {
   createForumTopicTelegram,
   deleteMessageTelegram,
@@ -19,9 +19,9 @@ import {
   sendMessageTelegram,
   sendPollTelegram,
   sendStickerTelegram,
-} from "@autocrab/telegram/send.js";
-import { getCacheStats, searchStickers } from "@autocrab/telegram/sticker-cache.js";
-import { resolveTelegramToken } from "@autocrab/telegram/token.js";
+} from "@autocrab/telegram/src/send.js";
+import { getCacheStats, searchStickers } from "@autocrab/telegram/src/sticker-cache.js";
+import { resolveTelegramToken } from "@autocrab/telegram/src/token.js";
 import type { AgentToolResult } from "@mariozechner/pi-agent-core";
 import type { AutoCrabConfig } from "../../config/config.js";
 import { readBooleanParam } from "../../plugin-sdk/boolean-param.js";

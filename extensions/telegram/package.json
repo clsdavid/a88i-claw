@@ -5,7 +5,10 @@
   "description": "AutoCrab Telegram channel plugin",
   "type": "module",
   "exports": {
-    "./src/*": "./src/*.js"
+    "./src/*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.js"
+    }
   },
   "devDependencies": {
     "autocrab": "workspace:*"

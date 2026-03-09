@@ -1,8 +1,8 @@
-import { telegramPlugin } from "@autocrab/telegram/channel.js";
-import { setTelegramRuntime } from "@autocrab/telegram/runtime.js";
+import { telegramPlugin } from "@autocrab/telegram/src/channel.js";
+import { setTelegramRuntime } from "@autocrab/telegram/src/runtime.js";
+import { whatsappPlugin } from "@autocrab/whatsapp/src/channel.js";
+import { setWhatsAppRuntime } from "@autocrab/whatsapp/src/runtime.js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { whatsappPlugin } from "../../../../extensions/whatsapp/src/channel.js";
-import { setWhatsAppRuntime } from "../../../../extensions/whatsapp/src/runtime.js";
 import * as replyModule from "../auto-reply/reply.js";
 import type { AutoCrabConfig } from "../config/config.js";
 import { resolveAgentMainSessionKey, resolveMainSessionKey } from "../config/sessions.js";

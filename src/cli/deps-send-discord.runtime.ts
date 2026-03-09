@@ -1,1 +1,1 @@
-export { sendMessageDiscord } from "@autocrab/discord/send.js";
+export { sendMessageDiscord } from "@autocrab/discord/src/send.js";

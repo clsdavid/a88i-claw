@@ -1,10 +1,10 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { slackPlugin } from "@autocrab/slack/channel.js";
-import { telegramPlugin } from "@autocrab/telegram/channel.js";
+import { slackPlugin } from "@autocrab/slack/src/channel.js";
+import { telegramPlugin } from "@autocrab/telegram/src/channel.js";
+import { whatsappPlugin } from "@autocrab/whatsapp/src/channel.js";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { whatsappPlugin } from "../../../../extensions/whatsapp/src/channel.js";
 import { jsonResult } from "../../agents/tools/common.js";
 import type { ChannelPlugin } from "../../channels/plugins/types.js";
 import type { AutoCrabConfig } from "../../config/config.js";
@@ -116,7 +116,7 @@ function createAlwaysConfiguredPluginConfig(account: Record<string, unknown> = {
 let createPluginRuntime: typeof import("../../plugins/runtime/index.js").createPluginRuntime;
 let setSlackRuntime: typeof import("../../../extensions/slack/src/runtime.js").setSlackRuntime;
 let setTelegramRuntime: typeof import("../../../extensions/telegram/src/runtime.js").setTelegramRuntime;
-let setWhatsAppRuntime: typeof import("../../../extensions/whatsapp/src/runtime.js").setWhatsAppRuntime;
+let setWhatsAppRuntime: typeof import("@autocrab/whatsapp/src/runtime.js").setWhatsAppRuntime;
 
 function installChannelRuntimes(params?: { includeTelegram?: boolean; includeWhatsApp?: boolean }) {
   const runtime = createPluginRuntime();
@@ -134,7 +134,7 @@ describe("runMessageAction context isolation", () => {
     ({ createPluginRuntime } = await import("../../plugins/runtime/index.js"));
     ({ setSlackRuntime } = await import("../../../extensions/slack/src/runtime.js"));
     ({ setTelegramRuntime } = await import("../../../extensions/telegram/src/runtime.js"));
-    ({ setWhatsAppRuntime } = await import("../../../extensions/whatsapp/src/runtime.js"));
+    ({ setWhatsAppRuntime } = await import("@autocrab/whatsapp/src/runtime.js"));
   });
 
   beforeEach(() => {

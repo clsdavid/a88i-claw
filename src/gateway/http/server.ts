@@ -6,7 +6,7 @@ import {
 } from "node:http";
 import { createServer as createHttpsServer } from "node:https";
 import type { TlsOptions } from "node:tls";
-import { handleSlackHttpRequest } from "@autocrab/slack/http/index.js";
+import { handleSlackHttpRequest } from "@autocrab/slack/src/http/index.js";
 import type { WebSocketServer } from "ws";
 import { resolveAgentAvatar } from "../../agents/identity-avatar.js";
 import { CANVAS_WS_PATH, handleA2uiHttpRequest } from "../../canvas-host/a2ui.js";

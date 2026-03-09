@@ -1,5 +1,8 @@
-import { extractSlackToolSend, listSlackMessageActions } from "@autocrab/slack/message-actions.js";
-import { resolveSlackChannelId } from "@autocrab/slack/targets.js";
+import {
+  extractSlackToolSend,
+  listSlackMessageActions,
+} from "@autocrab/slack/src/message-actions.js";
+import { resolveSlackChannelId } from "@autocrab/slack/src/targets.js";
 import { handleSlackAction, type SlackActionContext } from "../../agents/tools/slack-actions.js";
 import { handleSlackMessageAction } from "../../plugin-sdk/slack-message-actions.js";
 import type { ChannelMessageActionAdapter } from "./types.js";

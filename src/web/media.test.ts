@@ -1,7 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { sendVoiceMessageDiscord } from "@autocrab/discord/send.js";
+import { sendVoiceMessageDiscord } from "@autocrab/discord/src/send.js";
 import sharp from "sharp";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { resolveStateDir } from "../config/paths.js";

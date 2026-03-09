@@ -1,9 +1,9 @@
-import { discordPlugin } from "@autocrab/discord/channel.js";
-import { signalPlugin } from "@autocrab/signal/channel.js";
-import { slackPlugin } from "@autocrab/slack/channel.js";
-import { telegramPlugin } from "@autocrab/telegram/channel.js";
-import { imessagePlugin } from "../../../../extensions/imessage/src/channel.js";
-import { whatsappPlugin } from "../../../../extensions/whatsapp/src/channel.js";
+import { discordPlugin } from "@autocrab/discord/src/channel.js";
+import { imessagePlugin } from "@autocrab/imessage/src/channel.js";
+import { signalPlugin } from "@autocrab/signal/src/channel.js";
+import { slackPlugin } from "@autocrab/slack/src/channel.js";
+import { telegramPlugin } from "@autocrab/telegram/src/channel.js";
+import { whatsappPlugin } from "@autocrab/whatsapp/src/channel.js";
 import { setActivePluginRegistry } from "../plugins/runtime.js";
 import { createTestRegistry } from "../test-utils/channel-plugins.js";
 import type { ChannelChoice } from "./onboard-types.js";

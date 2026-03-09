@@ -1,6 +1,6 @@
-import { telegramPlugin } from "@autocrab/telegram/channel.js";
+import { telegramPlugin } from "@autocrab/telegram/src/channel.js";
+import { whatsappPlugin } from "@autocrab/whatsapp/src/channel.js";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { whatsappPlugin } from "../../../../extensions/whatsapp/src/channel.js";
 import { setActivePluginRegistry } from "../../plugins/runtime.js";
 import { createTestRegistry } from "../../test-utils/channel-plugins.js";
 import { resolveOutboundTarget } from "./targets.js";

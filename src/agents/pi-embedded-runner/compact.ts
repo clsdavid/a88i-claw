@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import os from "node:os";
-import { resolveSignalReactionLevel } from "@autocrab/signal/reaction-level.js";
-import { resolveTelegramInlineButtonsScope } from "@autocrab/telegram/inline-buttons.js";
-import { resolveTelegramReactionLevel } from "@autocrab/telegram/reaction-level.js";
+import { resolveSignalReactionLevel } from "@autocrab/signal/src/reaction-level.js";
+import { resolveTelegramInlineButtonsScope } from "@autocrab/telegram/src/inline-buttons.js";
+import { resolveTelegramReactionLevel } from "@autocrab/telegram/src/reaction-level.js";
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import {
   createAgentSession,

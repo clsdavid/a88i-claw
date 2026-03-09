@@ -1,4 +1,4 @@
-import { parseSlackTarget } from "@autocrab/slack/targets.js";
+import { parseSlackTarget } from "@autocrab/slack/src/targets.js";
 
 export function normalizeSlackMessagingTarget(raw: string): string | undefined {
   const target = parseSlackTarget(raw, { defaultKind: "channel" });

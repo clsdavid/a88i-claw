@@ -65,12 +65,12 @@ export type {
   ThreadBindingManager,
   ThreadBindingRecord,
   ThreadBindingTargetKind,
-} from "@autocrab/discord/monitor/thread-bindings.js";
+} from "@autocrab/discord/src/monitor/thread-bindings.js";
 export {
   autoBindSpawnedDiscordSubagent,
   listThreadBindingsBySessionKey,
   unbindThreadBindingsBySessionKey,
-} from "@autocrab/discord/monitor/thread-bindings.js";
+} from "@autocrab/discord/src/monitor/thread-bindings.js";
 export type {
   AcpRuntimeCapabilities,
   AcpRuntimeControl,
@@ -552,10 +552,10 @@ export {
   resolveDefaultDiscordAccountId,
   resolveDiscordAccount,
   type ResolvedDiscordAccount,
-} from "@autocrab/discord/accounts.js";
-export { inspectDiscordAccount } from "@autocrab/discord/account-inspect.js";
-export type { InspectedDiscordAccount } from "@autocrab/discord/account-inspect.js";
-export { collectDiscordAuditChannelIds } from "@autocrab/discord/audit.js";
+} from "@autocrab/discord/src/accounts.js";
+export { inspectDiscordAccount } from "@autocrab/discord/src/account-inspect.js";
+export type { InspectedDiscordAccount } from "@autocrab/discord/src/account-inspect.js";
+export { collectDiscordAuditChannelIds } from "@autocrab/discord/src/audit.js";
 export { discordOnboardingAdapter } from "../channels/plugins/onboarding/discord.js";
 export {
   looksLikeDiscordTargetId,
@@ -592,16 +592,19 @@ export {
   resolveSlackAccount,
   resolveSlackReplyToMode,
   type ResolvedSlackAccount,
-} from "@autocrab/slack/accounts.js";
-export { inspectSlackAccount } from "@autocrab/slack/account-inspect.js";
-export type { InspectedSlackAccount } from "@autocrab/slack/account-inspect.js";
-export { extractSlackToolSend, listSlackMessageActions } from "@autocrab/slack/message-actions.js";
+} from "@autocrab/slack/src/accounts.js";
+export { inspectSlackAccount } from "@autocrab/slack/src/account-inspect.js";
+export type { InspectedSlackAccount } from "@autocrab/slack/src/account-inspect.js";
+export {
+  extractSlackToolSend,
+  listSlackMessageActions,
+} from "@autocrab/slack/src/message-actions.js";
 export { slackOnboardingAdapter } from "../channels/plugins/onboarding/slack.js";
 export {
   looksLikeSlackTargetId,
   normalizeSlackMessagingTarget,
 } from "../channels/plugins/normalize/slack.js";
-export { buildSlackThreadingToolContext } from "@autocrab/slack/threading-tool-context.js";
+export { buildSlackThreadingToolContext } from "@autocrab/slack/src/threading-tool-context.js";
 
 // Channel: Telegram
 export {
@@ -609,9 +612,9 @@ export {
   resolveDefaultTelegramAccountId,
   resolveTelegramAccount,
   type ResolvedTelegramAccount,
-} from "@autocrab/telegram/accounts.js";
-export { inspectTelegramAccount } from "@autocrab/telegram/account-inspect.js";
-export type { InspectedTelegramAccount } from "@autocrab/telegram/account-inspect.js";
+} from "@autocrab/telegram/src/accounts.js";
+export { inspectTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
+export type { InspectedTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
 export { telegramOnboardingAdapter } from "../channels/plugins/onboarding/telegram.js";
 export {
   looksLikeTelegramTargetId,
@@ -621,8 +624,8 @@ export { collectTelegramStatusIssues } from "../channels/plugins/status-issues/t
 export {
   parseTelegramReplyToMessageId,
   parseTelegramThreadId,
-} from "@autocrab/telegram/outbound-params.js";
-export { type TelegramProbe } from "@autocrab/telegram/probe.js";
+} from "@autocrab/telegram/src/outbound-params.js";
+export { type TelegramProbe } from "@autocrab/telegram/src/probe.js";
 
 // Channel: Signal
 export {
@@ -630,7 +633,7 @@ export {
   resolveDefaultSignalAccountId,
   resolveSignalAccount,
   type ResolvedSignalAccount,
-} from "@autocrab/signal/accounts.js";
+} from "@autocrab/signal/src/accounts.js";
 export { signalOnboardingAdapter } from "../channels/plugins/onboarding/signal.js";
 export {
   looksLikeSignalTargetId,

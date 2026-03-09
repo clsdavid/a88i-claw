@@ -1,4 +1,4 @@
-import { clearGateways, registerGateway } from "@autocrab/discord/monitor/gateway-registry.js";
+import { clearGateways, registerGateway } from "@autocrab/discord/src/monitor/gateway-registry.js";
 import type { GatewayPlugin } from "@buape/carbon/gateway";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { DiscordActionConfig } from "../../config/config.js";

@@ -1,12 +1,12 @@
 import {
   getThreadBindingManager,
   type ThreadBindingRecord,
-} from "@autocrab/discord/monitor/thread-bindings.js";
+} from "@autocrab/discord/src/monitor/thread-bindings.js";
 import {
   sendMessageDiscord,
   sendPollDiscord,
   sendWebhookMessageDiscord,
-} from "@autocrab/discord/send.js";
+} from "@autocrab/discord/src/send.js";
 import type { AutoCrabConfig } from "../../../config/config.js";
 import type { OutboundIdentity } from "../../../infra/outbound/identity.js";
 import { normalizeDiscordOutboundTarget } from "../normalize/discord.js";
