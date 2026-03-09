@@ -77,6 +77,9 @@ The AutoCrab project (formerly OpenClaw) has a strong foundational security post
     - Removed unused `authenticate-pam` and `koffi` from `pnpm.onlyBuiltDependencies`.
     - Regular review of `pnpm.onlyBuiltDependencies`.
     - Minimize the list of packages allowed to run install scripts.
+2.  **Documentation & Licensing** (Done):
+    - Created comprehensive `ARCHITECTURE.md` detailing the project structure, origins (OpenClaw 3.3 fork), and security enhancements.
+    - Updated `LICENSE` to reflect the new stewardship (Dr Leshi Chen).
 
 ---
 
