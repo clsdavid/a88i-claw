@@ -55,6 +55,7 @@ import {
   detectLegacyStateMigrations,
   runLegacyStateMigrations,
 } from "./doctor-state-migrations.js";
+import { noteSystemPrerequisites, noteConflictingBinaries } from "./doctor-system-check.js";
 import { maybeRepairUiProtocolFreshness } from "./doctor-ui.js";
 import { maybeOfferUpdateBeforeDoctor } from "./doctor-update.js";
 import { noteWorkspaceStatus } from "./doctor-workspace-status.js";
@@ -96,6 +97,8 @@ export async function doctorCommand(
   }
 
   await maybeRepairUiProtocolFreshness(runtime, prompter);
+  noteSystemPrerequisites();
+  await noteConflictingBinaries();
   noteSourceInstallIssues(root);
   noteLegacyStateDirUsage();
   noteDeprecatedLegacyEnvVars();
