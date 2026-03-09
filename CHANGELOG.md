@@ -2,6 +2,16 @@
 
 Docs: https://docs.autocrab.ai
 
+## 2026.3.10
+
+### Changes
+
+- Renaming: Updated project references and terminology to align with `autocrab` branding.
+- Documentation/Architecture: Added `ARCHITECTURE.md` to document system design, core components, and data flow.
+- Documentation/Improvement Plan: Added `IMPROVEMENT_PLAN_SECURITY.md` and `IMPROVEMENT_PLAN_OPTIMIZATION.md` covering security findings and token usage optimizations.
+- License: Updated license and copyright headers.
+- README: Updated documentation references and project overview.
+
 ## 2026.3.3
 
 ### Changes
