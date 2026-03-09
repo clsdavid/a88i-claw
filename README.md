@@ -23,24 +23,22 @@ It answers you on the channels you already use (WhatsApp, Telegram, Slack, Disco
 
 If you want a personal, single-user assistant that feels local, fast, and always-on, this is it.
 
-[Website](https://autocrab.ai) · [Docs](https://docs.autocrab.ai) · [Vision](VISION.md) · [DeepWiki](https://deepwiki.com/autocrab/autocrab) · [Getting Started](https://docs.autocrab.ai/start/getting-started) · [Updating](https://docs.autocrab.ai/install/updating) · [Showcase](https://docs.autocrab.ai/start/showcase) · [FAQ](https://docs.autocrab.ai/help/faq) · [Wizard](https://docs.autocrab.ai/start/wizard) · [Nix](https://github.com/autocrab/nix-autocrab) · [Docker](https://docs.autocrab.ai/install/docker) · [Discord](https://discord.gg/clawd)
+### 🛡️ Security & Architecture
+
+This version, maintained by **Dr Leshi Chen**, is a hardened fork of OpenClaw 3.3. Key improvements include:
+
+- **Modular Architecture:** Core channels moved to workspace extensions for better isolation.
+- **Security Hardening:** Strict supply chain controls, sanitized CI/CD pipelines, and reduced attack surface.
+- **Docker Optimization:** Enhanced support for local inference (Ollama) and secure configuration.
+
+For a detailed breakdown of changes, see [ARCHITECTURE.md](ARCHITECTURE.md).
+
+[Website](https://autocrab.ai) · [Docs](https://docs.autocrab.ai) · [Architecture](ARCHITECTURE.md) · [Vision](VISION.md) · [DeepWiki](https://deepwiki.com/autocrab/autocrab) · [Getting Started](https://docs.autocrab.ai/start/getting-started) · [Updating](https://docs.autocrab.ai/install/updating) · [Showcase](https://docs.autocrab.ai/start/showcase) · [FAQ](https://docs.autocrab.ai/help/faq) · [Wizard](https://docs.autocrab.ai/start/wizard) · [Nix](https://github.com/autocrab/nix-autocrab) · [Docker](https://docs.autocrab.ai/install/docker) · [Discord](https://discord.gg/clawd)
 
 Preferred setup: run the onboarding wizard (`autocrab onboard`) in your terminal.
 The wizard guides you step by step through setting up the gateway, workspace, channels, and skills. The CLI wizard is the recommended path and works on **macOS, Linux, and Windows (via WSL2; strongly recommended)**.
 Works with npm, pnpm, or bun.
 New install? Start here: [Getting started](https://docs.autocrab.ai/start/getting-started)
-
-## Sponsors
-
-| OpenAI                                                            | Vercel                                                            | Blacksmith                                                                   | Convex                                                                |
-| ----------------------------------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------- |
-| [![OpenAI](docs/assets/sponsors/openai.svg)](https://openai.com/) | [![Vercel](docs/assets/sponsors/vercel.svg)](https://vercel.com/) | [![Blacksmith](docs/assets/sponsors/blacksmith.svg)](https://blacksmith.sh/) | [![Convex](docs/assets/sponsors/convex.svg)](https://www.convex.dev/) |
-
-**Subscriptions (OAuth):**
-
-- **[OpenAI](https://openai.com/)** (ChatGPT/Codex)
-
-Model note: while many providers/models are supported, for the best experience and lower prompt-injection risk use the strongest latest-generation model available to you. See [Onboarding](https://docs.autocrab.ai/start/onboarding).
 
 ## Models (selection + auth)
 
@@ -509,21 +507,19 @@ Use these when you’re past the onboarding flow and want the deeper reference.
 
 ## Molty
 
-AutoCrab was built for **Molty**, a space lobster AI assistant. 🦞
-by Peter Steinberger and the community.
+AutoCrab was originally built for **Molty**, a space lobster AI assistant 🦞, by Peter Steinberger.
+This hardened fork is maintained by **Dr Leshi Chen**.
 
 - [autocrab.ai](https://autocrab.ai)
-- [soul.md](https://soul.md)
-- [steipete.me](https://steipete.me)
-- [@autocrab](https://x.com/autocrab)
+- [Architecture](ARCHITECTURE.md)
+- [Improvement Plan](IMPROVEMENT_PLAN_SECURITY.md)
 
 ## Community
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, maintainers, and how to submit PRs.
 AI/vibe-coded PRs welcome! 🤖
 
-Special thanks to [Mario Zechner](https://mariozechner.at/) for his support and for
-[pi-mono](https://github.com/badlogic/pi-mono).
+Special thanks to Peter Steinberger for creating OpenClaw, and to [Mario Zechner](https://mariozechner.at/) for [pi-mono](https://github.com/badlogic/pi-mono).
 Special thanks to Adam Doppelt for lobster.bot.
 
 Thanks to all clawtributors:
