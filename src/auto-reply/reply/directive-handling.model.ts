@@ -1,4 +1,4 @@
-import { buildBrowseProvidersButton } from "@autocrab/telegram/src/model-buttons.js";
+import { buildBrowseProvidersButton } from "@autocrab/telegram/src/model-buttons";
 import { resolveAuthStorePathForDisplay } from "../../agents/auth-profiles.js";
 import {
   type ModelAliasIndex,

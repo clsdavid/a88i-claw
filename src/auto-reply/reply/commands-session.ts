@@ -7,11 +7,11 @@ import {
   resolveThreadBindingMaxAgeMs,
   setThreadBindingIdleTimeoutBySessionKey,
   setThreadBindingMaxAgeBySessionKey,
-} from "@autocrab/discord/src/monitor/thread-bindings.js";
+} from "@autocrab/discord/src/monitor/thread-bindings";
 import {
   setTelegramThreadBindingIdleTimeoutBySessionKey,
   setTelegramThreadBindingMaxAgeBySessionKey,
-} from "@autocrab/telegram/src/thread-bindings.js";
+} from "@autocrab/telegram/src/thread-bindings";
 import { parseDurationMs } from "../../cli/parse-duration.js";
 import { isRestartEnabled } from "../../config/commands.js";
 import { logVerbose } from "../../globals.js";

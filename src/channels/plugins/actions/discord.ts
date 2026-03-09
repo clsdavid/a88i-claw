@@ -1,7 +1,7 @@
 import {
   createDiscordActionGate,
   listEnabledDiscordAccounts,
-} from "@autocrab/discord/src/accounts.js";
+} from "@autocrab/discord/src/accounts";
 import type { DiscordActionConfig } from "../../../config/types.discord.js";
 import type { ChannelMessageActionAdapter, ChannelMessageActionName } from "../types.js";
 import { handleDiscordMessageAction } from "./discord/handle-action.js";

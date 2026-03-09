@@ -8,6 +8,9 @@ services:
       AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS: ${AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS:-}
       AUTOCRAB_MODEL_PROVIDER: ${AUTOCRAB_MODEL_PROVIDER:-anthropic}
       AUTOCRAB_MODEL_ID: ${AUTOCRAB_MODEL_ID:-claude-opus-4-6}
+      AUTOCRAB_CONFIG_GATEWAY_MODE: local
+      AUTOCRAB_CONFIG_GATEWAY_CONTROL_UI_ALLOWED_ORIGINS: "*"
+      AUTOCRAB_CONFIG_GATEWAY_CONTROL_UI_DANGEROUSLY_ALLOW_HOST_HEADER_ORIGIN_FALLBACK: "true"
       CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE:-}
@@ -28,18 +31,9 @@ services:
     ports:
       - "${AUTOCRAB_GATEWAY_PORT:-18789}:18789"
       - "${AUTOCRAB_BRIDGE_PORT:-18790}:18790"
+    command: ["node", "autocrab.mjs", "gateway", "run", "--bind", "lan", "--allow-unconfigured"]
     init: true
     restart: unless-stopped
-    command:
-      [
-        "node",
-        "dist/index.js",
-        "gateway",
-        "--bind",
-        "${AUTOCRAB_GATEWAY_BIND:-lan}",
-        "--port",
-        "18789",
-      ]
     healthcheck:
       test:
         [

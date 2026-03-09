@@ -1,5 +1,5 @@
-import { resolveTelegramAccount } from "@autocrab/telegram/src/accounts.js";
-import { deleteTelegramUpdateOffset } from "@autocrab/telegram/src/update-offset-store.js";
+import { resolveTelegramAccount } from "@autocrab/telegram/src/accounts";
+import { deleteTelegramUpdateOffset } from "@autocrab/telegram/src/update-offset-store";
 import { resolveAgentWorkspaceDir, resolveDefaultAgentId } from "../../agents/agent-scope.js";
 import { listChannelPluginCatalogEntries } from "../../channels/plugins/catalog.js";
 import { getChannelPlugin, normalizeChannelId } from "../../channels/plugins/index.js";

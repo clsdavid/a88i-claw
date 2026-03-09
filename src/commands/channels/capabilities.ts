@@ -1,6 +1,6 @@
-import { fetchChannelPermissionsDiscord } from "@autocrab/discord/src/send.js";
-import { parseDiscordTarget } from "@autocrab/discord/src/targets.js";
-import { fetchSlackScopes, type SlackScopesResult } from "@autocrab/slack/src/scopes.js";
+import { fetchChannelPermissionsDiscord } from "@autocrab/discord/src/send";
+import { parseDiscordTarget } from "@autocrab/discord/src/targets";
+import { fetchSlackScopes, type SlackScopesResult } from "@autocrab/slack/src/scopes";
 import { resolveChannelDefaultAccountId } from "../../channels/plugins/helpers.js";
 import { getChannelPlugin, listChannelPlugins } from "../../channels/plugins/index.js";
 import type { ChannelCapabilities, ChannelPlugin } from "../../channels/plugins/types.js";

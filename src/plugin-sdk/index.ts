@@ -633,7 +633,7 @@ export {
   resolveDefaultSignalAccountId,
   resolveSignalAccount,
   type ResolvedSignalAccount,
-} from "@autocrab/signal/src/accounts.js";
+} from "@autocrab/signal/src/accounts";
 export { signalOnboardingAdapter } from "../channels/plugins/onboarding/signal.js";
 export {
   looksLikeSignalTargetId,

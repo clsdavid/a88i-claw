@@ -1,4 +1,4 @@
-import type { StickerMetadata } from "@autocrab/telegram/src/bot/types.js";
+import type { StickerMetadata } from "@autocrab/telegram/src/bot/types";
 import type { ChannelId } from "../channels/plugins/types.js";
 import type {
   MediaUnderstandingDecision,

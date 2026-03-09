@@ -1,4 +1,4 @@
-import { listEnabledSignalAccounts, resolveSignalAccount } from "@autocrab/signal/src/accounts.js";
+import { listEnabledSignalAccounts, resolveSignalAccount } from "@autocrab/signal/src/accounts";
 import { resolveSignalReactionLevel } from "@autocrab/signal/src/reaction-level.js";
 import { sendReactionSignal, removeReactionSignal } from "@autocrab/signal/src/send-reactions.js";
 import { createActionGate, jsonResult, readStringParam } from "../../../agents/tools/common.js";

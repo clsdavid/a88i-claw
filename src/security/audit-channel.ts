@@ -1,7 +1,7 @@
 import {
   isNumericTelegramUserId,
   normalizeTelegramAllowFromEntry,
-} from "@autocrab/telegram/src/allow-from.js";
+} from "@autocrab/telegram/src/allow-from";
 import {
   hasConfiguredUnavailableCredentialStatus,
   hasResolvedCredentialValue,

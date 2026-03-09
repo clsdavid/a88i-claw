@@ -1,4 +1,4 @@
-import { parseTelegramTarget } from "@autocrab/telegram/src/targets.js";
+import { parseTelegramTarget } from "@autocrab/telegram/src/targets";
 import { isMessagingToolDuplicate } from "../../agents/pi-embedded-helpers.js";
 import type { MessagingToolSend } from "../../agents/pi-embedded-runner.js";
 import { normalizeChannelId } from "../../channels/plugins/index.js";

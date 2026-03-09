@@ -4,7 +4,7 @@ import {
   calculateTotalPages,
   getModelsPageSize,
   type ProviderInfo,
-} from "@autocrab/telegram/src/model-buttons.js";
+} from "@autocrab/telegram/src/model-buttons";
 import { resolveAgentDir, resolveSessionAgentId } from "../../agents/agent-scope.js";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../../agents/defaults.js";
 import { resolveModelAuthLabel } from "../../agents/model-auth-label.js";

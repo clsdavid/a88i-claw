@@ -2,8 +2,8 @@ import {
   createTelegramActionGate,
   listEnabledTelegramAccounts,
   resolveTelegramPollActionGateState,
-} from "@autocrab/telegram/src/accounts.js";
-import { isTelegramInlineButtonsEnabled } from "@autocrab/telegram/src/inline-buttons.js";
+} from "@autocrab/telegram/src/accounts";
+import { isTelegramInlineButtonsEnabled } from "@autocrab/telegram/src/inline-buttons";
 import {
   readNumberParam,
   readStringArrayParam,

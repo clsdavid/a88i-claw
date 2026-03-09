@@ -1,7 +1,7 @@
-import type { sendMessageDiscord } from "@autocrab/discord/src/send.js";
-import type { sendMessageSignal } from "@autocrab/signal/src/send.js";
-import type { sendMessageSlack } from "@autocrab/slack/src/send.js";
-import type { sendMessageTelegram } from "@autocrab/telegram/src/send.js";
+import type { sendMessageDiscord } from "@autocrab/discord/src/send";
+import type { sendMessageSignal } from "@autocrab/signal/src/send";
+import type { sendMessageSlack } from "@autocrab/slack/src/send";
+import type { sendMessageTelegram } from "@autocrab/telegram/src/send";
 import type { sendMessageWhatsApp } from "../channels/web/index.js";
 import type { sendMessageIMessage } from "../imessage/send.js";
 import type { OutboundSendDeps } from "../infra/outbound/deliver.js";

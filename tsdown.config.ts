@@ -4,6 +4,14 @@ const env = {
   NODE_ENV: "production",
 };
 
+const baseConfig = {
+  env,
+  fixedExtension: false,
+  platform: "node" as const,
+  // Force bundling of workspace packages to avoid external module resolution issues at runtime
+  noExternal: [/^@autocrab\//],
+};
+
 const pluginSdkEntrypoints = [
   "index",
   "core",
@@ -54,28 +62,20 @@ const pluginSdkEntrypoints = [
 export default defineConfig([
   {
     entry: "src/index.ts",
-    env,
-    fixedExtension: false,
-    platform: "node",
+    ...baseConfig,
   },
   {
     entry: "src/entry.ts",
-    env,
-    fixedExtension: false,
-    platform: "node",
+    ...baseConfig,
   },
   {
     // Ensure this module is bundled as an entry so legacy CLI shims can resolve its exports.
     entry: "src/cli/daemon-cli.ts",
-    env,
-    fixedExtension: false,
-    platform: "node",
+    ...baseConfig,
   },
   {
     entry: "src/infra/warning-filter.ts",
-    env,
-    fixedExtension: false,
-    platform: "node",
+    ...baseConfig,
   },
   {
     // Keep sync lazy-runtime channel modules as concrete dist files.
@@ -91,27 +91,19 @@ export default defineConfig([
       "line/send": "src/line/send.ts",
       "line/template-messages": "src/line/template-messages.ts",
     },
-    env,
-    fixedExtension: false,
-    platform: "node",
+    ...baseConfig,
   },
   ...pluginSdkEntrypoints.map((entry) => ({
     entry: `src/plugin-sdk/${entry}.ts`,
     outDir: "dist/plugin-sdk",
-    env,
-    fixedExtension: false,
-    platform: "node" as const,
+    ...baseConfig,
   })),
   {
     entry: "src/extensionAPI.ts",
-    env,
-    fixedExtension: false,
-    platform: "node",
+    ...baseConfig,
   },
   {
     entry: ["src/hooks/bundled/*/handler.ts", "src/hooks/llm-slug-generator.ts"],
-    env,
-    fixedExtension: false,
-    platform: "node",
+    ...baseConfig,
   },
 ]);

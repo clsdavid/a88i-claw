@@ -1,6 +1,6 @@
 export type { ChannelMessageActionAdapter } from "../channels/plugins/types.js";
 export type { ChannelPlugin } from "../channels/plugins/types.plugin.js";
-export type { ResolvedSignalAccount } from "@autocrab/signal/src/accounts.js";
+export type { ResolvedSignalAccount } from "@autocrab/signal/src/accounts";
 export type { PluginRuntime } from "../plugins/runtime/types.js";
 export type { AutoCrabPluginApi } from "../plugins/types.js";
 
@@ -25,7 +25,7 @@ export {
   listSignalAccountIds,
   resolveDefaultSignalAccountId,
   resolveSignalAccount,
-} from "@autocrab/signal/src/accounts.js";
+} from "@autocrab/signal/src/accounts";
 export {
   looksLikeSignalTargetId,
   normalizeSignalMessagingTarget,

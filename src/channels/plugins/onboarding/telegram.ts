@@ -1,10 +1,10 @@
-import { inspectTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
+import { inspectTelegramAccount } from "@autocrab/telegram/src/account-inspect";
 import {
   listTelegramAccountIds,
   resolveDefaultTelegramAccountId,
   resolveTelegramAccount,
-} from "@autocrab/telegram/src/accounts.js";
-import { fetchTelegramChatId } from "@autocrab/telegram/src/api.js";
+} from "@autocrab/telegram/src/accounts";
+import { fetchTelegramChatId } from "@autocrab/telegram/src/api";
 import { formatCliCommand } from "../../../cli/command-format.js";
 import type { AutoCrabConfig } from "../../../config/config.js";
 import { hasConfiguredSecretInput } from "../../../config/types.secrets.js";
