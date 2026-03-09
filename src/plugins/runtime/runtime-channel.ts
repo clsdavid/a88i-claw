@@ -25,7 +25,7 @@ import {
   collectTelegramUnmentionedGroupIds,
 } from "@autocrab/telegram/src/audit.js";
 import { monitorTelegramProvider } from "@autocrab/telegram/src/monitor.js";
-import { probeTelegram } from "@autocrab/telegram/src/probe.js";
+import { probeTelegram } from "@autocrab/telegram/src/probe.ts";
 import { sendMessageTelegram, sendPollTelegram } from "@autocrab/telegram/src/send.js";
 import { resolveTelegramToken } from "@autocrab/telegram/src/token.js";
 import { resolveEffectiveMessagesConfig, resolveHumanDelayConfig } from "../../agents/identity.js";

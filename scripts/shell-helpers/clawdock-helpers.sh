@@ -113,7 +113,7 @@ _clawdock_ensure_dir() {
     echo ""
     echo "Clone it first:"
     echo ""
-    echo "  git clone https://github.com/autocrab/autocrab.git ~/autocrab"
+    echo "  git clone https://github.com/clsdavid/autocrab.git ~/autocrab"
     echo "  cd ~/autocrab && ./docker-setup.sh"
     echo ""
     echo "Or set CLAWDOCK_DIR if it's elsewhere:"

@@ -169,7 +169,7 @@ autocrab pairing approve whatsapp <code>
 如果你正在开发 AutoCrab 本身，从源代码运行：
 
 ```bash
-git clone https://github.com/autocrab/autocrab.git
+git clone https://github.com/clsdavid/autocrab.git
 cd autocrab
 pnpm install
 pnpm ui:build # 首次运行时自动安装 UI 依赖

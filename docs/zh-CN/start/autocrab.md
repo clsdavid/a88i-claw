@@ -45,7 +45,7 @@ npm install -g autocrab@latest
 从源代码（开发）：
 
 ```bash
-git clone https://github.com/autocrab/autocrab.git
+git clone https://github.com/clsdavid/autocrab.git
 cd autocrab
 pnpm install
 pnpm ui:build # 首次运行时自动安装 UI 依赖

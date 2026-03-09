@@ -7,7 +7,7 @@
     "noEmit": false,
     "noEmitOnError": true,
     "outDir": "dist/plugin-sdk",
-    "rootDir": "src",
+    "rootDir": ".",
     "tsBuildInfoFile": "dist/plugin-sdk/.tsbuildinfo"
   },
   "include": [
@@ -55,7 +55,8 @@
     "src/plugin-sdk/voice-call.ts",
     "src/plugin-sdk/zalo.ts",
     "src/plugin-sdk/zalouser.ts",
-    "src/types/**/*.d.ts"
+    "src/types/**/*.d.ts",
+    "extensions/**/*.ts"
   ],
   "exclude": ["node_modules", "dist", "src/**/*.test.ts"]
 }

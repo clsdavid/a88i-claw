@@ -3,15 +3,15 @@
   "version": "2026.3.3",
   "description": "Multi-channel AI gateway with extensible messaging integrations",
   "keywords": [],
-  "homepage": "https://github.com/autocrab/autocrab#readme",
+  "homepage": "https://github.com/clsdavid/autocrab#readme",
   "bugs": {
-    "url": "https://github.com/autocrab/autocrab/issues"
+    "url": "https://github.com/clsdavid/autocrab/issues"
   },
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/autocrab/autocrab.git"
+    "url": "git+https://github.com/clsdavid/autocrab.git"
   },
   "bin": {
     "autocrab": "autocrab.mjs"
@@ -331,10 +331,6 @@
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "0.14.1",
-    "@autocrab/discord": "workspace:*",
-    "@autocrab/signal": "workspace:*",
-    "@autocrab/slack": "workspace:*",
-    "@autocrab/telegram": "workspace:*",
     "@aws-sdk/client-bedrock": "^3.1000.0",
     "@buape/carbon": "0.0.0-beta-20260216184201",
     "@clack/prompts": "^1.0.1",
@@ -392,6 +388,10 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@autocrab/discord": "workspace:*",
+    "@autocrab/signal": "workspace:*",
+    "@autocrab/slack": "workspace:*",
+    "@autocrab/telegram": "workspace:*",
     "@grammyjs/types": "^3.25.0",
     "@lit-labs/signals": "^0.2.0",
     "@lit/context": "^1.1.6",

@@ -6,12 +6,12 @@ If you believe you've found a security issue in AutoCrab, please report it priva
 
 Report vulnerabilities directly to the repository where the issue lives:
 
-- **Core CLI and gateway** — [autocrab/autocrab](https://github.com/autocrab/autocrab)
-- **macOS desktop app** — [autocrab/autocrab](https://github.com/autocrab/autocrab) (apps/macos)
-- **iOS app** — [autocrab/autocrab](https://github.com/autocrab/autocrab) (apps/ios)
-- **Android app** — [autocrab/autocrab](https://github.com/autocrab/autocrab) (apps/android)
-- **ClawHub** — [autocrab/clawhub](https://github.com/autocrab/clawhub)
-- **Trust and threat model** — [autocrab/trust](https://github.com/autocrab/trust)
+- **Core CLI and gateway** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab)
+- **macOS desktop app** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab) (apps/macos)
+- **iOS app** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab) (apps/ios)
+- **Android app** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab) (apps/android)
+- **ClawHub** — [autocrab/clawhub](https://github.com/clsdavid/autocrab/clawhub)
+- **Trust and threat model** — [autocrab/trust](https://github.com/clsdavid/autocrab/trust)
 
 For issues that don't fit a specific repo, or if you're unsure, email **[security@autocrab.ai](mailto:security@autocrab.ai)** and we'll route it.
 

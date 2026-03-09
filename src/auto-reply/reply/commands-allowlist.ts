@@ -1,9 +1,9 @@
-import { resolveDiscordAccount } from "@autocrab/discord/src/accounts.js";
-import { resolveDiscordUserAllowlist } from "@autocrab/discord/src/resolve-users.js";
-import { resolveSignalAccount } from "@autocrab/signal/src/accounts.js";
-import { resolveSlackAccount } from "@autocrab/slack/src/accounts.js";
-import { resolveSlackUserAllowlist } from "@autocrab/slack/src/resolve-users.js";
-import { resolveTelegramAccount } from "@autocrab/telegram/src/accounts.js";
+import { resolveDiscordAccount } from "@autocrab/discord/src/accounts";
+import { resolveDiscordUserAllowlist } from "@autocrab/discord/src/resolve-users";
+import { resolveSignalAccount } from "@autocrab/signal/src/accounts";
+import { resolveSlackAccount } from "@autocrab/slack/src/accounts";
+import { resolveSlackUserAllowlist } from "@autocrab/slack/src/resolve-users";
+import { resolveTelegramAccount } from "@autocrab/telegram/src/accounts";
 import { getChannelDock } from "../../channels/dock.js";
 import { resolveChannelConfigWrites } from "../../channels/plugins/config-writes.js";
 import { listPairingChannels } from "../../channels/plugins/pairing.js";

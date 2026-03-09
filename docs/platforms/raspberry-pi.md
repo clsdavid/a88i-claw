@@ -118,7 +118,7 @@ curl -fsSL https://autocrab.ai/install.sh | bash
 ### Option B: Hackable Install (For tinkering)
 
 ```bash
-git clone https://github.com/autocrab/autocrab.git
+git clone https://github.com/clsdavid/autocrab.git
 cd autocrab
 npm install
 npm run build

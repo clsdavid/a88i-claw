@@ -126,7 +126,7 @@ function mergeTelegramAccountConfig(cfg: AutoCrabConfig, accountId: string): Tel
   // this failure disrupts message delivery for *all* accounts.
   // Single-account setups keep backward compat: channel-level groups still
   // applies when the account has no override.
-  // See: https://github.com/autocrab/autocrab/issues/30673
+  // See: https://github.com/clsdavid/autocrab/issues/30673
   const configuredAccountIds = Object.keys(cfg.channels?.telegram?.accounts ?? {});
   const isMultiAccount = configuredAccountIds.length > 1;
   const groups = account.groups ?? (isMultiAccount ? undefined : channelGroups);

@@ -12,8 +12,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/autocrab/autocrab/actions/workflows/ci.yml?branch=main"><img src="https://img.shields.io/github/actions/workflow/status/autocrab/autocrab/ci.yml?branch=main&style=for-the-badge" alt="CI status"></a>
-  <a href="https://github.com/autocrab/autocrab/releases"><img src="https://img.shields.io/github/v/release/autocrab/autocrab?include_prereleases&style=for-the-badge" alt="GitHub release"></a>
+  <a href="https://github.com/clsdavid/autocrab/actions/workflows/ci.yml?branch=main"><img src="https://img.shields.io/github/actions/workflow/status/autocrab/autocrab/ci.yml?branch=main&style=for-the-badge" alt="CI status"></a>
+  <a href="https://github.com/clsdavid/autocrab/releases"><img src="https://img.shields.io/github/v/release/autocrab/autocrab?include_prereleases&style=for-the-badge" alt="GitHub release"></a>
   <a href="https://discord.gg/clawd"><img src="https://img.shields.io/discord/1456350064065904867?label=Discord&logo=discord&logoColor=white&color=5865F2&style=for-the-badge" alt="Discord"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
 </p>
@@ -48,6 +48,33 @@ Model note: while many providers/models are supported, for the best experience a
 - Auth profile rotation (OAuth vs API keys) + fallbacks: [Model failover](https://docs.autocrab.ai/concepts/model-failover)
 
 ## Install (recommended)
+
+### Quick Start: Local Ollama
+
+Run AutoCrab with a local LLM in one command:
+
+```bash
+# Ensure Ollama is running (http://localhost:11434)
+./scripts/deploy-local.sh [model-name]
+```
+
+This starts the AutoCrab gateway via Docker, configured to use your local Ollama instance.
+Default model is `llama3`. To use another model:
+
+```bash
+./scripts/deploy-local.sh mistral
+```
+
+> **Note on Live Canvas (A2UI)**:
+> The `vendor/a2ui` directory contains source code for the "Live Canvas" feature. If this directory is missing, the build script uses a placeholder `a2ui.bundle.js` so the **backend can still run successfully**, but the **Live Canvas UI will be disabled**.
+>
+> To enable the full UI later, initialize the submodules:
+>
+> ```bash
+> git submodule update --init --recursive
+> # Rebuild the image
+> docker build -t autocrab:local .
+> ```
 
 Runtime: **Node ≥22**.
 
@@ -94,7 +121,7 @@ Details: [Development channels](https://docs.autocrab.ai/install/development-cha
 Prefer `pnpm` for builds from source. Bun is optional for running TypeScript directly.
 
 ```bash
-git clone https://github.com/autocrab/autocrab.git
+git clone https://github.com/clsdavid/autocrab.git
 cd autocrab
 
 pnpm install

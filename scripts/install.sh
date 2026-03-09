@@ -1896,7 +1896,7 @@ resolve_autocrab_bin() {
 
 install_autocrab_from_git() {
     local repo_dir="$1"
-    local repo_url="https://github.com/autocrab/autocrab.git"
+    local repo_url="https://github.com/clsdavid/autocrab.git"
 
     if [[ -d "$repo_dir/.git" ]]; then
         ui_info "Installing AutoCrab from git checkout: ${repo_dir}"

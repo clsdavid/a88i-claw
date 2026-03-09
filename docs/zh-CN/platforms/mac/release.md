@@ -77,7 +77,7 @@ ditto -c -k --keepParent apps/macos/.build/release/AutoCrab.app.dSYM dist/AutoCr
 SPARKLE_PRIVATE_KEY_FILE=/path/to/ed25519-private-key scripts/make_appcast.sh dist/AutoCrab-2026.1.27-beta.1.zip https://raw.githubusercontent.com/autocrab/autocrab/main/appcast.xml
 ```
 
-从 `CHANGELOG.md`（通过 [`scripts/changelog-to-html.sh`](https://github.com/autocrab/autocrab/blob/main/scripts/changelog-to-html.sh)）生成 HTML 发布说明，并将其嵌入 appcast 条目。
+从 `CHANGELOG.md`（通过 [`scripts/changelog-to-html.sh`](https://github.com/clsdavid/autocrab/blob/main/scripts/changelog-to-html.sh)）生成 HTML 发布说明，并将其嵌入 appcast 条目。
 发布时，将更新后的 `appcast.xml` 与发布资源（zip + dSYM）一起提交。
 
 ## 发布与验证

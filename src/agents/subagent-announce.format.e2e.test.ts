@@ -178,7 +178,7 @@ describe("subagent announce formatting", () => {
     // Set FAST_TEST_MODE before importing the module to ensure the module-level
     // constant picks it up. This fixes flaky Windows CI failures where the test
     // timeout budget is too tight without fast mode enabled.
-    // See: https://github.com/autocrab/autocrab/issues/31298
+    // See: https://github.com/clsdavid/autocrab/issues/31298
     previousFastTestEnv = process.env.AUTOCRAB_TEST_FAST;
     process.env.AUTOCRAB_TEST_FAST = "1";
     ({ runSubagentAnnounceFlow } = await import("./subagent-announce.js"));

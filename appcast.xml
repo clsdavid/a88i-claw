@@ -217,9 +217,9 @@
 <li>Tests/Windows backup rotation: skip chmod-only backup permission assertions on Windows while retaining compose/rotation/prune coverage across platforms to avoid false CI failures from Windows non-POSIX mode semantics. (#32286) Thanks @jalehman.</li>
 <li>Tests/Subagent announce: set <code>AUTOCRAB_TEST_FAST=1</code> before importing <code>subagent-announce</code> format suites so module-level fast-mode constants are captured deterministically on Windows CI, preventing timeout flakes in nested completion announce coverage. (#31370) Thanks @zwffff.</li>
 </ul>
-<p><a href="https://github.com/autocrab/autocrab/blob/main/CHANGELOG.md">View full changelog</a></p>
+<p><a href="https://github.com/clsdavid/autocrab/blob/main/CHANGELOG.md">View full changelog</a></p>
 ]]></description>
-            <enclosure url="https://github.com/autocrab/autocrab/releases/download/v2026.3.2/AutoCrab-2026.3.2.zip" length="23181513" type="application/octet-stream" sparkle:edSignature="THMgkcoMgz2vv5zse3Po3K7l3Or2RhBKurXZIi8iYVXN76yJy1YXAY6kXi6ovD+dbYn68JKYDIKA1Ya78bO7BQ=="/>
+            <enclosure url="https://github.com/clsdavid/autocrab/releases/download/v2026.3.2/AutoCrab-2026.3.2.zip" length="23181513" type="application/octet-stream" sparkle:edSignature="THMgkcoMgz2vv5zse3Po3K7l3Or2RhBKurXZIi8iYVXN76yJy1YXAY6kXi6ovD+dbYn68JKYDIKA1Ya78bO7BQ=="/>
         </item>
         <item>
             <title>2026.3.1</title>
@@ -355,9 +355,9 @@
 <li>Feishu/Multi-account + reply reliability: add <code>channels.feishu.defaultAccount</code> outbound routing support with schema validation, keep quoted-message extraction text-first (post/interactive/file placeholders instead of raw JSON), route Feishu video sends as <code>msg_type: "file"</code>, and avoid websocket event blocking by using non-blocking event handling in monitor dispatch. Landed from contributor PRs #29610, #30432, #30331, and #29501. Thanks @hclsys, @bmendonca3, @patrick-yingxi-pan, and @zwffff.</li>
 <li>Feishu/Typing replay suppression: skip typing indicators for stale replayed inbound messages after compaction using message-age checks with second/millisecond timestamp normalization, preventing old-message reaction floods while preserving typing for fresh messages. Landed from contributor PR #30709 by @arkyu2077. Thanks @arkyu2077.</li>
 </ul>
-<p><a href="https://github.com/autocrab/autocrab/blob/main/CHANGELOG.md">View full changelog</a></p>
+<p><a href="https://github.com/clsdavid/autocrab/blob/main/CHANGELOG.md">View full changelog</a></p>
 ]]></description>
-            <enclosure url="https://github.com/autocrab/autocrab/releases/download/v2026.3.1/AutoCrab-2026.3.1.zip" length="12804155" type="application/octet-stream" sparkle:edSignature="TF1otD4Vk3pG0iViX7mvix5DQEgAsk4JkSFvH7opjf9aawV16f29SUa2wRmiCFU6HEgyNgnGI/078O+A27eXCA=="/>
+            <enclosure url="https://github.com/clsdavid/autocrab/releases/download/v2026.3.1/AutoCrab-2026.3.1.zip" length="12804155" type="application/octet-stream" sparkle:edSignature="TF1otD4Vk3pG0iViX7mvix5DQEgAsk4JkSFvH7opjf9aawV16f29SUa2wRmiCFU6HEgyNgnGI/078O+A27eXCA=="/>
         </item>
     </channel>
 </rss>

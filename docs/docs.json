@@ -36,12 +36,12 @@
     "links": [
       {
         "label": "GitHub",
-        "href": "https://github.com/autocrab/autocrab",
+        "href": "https://github.com/clsdavid/autocrab",
         "icon": "github"
       },
       {
         "label": "Releases",
-        "href": "https://github.com/autocrab/autocrab/releases",
+        "href": "https://github.com/clsdavid/autocrab/releases",
         "icon": "package"
       }
     ]

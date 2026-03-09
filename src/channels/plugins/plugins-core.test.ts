@@ -5,7 +5,7 @@ import type { DiscordProbe } from "@autocrab/discord/src/probe.js";
 import type { DiscordTokenResolution } from "@autocrab/discord/src/token.js";
 import type { SignalProbe } from "@autocrab/signal/src/probe.js";
 import type { SlackProbe } from "@autocrab/slack/src/probe.js";
-import type { TelegramProbe } from "@autocrab/telegram/src/probe.js";
+import type { TelegramProbe } from "@autocrab/telegram/src/probe.ts";
 import type { TelegramTokenResolution } from "@autocrab/telegram/src/token.js";
 import { afterEach, beforeEach, describe, expect, expectTypeOf, it } from "vitest";
 import type { AutoCrabConfig } from "../../config/config.js";

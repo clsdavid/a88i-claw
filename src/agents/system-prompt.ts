@@ -176,7 +176,7 @@ function buildDocsSection(params: { docsPath?: string; isMinimal: boolean; readT
     "## Documentation",
     `AutoCrab docs: ${docsPath}`,
     "Mirror: https://docs.autocrab.ai",
-    "Source: https://github.com/autocrab/autocrab",
+    "Source: https://github.com/clsdavid/autocrab",
     "Community: https://discord.com/invite/clawd",
     "Find new skills: https://clawhub.com",
     "For AutoCrab behavior, commands, config, or architecture: consult local docs first.",

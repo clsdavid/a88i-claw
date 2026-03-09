@@ -32,7 +32,7 @@ x-i18n:
 
 ```bash
 # Clone the repo
-git clone https://github.com/autocrab/autocrab.git
+git clone https://github.com/clsdavid/autocrab.git
 cd autocrab
 
 # Create a new Fly app (pick your own name)

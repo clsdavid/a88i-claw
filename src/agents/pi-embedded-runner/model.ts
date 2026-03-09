@@ -224,7 +224,7 @@ export function resolveModel(
  * error.  This detects known providers that require opt-in auth and adds
  * a hint.
  *
- * See: https://github.com/autocrab/autocrab/issues/17328
+ * See: https://github.com/clsdavid/autocrab/issues/17328
  */
 const LOCAL_PROVIDER_HINTS: Record<string, string> = {
   ollama:

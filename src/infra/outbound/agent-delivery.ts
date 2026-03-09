@@ -37,7 +37,7 @@ export function resolveAgentDeliveryPlan(params: {
    * overrides session-level `lastChannel` to prevent cross-channel reply
    * routing in shared sessions (dmScope="main").
    *
-   * @see https://github.com/autocrab/autocrab/issues/24152
+   * @see https://github.com/clsdavid/autocrab/issues/24152
    */
   turnSourceChannel?: string;
   /** Turn-source `to` — paired with `turnSourceChannel`. */

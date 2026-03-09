@@ -109,10 +109,10 @@ For VPS/cloud hosts, avoid third-party "1-click" marketplace images when possibl
 
     <Steps>
       <Step title="Clone and build">
-        Clone the [AutoCrab repo](https://github.com/autocrab/autocrab) and build:
+        Clone the [AutoCrab repo](https://github.com/clsdavid/autocrab) and build:
 
         ```bash
-        git clone https://github.com/autocrab/autocrab.git
+        git clone https://github.com/clsdavid/autocrab.git
         cd autocrab
         pnpm install
         pnpm ui:build

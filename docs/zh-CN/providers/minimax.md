@@ -55,7 +55,7 @@ autocrab onboard --auth-choice minimax-portal
 - **Global** - 国际用户（`api.minimax.io`）
 - **CN** - 中国用户（`api.minimaxi.com`）
 
-详情参见 [MiniMax OAuth 插件 README](https://github.com/autocrab/autocrab/tree/main/extensions/minimax-portal-auth)。
+详情参见 [MiniMax OAuth 插件 README](https://github.com/clsdavid/autocrab/tree/main/extensions/minimax-portal-auth)。
 
 ### MiniMax M2.1（API 密钥）
 

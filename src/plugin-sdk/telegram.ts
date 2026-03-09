@@ -9,7 +9,7 @@ export type { PluginRuntime } from "../plugins/runtime/types.js";
 export type { AutoCrabPluginApi } from "../plugins/types.js";
 export type { InspectedTelegramAccount } from "@autocrab/telegram/src/account-inspect.js";
 export type { ResolvedTelegramAccount } from "@autocrab/telegram/src/accounts.js";
-export type { TelegramProbe } from "@autocrab/telegram/src/probe.js";
+export type { TelegramProbe } from "@autocrab/telegram/src/probe.ts";
 
 export { emptyPluginConfigSchema } from "../plugins/config-schema.js";
 

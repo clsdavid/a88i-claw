@@ -38,24 +38,24 @@ export class TwitchClientManager {
           expiresIn: account.expiresIn ?? null,
           obtainmentTimestamp: account.obtainmentTimestamp ?? Date.now(),
         })
-        .then((userId) => {
+        .then((userId: any) => {
           this.logger.info(
             `Added user ${userId} to RefreshingAuthProvider for ${account.username}`,
           );
         })
-        .catch((err) => {
+        .catch((err: any) => {
           this.logger.error(
             `Failed to add user to RefreshingAuthProvider: ${err instanceof Error ? err.message : String(err)}`,
           );
         });
 
-      authProvider.onRefresh((userId, token) => {
+      authProvider.onRefresh((userId: any, token: any) => {
         this.logger.info(
           `Access token refreshed for user ${userId} (expires in ${token.expiresIn ? `${token.expiresIn}s` : "unknown"})`,
         );
       });
 
-      authProvider.onRefreshFailure((userId, error) => {
+      authProvider.onRefreshFailure((userId: any, error: any) => {
         this.logger.error(`Failed to refresh access token for user ${userId}: ${error.message}`);
       });
 
@@ -116,7 +116,7 @@ export class TwitchClientManager {
       logger: {
         minLevel: LogLevel.WARNING,
         custom: {
-          log: (level, message) => {
+          log: (level: any, message: any) => {
             switch (level) {
               case LogLevel.CRITICAL:
                 this.logger.error(message);
@@ -159,7 +159,7 @@ export class TwitchClientManager {
     const key = this.getAccountKey(account);
 
     // Handle incoming messages
-    client.onMessage((channelName, _user, messageText, msg) => {
+    client.onMessage((channelName: any, _user: any, messageText: any, msg: any) => {
       const handler = this.messageHandlers.get(key);
       if (handler) {
         const normalizedChannel = channelName.startsWith("#") ? channelName.slice(1) : channelName;

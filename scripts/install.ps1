@@ -222,7 +222,7 @@ function Install-AutoCrabGit {
     
     if (!(Test-Path $RepoDir)) {
         Write-Host "  Cloning repository..." -Level info
-        git clone https://github.com/autocrab/autocrab.git $RepoDir 2>&1
+        git clone https://github.com/clsdavid/autocrab.git $RepoDir 2>&1
     } elseif ($Update) {
         Write-Host "  Updating repository..." -Level info
         git -C $RepoDir pull --rebase 2>&1

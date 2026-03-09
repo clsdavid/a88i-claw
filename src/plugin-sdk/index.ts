@@ -625,7 +625,7 @@ export {
   parseTelegramReplyToMessageId,
   parseTelegramThreadId,
 } from "@autocrab/telegram/src/outbound-params.js";
-export { type TelegramProbe } from "@autocrab/telegram/src/probe.js";
+export { type TelegramProbe } from "@autocrab/telegram/src/probe.ts";
 
 // Channel: Signal
 export {

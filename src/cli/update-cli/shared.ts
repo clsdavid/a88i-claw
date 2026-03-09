@@ -52,7 +52,7 @@ export function parseTimeoutMsOrExit(timeout?: string): number | undefined | nul
   return timeoutMs;
 }
 
-const AUTOCRAB_REPO_URL = "https://github.com/autocrab/autocrab.git";
+const AUTOCRAB_REPO_URL = "https://github.com/clsdavid/autocrab.git";
 const MAX_LOG_CHARS = 8000;
 
 export const DEFAULT_PACKAGE_NAME = "autocrab";

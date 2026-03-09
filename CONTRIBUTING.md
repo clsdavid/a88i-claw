@@ -4,7 +4,7 @@ Welcome to the lobster tank! 🦞
 
 ## Quick Links
 
-- **GitHub:** https://github.com/autocrab/autocrab
+- **GitHub:** https://github.com/clsdavid/autocrab
 - **Vision:** [`VISION.md`](VISION.md)
 - **Discord:** https://discord.gg/qkhbAGHRBT
 - **X/Twitter:** [@steipete](https://x.com/steipete) / [@autocrab](https://x.com/autocrab)
@@ -64,7 +64,7 @@ Welcome to the lobster tank! 🦞
 ## How to Contribute
 
 1. **Bugs & small fixes** → Open a PR!
-2. **New features / architecture** → Start a [GitHub Discussion](https://github.com/autocrab/autocrab/discussions) or ask in Discord first
+2. **New features / architecture** → Start a [GitHub Discussion](https://github.com/clsdavid/autocrab/discussions) or ask in Discord first
 3. **Questions** → Discord [#help](https://discord.com/channels/1456350064065904867/1459642797895319552) / [#users-helping-users](https://discord.com/channels/1456350064065904867/1459007081603403828)
 
 ## Before You PR
@@ -113,7 +113,7 @@ We are currently prioritizing:
 - **Skills**: For skill contributions, head to [ClawHub](https://clawhub.ai/) — the community hub for AutoCrab skills.
 - **Performance**: Optimizing token usage and compaction logic.
 
-Check the [GitHub Issues](https://github.com/autocrab/autocrab/issues) for "good first issue" labels!
+Check the [GitHub Issues](https://github.com/clsdavid/autocrab/issues) for "good first issue" labels!
 
 ## Maintainers
 
@@ -139,10 +139,10 @@ Please allow a few weeks for a response.
 
 We take security reports seriously. Report vulnerabilities directly to the repository where the issue lives:
 
-- **Core CLI and gateway** — [autocrab/autocrab](https://github.com/autocrab/autocrab)
-- **macOS desktop app** — [autocrab/autocrab](https://github.com/autocrab/autocrab) (apps/macos)
-- **iOS app** — [autocrab/autocrab](https://github.com/autocrab/autocrab) (apps/ios)
-- **Android app** — [autocrab/autocrab](https://github.com/autocrab/autocrab) (apps/android)
+- **Core CLI and gateway** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab)
+- **macOS desktop app** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab) (apps/macos)
+- **iOS app** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab) (apps/ios)
+- **Android app** — [clsdavid/autocrab](https://github.com/clsdavid/autocrab) (apps/android)
 - **ClawHub** — [autocrab/clawhub](https://github.com/autocrab/clawhub)
 - **Trust and threat model** — [autocrab/trust](https://github.com/autocrab/trust)
 

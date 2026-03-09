@@ -106,7 +106,7 @@ docker compose version
 ## 3) 克隆 AutoCrab 仓库
 
 ```bash
-git clone https://github.com/autocrab/autocrab.git
+git clone https://github.com/clsdavid/autocrab.git
 cd autocrab
 ```
 

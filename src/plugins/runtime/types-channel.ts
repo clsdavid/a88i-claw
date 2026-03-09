@@ -110,7 +110,7 @@ export type PluginRuntimeChannel = {
   telegram: {
     auditGroupMembership: typeof import("@autocrab/telegram/src/audit.js").auditTelegramGroupMembership;
     collectUnmentionedGroupIds: typeof import("@autocrab/telegram/src/audit.js").collectTelegramUnmentionedGroupIds;
-    probeTelegram: typeof import("@autocrab/telegram/src/probe.js").probeTelegram;
+    probeTelegram: typeof import("@autocrab/telegram/src/probe.ts").probeTelegram;
     resolveTelegramToken: typeof import("@autocrab/telegram/src/token.js").resolveTelegramToken;
     sendMessageTelegram: typeof import("@autocrab/telegram/src/send.js").sendMessageTelegram;
     sendPollTelegram: typeof import("@autocrab/telegram/src/send.js").sendPollTelegram;

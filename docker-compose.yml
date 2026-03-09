@@ -6,9 +6,14 @@ services:
       TERM: xterm-256color
       AUTOCRAB_GATEWAY_TOKEN: ${AUTOCRAB_GATEWAY_TOKEN}
       AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS: ${AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS:-}
+      AUTOCRAB_MODEL_PROVIDER: ${AUTOCRAB_MODEL_PROVIDER:-anthropic}
+      AUTOCRAB_MODEL_ID: ${AUTOCRAB_MODEL_ID:-claude-opus-4-6}
       CLAUDE_AI_SESSION_KEY: ${CLAUDE_AI_SESSION_KEY:-}
       CLAUDE_WEB_SESSION_KEY: ${CLAUDE_WEB_SESSION_KEY:-}
       CLAUDE_WEB_COOKIE: ${CLAUDE_WEB_COOKIE:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ${AUTOCRAB_CONFIG_DIR}:/home/node/.autocrab
       - ${AUTOCRAB_WORKSPACE_DIR}:/home/node/.autocrab/workspace

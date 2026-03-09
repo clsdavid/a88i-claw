@@ -1722,7 +1722,7 @@ export async function runEmbeddedAttempt(
         // Previously this was before the prompt, which caused a custom entry to be
         // inserted between compaction and the next prompt — breaking the
         // prepareCompaction() guard that checks the last entry type, leading to
-        // double-compaction. See: https://github.com/autocrab/autocrab/issues/9282
+        // double-compaction. See: https://github.com/clsdavid/autocrab/issues/9282
         // Skip when timed out during compaction — session state may be inconsistent.
         if (!timedOutDuringCompaction && !compactionOccurredThisAttempt) {
           const shouldTrackCacheTtl =
@@ -1902,7 +1902,7 @@ export async function runEmbeddedAttempt(
       // *before* tool execution completes in the retried agent loop. Without this wait,
       // flushPendingToolResults() fires while tools are still executing, inserting
       // synthetic "missing tool result" errors and causing silent agent failures.
-      // See: https://github.com/autocrab/autocrab/issues/8643
+      // See: https://github.com/clsdavid/autocrab/issues/8643
       removeToolResultContextGuard?.();
       await flushPendingToolResultsAfterIdle({
         agent: session?.agent,

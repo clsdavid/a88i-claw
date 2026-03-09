@@ -137,7 +137,7 @@ autocrab health
 
 说明：
 
-- 当你运行打包的 `autocrab` 二进制文件（[`autocrab.mjs`](https://github.com/autocrab/autocrab/blob/main/autocrab.mjs)）或使用 Node 运行 `dist/` 时，`pnpm build` 很重要。
+- 当你运行打包的 `autocrab` 二进制文件（[`autocrab.mjs`](https://github.com/clsdavid/autocrab/blob/main/autocrab.mjs)）或使用 Node 运行 `dist/` 时，`pnpm build` 很重要。
 - 如果你从仓库 checkout 运行而没有全局安装，CLI 命令使用 `pnpm autocrab ...`。
 - 如果你直接从 TypeScript 运行（`pnpm autocrab ...`），通常不需要重新构建，但**配置迁移仍然适用** → 运行 doctor。
 - 在全局和 git 安装之间切换很容易：安装另一种方式，然后运行 `autocrab doctor` 以便将 Gateway 网关服务入口点重写为当前安装。

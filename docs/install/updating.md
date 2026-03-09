@@ -161,7 +161,7 @@ autocrab health
 
 Notes:
 
-- `pnpm build` matters when you run the packaged `autocrab` binary ([`autocrab.mjs`](https://github.com/autocrab/autocrab/blob/main/autocrab.mjs)) or use Node to run `dist/`.
+- `pnpm build` matters when you run the packaged `autocrab` binary ([`autocrab.mjs`](https://github.com/clsdavid/autocrab/blob/main/autocrab.mjs)) or use Node to run `dist/`.
 - If you run from a repo checkout without a global install, use `pnpm autocrab ...` for CLI commands.
 - If you run directly from TypeScript (`pnpm autocrab ...`), a rebuild is usually unnecessary, but **config migrations still apply** → run doctor.
 - Switching between global and git installs is easy: install the other flavor, then run `autocrab doctor` so the gateway service entrypoint is rewritten to the current install.
