@@ -59,22 +59,22 @@ The AutoCrab project (formerly OpenClaw) has a strong foundational security post
     - Document the existing rate-limiting logic in `src/security/`.
     - Ensure "Trusted Proxy" mode has explicit warnings about `X-Real-IP` spoofing risks if misconfigured (added to code comments).
 
-### Phase 3: Developer Experience & Standardization (In Progress)
+### Phase 3: Developer Experience & Standardization (Done)
 
 **Goal:** Reduce human error during extension development.
 
 1.  **Extension Scaffolding Tool** (Done):
     - Create `scripts/create-extension.ts`.
     - **Security Benefit**: Ensures new extensions start with secure defaults.
-2.  **Standardize Channel Architecture** (In Progress):
+2.  **Standardize Channel Architecture** (Done):
     - Moved core channels (`src/discord`, `src/slack`, `src/telegram`, `src/signal`) to `extensions/`.
-    - **Current Status**: Code moved, imports updated.
-    - **Pending Issue**: High-strictness TypeScript lint errors (`no-redundant-type-constituents`) due to cross-workspace type resolution failures for complex types (`DiscordSendComponents`, `TelegramInlineButtons`) when imported from `extensions/` back into `src/`.
-    - **Next Step**: Resolve workspace type boundaries, likely by using proper workspace package imports (`@autocrab/discord`) in `src/` instead of relative paths, or suppressing lint errors temporarily to unblock critical path.
+    - Resolved cross-workspace type boundaries (`no-redundant-type-constituents` errors are resolved).
+    - Code now uses proper workspace package imports (e.g., `@autocrab/discord`).
 
 ### Phase 4: Long-Term audit (Ongoing)
 
-1.  **Dependency Audit**:
+1.  **Dependency Audit** (In Progress):
+    - Removed unused `authenticate-pam` and `koffi` from `pnpm.onlyBuiltDependencies`.
     - Regular review of `pnpm.onlyBuiltDependencies`.
     - Minimize the list of packages allowed to run install scripts.
 
