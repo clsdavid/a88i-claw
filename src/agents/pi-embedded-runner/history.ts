@@ -1,5 +1,6 @@
 import type { AgentMessage } from "@mariozechner/pi-agent-core";
 import type { AutoCrabConfig } from "../../config/config.js";
+import { DEFAULT_HISTORY_LIMIT } from "../defaults.js";
 
 const THREAD_SUFFIX_REGEX = /^(.*)(?::(?:thread|topic):\d+)$/i;
 
@@ -96,13 +97,13 @@ export function getHistoryLimitFromSessionKey(
     if (userId && providerConfig.dms?.[userId]?.historyLimit !== undefined) {
       return providerConfig.dms[userId].historyLimit;
     }
-    return providerConfig.dmHistoryLimit;
+    return providerConfig.dmHistoryLimit ?? DEFAULT_HISTORY_LIMIT;
   }
 
   // For channel/group sessions: use historyLimit from provider config
   // This prevents context overflow in long-running channel sessions
   if (kind === "channel" || kind === "group") {
-    return providerConfig.historyLimit;
+    return providerConfig.historyLimit ?? DEFAULT_HISTORY_LIMIT;
   }
 
   return undefined;

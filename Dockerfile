@@ -91,6 +91,15 @@ RUN if [ -n "$AUTOCRAB_INSTALL_DOCKER_CLI" ]; then \
 
 USER node
 COPY --chown=node:node . .
+
+# Ensure default template files exist if they were excluded from the build context
+# (for example if IDENTITY.md/USER.md are locally untracked but required by runtime).
+RUN for name in IDENTITY USER; do \
+  if [ ! -f "docs/reference/templates/${name}.md" ] && [ -f "docs/reference/templates/${name}.dev.md" ]; then \
+  cp "docs/reference/templates/${name}.dev.md" "docs/reference/templates/${name}.md"; \
+  fi; \
+  done
+
 # Normalize copied plugin/agent paths so plugin safety checks do not reject
 # world-writable directories inherited from source file modes.
 RUN for dir in /app/extensions /app/.agent /app/.agents; do \
