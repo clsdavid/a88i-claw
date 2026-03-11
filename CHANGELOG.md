@@ -2,7 +2,11 @@
 
 Docs: https://docs.autocrab.ai
 
-## 2026.3.10
+## v0.1.1 2026.3.11
+
+- Improve the momory management.
+
+## v0.1.0 2026.3.10 (new implementation start)
 
 ### Changes
 
@@ -12,7 +16,7 @@ Docs: https://docs.autocrab.ai
 - License: Updated license and copyright headers.
 - README: Updated documentation references and project overview.
 
-## 2026.3.3
+## v3.3.0 2026.3.3 (Base from OpenClaw)
 
 ### Changes
 
