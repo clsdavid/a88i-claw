@@ -94,7 +94,7 @@ COPY --chown=node:node . .
 
 # Ensure default template files exist if they were excluded from the build context
 # (for example if IDENTITY.md/USER.md are locally untracked but required by runtime).
-RUN for name in IDENTITY USER; do \
+RUN for name in IDENTITY USER MEMORY; do \
   if [ ! -f "docs/reference/templates/${name}.md" ] && [ -f "docs/reference/templates/${name}.dev.md" ]; then \
   cp "docs/reference/templates/${name}.dev.md" "docs/reference/templates/${name}.md"; \
   fi; \
