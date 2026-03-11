@@ -1,6 +1,7 @@
 services:
   autocrab-gateway:
     image: ${AUTOCRAB_IMAGE:-autocrab:local}
+    build: .
     environment:
       HOME: /home/node
       TERM: xterm-256color
@@ -20,6 +21,7 @@ services:
     volumes:
       - ${AUTOCRAB_CONFIG_DIR}:/home/node/.autocrab
       - ${AUTOCRAB_WORKSPACE_DIR}:/home/node/.autocrab/workspace
+      - ./docs:/app/docs
       ## Uncomment the lines below to enable sandbox isolation
       ## (agents.defaults.sandbox). Requires Docker CLI in the image
       ## (build with --build-arg AUTOCRAB_INSTALL_DOCKER_CLI=1) or use
@@ -28,9 +30,10 @@ services:
       # - /var/run/docker.sock:/var/run/docker.sock
     # group_add:
     #   - "${DOCKER_GID:-999}"
-    ports:
-      - "${AUTOCRAB_GATEWAY_PORT:-18789}:18789"
-      - "${AUTOCRAB_BRIDGE_PORT:-18790}:18790"
+    network_mode: "host"
+    # ports:
+    #   - "${AUTOCRAB_GATEWAY_PORT:-18789}:18789"
+    #   - "${AUTOCRAB_BRIDGE_PORT:-18790}:18790"
     command: ["node", "autocrab.mjs", "gateway", "run", "--bind", "lan", "--allow-unconfigured"]
     init: true
     restart: unless-stopped

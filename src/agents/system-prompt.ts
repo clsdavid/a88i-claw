@@ -127,6 +127,14 @@ function buildMessagingSection(params: {
   if (params.isMinimal) {
     return [];
   }
+  const hasMessage = params.availableTools.has("message");
+  const hasSessions = params.availableTools.has("sessions_send");
+  const hasSubagents = params.availableTools.has("subagents");
+
+  if (!hasMessage && !hasSessions && !hasSubagents) {
+    return [];
+  }
+
   return [
     "## Messaging",
     "- Reply in current session → automatically routes to the source channel (Signal, Telegram, etc.)",
@@ -252,21 +260,20 @@ export function buildAgentSystemPrompt(params: {
     browser: "Control web browser",
     canvas: "Present/eval/snapshot the Canvas",
     nodes: "List/describe/notify/camera/screen on paired nodes",
-    cron: "Manage cron jobs and wake events (use for reminders; when scheduling a reminder, write the systemEvent text as something that will read like a reminder when it fires, and mention that it is a reminder depending on the time gap between setting and firing; include recent context in reminder text if appropriate)",
+    cron: "Manage cron jobs and wake events (use for reminders with descriptive systemEvent text and context)",
     message: "Send messages and channel actions",
     gateway: "Restart, apply config, or run updates on the running AutoCrab process",
     agents_list: acpSpawnRuntimeEnabled
-      ? 'List AutoCrab agent ids allowed for sessions_spawn when runtime="subagent" (not ACP harness ids)'
+      ? "List allowlisted AutoCrab agent ids for sessions_spawn"
       : "List AutoCrab agent ids allowed for sessions_spawn",
     sessions_list: "List other sessions (incl. sub-agents) with filters/last",
     sessions_history: "Fetch history for another session/sub-agent",
     sessions_send: "Send a message to another session/sub-agent",
     sessions_spawn: acpSpawnRuntimeEnabled
-      ? 'Spawn an isolated sub-agent or ACP coding session (runtime="acp" requires `agentId` unless `acp.defaultAgent` is configured; ACP harness ids follow acp.allowedAgents, not agents_list)'
+      ? "Spawn an isolated sub-agent or ACP coding session"
       : "Spawn an isolated sub-agent session",
     subagents: "List, steer, or kill sub-agent runs for this requester session",
-    session_status:
-      "Show a /status-equivalent status card (usage + time + Reasoning/Verbose/Elevated); use for model-use questions (📊 session_status); optional per-session model override",
+    session_status: "Show session status card (usage/time/model) for diagnostics",
     image: "Analyze an image with the configured image model",
   };
 
@@ -621,6 +628,7 @@ export function buildAgentSystemPrompt(params: {
     if (validContextFiles.length > 0) {
       const hasSoulFile = validContextFiles.some((file) => {
         const normalizedPath = file.path.trim().replace(/\\/g, "/");
+        // Check for 'soul.md' or 'SOUL.md' (case-insensitive base name)
         const baseName = normalizedPath.split("/").pop() ?? normalizedPath;
         return baseName.toLowerCase() === "soul.md";
       });
@@ -628,6 +636,11 @@ export function buildAgentSystemPrompt(params: {
       if (hasSoulFile) {
         lines.push(
           "If SOUL.md is present, embody its persona and tone. Avoid stiff, generic replies; follow its guidance unless higher-priority instructions override it.",
+        );
+      } else {
+        // Fallback default personality if no external SOUL.md is provided
+        lines.push(
+          "You are AutoCrab, a helpful, witty, and slightly crab-obsessed AI assistant. Be concise, technical, and prioritize safety.",
         );
       }
       lines.push("");
