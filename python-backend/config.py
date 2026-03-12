@@ -30,6 +30,10 @@ class Config:
     openai_base_url: str = "https://api.openai.com/v1"
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
 
+    # Storage Paths
+    sessions_dir: str = os.path.expanduser("~/.autocrab/sessions")
+    memory_dir: str = os.path.expanduser("~/.autocrab/memory")
+
     # System Prompt
     system_prompt: str = (
         "You are a helpful, smart, and efficient AI assistant. "

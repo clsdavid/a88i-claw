@@ -4,6 +4,8 @@ from fastapi.responses import StreamingResponse, JSONResponse
 import json
 import time
 import uuid
+import aiofiles
+import asyncio
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 
@@ -49,6 +51,10 @@ async def health_check():
         "model": settings.model_name
     }
 
+@app.get("/api/health")
+async def api_health_check():
+    return await health_check()
+
 @app.websocket("/")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -74,18 +80,29 @@ async def websocket_endpoint(websocket: WebSocket):
                 req_id = msg.get("id")
                 method = msg.get("method")
                 
+                print(f"WS Request: {method} (id={req_id})")
+
                 if method == "connect":
                     await websocket.send_json({
+                         "type": "res",
                          "id": req_id,
                          "ok": True,
                          "payload": {
                              "features": {
-                                 "methods": ["health", "channels.status", "doctor.memory.status"]
+                                 "methods": ["health", "channels.status", "doctor.memory.status", "sessions.list", "memory.search", "chat.history", "chat.send"]
                              }
                          }
                     })
+                elif method == "ping":
+                    await websocket.send_json({
+                        "type": "res",
+                        "id": req_id,
+                        "ok": True,
+                        "payload": {"pong": True}
+                    })
                 elif method == "health":
                      await websocket.send_json({
+                         "type": "res",
                          "id": req_id,
                          "ok": True,
                          "payload": {
@@ -109,12 +126,14 @@ async def websocket_endpoint(websocket: WebSocket):
                      })
                 elif method == "channels.status":
                      await websocket.send_json({
+                         "type": "res",
                          "id": req_id,
                          "ok": True,
                          "payload": {}
                      })
                 elif method == "doctor.memory.status":
                      await websocket.send_json({
+                         "type": "res",
                          "id": req_id,
                          "ok": True,
                          "payload": {
@@ -123,11 +142,176 @@ async def websocket_endpoint(websocket: WebSocket):
                             "provider": "python-local"
                          }
                      })
+                elif method == "sessions.list":
+                    sessions = []
+                    if os.path.exists(settings.sessions_dir):
+                        try:
+                            # List .jsonl files in sessions_dir
+                            files = [f for f in os.listdir(settings.sessions_dir) if f.endswith(".jsonl")]
+                            # Sort by mtime checks
+                            files.sort(key=lambda x: os.path.getmtime(os.path.join(settings.sessions_dir, x)), reverse=True)
+                            
+                            for f in files[:20]: # Limit to 20 recent
+                                path = os.path.join(settings.sessions_dir, f)
+                                sessions.append({
+                                    "id": f.replace(".jsonl", ""),
+                                    "path": path,
+                                    "updated": int(os.path.getmtime(path) * 1000)
+                                })
+                        except Exception as e:
+                            print(f"Error listing sessions: {e}")
+
+                    await websocket.send_json({
+                        "type": "res",
+                        "id": req_id,
+                        "ok": True,
+                        "payload": {
+                            "sessions": sessions
+                        }
+                    })
+                elif method == "memory.search":
+                    query = msg.get("params", {}).get("query", "")
+                    results = []
+                    # Simple mock search or file grep if memory_dir exists
+                    if os.path.exists(settings.memory_dir):
+                        # TODO: Implement actual search
+                        pass
+                        
+                    await websocket.send_json({
+                        "type": "res",
+                        "id": req_id,
+                        "ok": True,
+                        "payload": {
+                            "results": results,
+                            "provider": "python-simple",
+                            "mode": "text"
+                        }
+                    })
+                elif method == "chat.history":
+                    session_key = msg.get("params", {}).get("sessionKey")
+                    messages = []
+                    if session_key and settings.sessions_dir:
+                        session_file = os.path.join(settings.sessions_dir, f"{session_key}.jsonl")
+                        if os.path.exists(session_file):
+                            async with aiofiles.open(session_file, mode='r') as f:
+                                async for line in f:
+                                    if line.strip():
+                                        try:
+                                            messages.append(json.loads(line))
+                                        except:
+                                            pass
+
+                    await websocket.send_json({
+                        "type": "res",
+                        "id": req_id,
+                        "ok": True,
+                        "payload": {
+                            "messages": messages,
+                            "thinkingLevel": "low"
+                        }
+                    })
+                elif method == "chat.send":
+                    session_key = msg.get("params", {}).get("sessionKey")
+                    user_message = msg.get("params", {}).get("message")
+                    
+                    # 1. Send ACK immediately
+                    await websocket.send_json({
+                        "type": "res",
+                        "id": req_id,
+                        "ok": True,
+                        "payload": {}
+                    })
+
+                    # 2. Store User Message
+                    if session_key and settings.sessions_dir:
+                        if not os.path.exists(settings.sessions_dir):
+                            os.makedirs(settings.sessions_dir, exist_ok=True)
+                        
+                        session_file = os.path.join(settings.sessions_dir, f"{session_key}.jsonl")
+                        
+                        user_entry = {"role": "user", "content": user_message, "ts": int(time.time() * 1000)}
+                        async with aiofiles.open(session_file, mode='a') as f:
+                            await f.write(json.dumps(user_entry) + "\n")
+                        
+                        # 3. Load History
+                        history = []
+                        async with aiofiles.open(session_file, mode='r') as f:
+                             async for line in f:
+                                 if line.strip():
+                                     try:
+                                         msg_obj = json.loads(line)
+                                         # Clean for model context
+                                         clean_msg = {k: v for k, v in msg_obj.items() if k in ["role", "content", "name", "tool_calls"]}
+                                         history.append(clean_msg)
+                                     except:
+                                         pass
+                        
+                        # 4. Stream Response
+                        run_id = str(uuid.uuid4())
+                        full_content = ""
+                        seq = 0
+                        
+                        try:
+                            truncated_history = truncate_context(history)
+                            async for chunk in model_client.chat_completions(messages=truncated_history, stream=True):
+                                 content = chunk.get("content", "")
+                                 if content:
+                                     full_content += content
+                                 
+                                 await websocket.send_json({
+                                     "type": "event",
+                                     "event": "chat.event",
+                                     "payload": {
+                                         "runId": run_id,
+                                         "sessionKey": session_key,
+                                         "seq": seq,
+                                         "state": "delta",
+                                         "message": chunk
+                                     }
+                                 })
+                                 seq += 1
+                            
+                            # Final event
+                            await websocket.send_json({
+                                "type": "event",
+                                "event": "chat.event",
+                                "payload": {
+                                    "runId": run_id,
+                                    "sessionKey": session_key,
+                                    "seq": seq,
+                                    "state": "final",
+                                    "message": {"role": "assistant", "content": full_content}
+                                }
+                            })
+                            
+                            # Save assistant message
+                            assistant_entry = {"role": "assistant", "content": full_content, "ts": int(time.time() * 1000)}
+                            async with aiofiles.open(session_file, mode='a') as f:
+                                await f.write(json.dumps(assistant_entry) + "\n")
+                                
+                        except Exception as e:
+                            print(f"Error generation: {e}")
+                            await websocket.send_json({
+                                "type": "event",
+                                "event": "chat.event",
+                                "payload": {
+                                    "runId": run_id,
+                                    "sessionKey": session_key,
+                                    "seq": seq,
+                                    "state": "error",
+                                    "errorMessage": str(e)
+                                }
+                            })
+
                 else:
                      await websocket.send_json({
+                         "type": "res",
                          "id": req_id,
                          "ok": False,
-                         "error": f"Method {method} not implemented in Python backend"
+                         "error": {
+                             "code": "method_not_found",
+                             "message": f"Method {method} not implemented in Python backend"
+                         }
                      })
     except WebSocketDisconnect:
         pass
