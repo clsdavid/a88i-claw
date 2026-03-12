@@ -58,7 +58,16 @@ class ModelClient:
             }
             if "max_tokens" not in kwargs:
                  payload["max_tokens"] = settings.max_generate_tokens
-        
+        elif self.backend == "deepseek":
+            base_url = settings.deepseek_base_url.rstrip("/")
+            url = f"{base_url}/chat/completions"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {settings.deepseek_api_key}"
+            }
+            if "max_tokens" not in kwargs:
+                 payload["max_tokens"] = settings.max_generate_tokens
+                 
         # Merge kwargs into payload (tools, tool_choice, temperature, etc.)
         for k, v in kwargs.items():
             if v is not None:
