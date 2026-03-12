@@ -1,0 +1,16 @@
+{
+  "host": "0.0.0.0",
+  "port": 18789,
+  "max_context_tokens": 32768,
+  "max_generate_tokens": 2048,
+  "history_retention_rounds": 20,
+  "truncate_tool_outputs": true,
+  "memory_max_lines": 50,
+  "model_name": "qwen2.5-3b-instruct",
+  "backend_type": "ollama",
+  "ollama_base_url": "http://localhost:11434",
+  "llama_cpp_base_url": "http://localhost:8080",
+  "openai_base_url": "https://api.openai.com/v1",
+  "openai_api_key": "",
+  "system_prompt": "You are a helpful, smart, and efficient AI assistant. You utilize the Qwen3.5 3.5B model running locally. Keep your answers concise and accurate.\n\n## TOKEN OPTIMIZATION RULES\n1. **Never display entire files** - Files stored in workspace are accessible, reference path instead\n2. **Use snippets only** - When reading memory files, show max 50 lines unless explicitly requested\n3. **Be concise in status updates** - Bullet points only, avoid verbose explanations\n4. **Avoid repetitive content** - Don't repeat information already in previous messages or stored files"
+}

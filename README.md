@@ -47,7 +47,33 @@ New install? Start here: [Getting started](https://docs.autocrab.ai/start/gettin
 
 ## Install (recommended)
 
-### Quick Start: Local Ollama
+### 🐍 Python Backend (New Core)
+
+The core logic of AutoCrab has been migrated to a high-performance **Python backend** designed for local inference (Ollama/llama.cpp) and strict context management.
+
+**Quick Start:**
+
+```bash
+# Start the Python Gateway (Port 18789)
+./bin/autocrab-python gateway run
+```
+
+This automatically sets up a virtual environment, installs dependencies, and launches the server.
+
+**Configuration:**
+Edit `python-backend/config.json` to tune for your hardware (e.g., RTX 5090).
+
+```json
+{
+  "max_context_tokens": 32768,
+  "model_name": "qwen2.5-3b-instruct",
+  "truncate_tool_outputs": true
+}
+```
+
+### Legacy Quick Start (Node.js)
+
+> **Note:** The Node.js gateway is deprecated in favor of the Python backend.
 
 Run AutoCrab with a local LLM in one command:
 

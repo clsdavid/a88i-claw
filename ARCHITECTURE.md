@@ -58,16 +58,23 @@ The codebase is organized as a monorepo workspace.
 
 ## 3. Core Components
 
-### 3.1 The Gateway (`src/gateway`)
+### 3.1 The Gateway (`python-backend/`)
 
-The Gateway is the kernel of AutoCrab. It differs significantly from the original OpenClaw implementation through extensive modularization and security hardening.
+The Gateway has been re-architected as a high-performance **Python backend (FastAPI)**, replacing the legacy Node.js implementation for core routing and inference management.
 
-- **`src/gateway/auth/`**: Contains the Authentication Mode Policy engine. It enforces strict separation between authentication methods (Token vs. Password vs. Trusted Proxy) to prevent bypass vulnerabilities.
-- **`src/gateway/http/`**: Handles the HTTP/WebSocket server, routing requests to appropriate internal handlers or extensions.
-- **`src/gateway/plugins/`**: The Extension Loader. It dynamically loads plugins from the `extensions/` directory, validating their manifest (`autocrab.plugin.json`) and permissions before execution.
-- **`src/gateway/server/`**: The main server loop and lifecycle management.
+- **`python-backend/main.py`**: The API entry point implementing `/v1/chat/completions`.
+- **`python-backend/context_manager.py`**: Enforces strict token limits (e.g., 32k tokens) and truncates chat history intelligently to prevent infinite context growth.
+- **`python-backend/model_client.py`**: A unified client for local inference (Ollama, llama.cpp) and cloud APIs (OpenAI).
+- **Frontend Integration**: Serves the React/Vite frontend as a Single Page Application (SPA).
 
-### 3.2 Agents & Tools (`src/agents`)
+### 3.2 Legacy Gateway (`src/gateway`) - Deprecated
+
+The original Node.js gateway components remain for reference but are superseded by the Python core for primary operations.
+
+- **`src/gateway/auth/`**: (Legacy) Authentication Mode Policy engine.
+- **`src/gateway/http/`**: (Legacy) HTTP/WebSocket server.
+
+### 3.3 Agents & Tools (`src/agents`)
 
 Agents are the intelligent workers.
 

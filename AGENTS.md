@@ -10,9 +10,10 @@
 
 ## Project Structure & Module Organization
 
-- Source code: `src/` (CLI wiring in `src/cli`, commands in `src/commands`, web provider in `src/provider-web.ts`, infra in `src/infra`, media pipeline in `src/media`).
-- Tests: colocated `*.test.ts`.
-- Docs: `docs/` (images, queue, Pi config). Built output lives in `dist/`.
+- **Python Backend (Core):** `python-backend/` (FastAPI app, strict context management, local model client).
+- **Source code (Legacy/CLI):** `src/` (CLI wiring in `src/cli`, commands in `src/commands`).
+- **Tests:** colocated `*.test.ts` (JS/TS) or `*_test.py` (Python).
+- **Docs:** `docs/` (images, queue, Pi config). Built output lives in `dist/`.
 - Plugins/extensions: live under `extensions/*` (workspace packages). Keep plugin-only deps in the extension `package.json`; do not add them to the root `package.json` unless core uses them.
 - Plugins: install runs `npm install --omit=dev` in plugin dir; runtime deps must live in `dependencies`. Avoid `workspace:*` in `dependencies` (npm install breaks); put `autocrab` in `devDependencies` or `peerDependencies` instead (runtime resolves `autocrab/plugin-sdk` via jiti alias).
 - Installers served from `https://autocrab.ai/*`: live in the sibling repo `../autocrab.ai` (`public/install.sh`, `public/install-cli.sh`, `public/install.ps1`).
@@ -55,6 +56,14 @@
 
 ## Build, Test, and Development Commands
 
+### Python Backend
+
+- **Start:** `python-backend/start.sh` (handles venv creation).
+- **Run Manually:** `source python-backend/venv/bin/activate && uvicorn main:app --reload`.
+- **Config:** `python-backend/config.json`.
+
+### TypeScript/Legacy
+
 - Runtime baseline: Node **22+** (keep Node + Bun paths working).
 - Install deps: `pnpm install`
 - If deps are missing (for example `node_modules` missing, `vitest not found`, or `command not found`), run the repo’s package-manager install command (prefer lockfile/README-defined PM), then rerun the exact requested command once. Apply this to test/build/lint/typecheck/dev commands; if retry still fails, report the command and first actionable error.
@@ -72,6 +81,16 @@
 - Tests: `pnpm test` (vitest); coverage: `pnpm test:coverage`
 
 ## Coding Style & Naming Conventions
+
+### Python (New Backend)
+
+- **Framework:** FastAPI + Pydantic.
+- **Async:** Use `async/await` for all I/O bound operations.
+- **Type Hints:** Strict typing required for function signatures and data classes.
+- **Linting:** Follow PEP 8.
+- **Dependencies:** Managed via `requirements.txt` and `venv`.
+
+### TypeScript (CLI/Frontend)
 
 - Language: TypeScript (ESM). Prefer strict typing; avoid `any`.
 - Formatting/linting via Oxlint and Oxfmt; run `pnpm check` before commits.
