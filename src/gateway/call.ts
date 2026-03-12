@@ -25,8 +25,9 @@ import {
   resolveLeastPrivilegeOperatorScopesForMethod,
   type OperatorScope,
 } from "./method-scopes.js";
-import { isSecureWebSocketUrl } from "./net.js";
+import { isSecureGatewayUrl } from "./net.js";
 import { PROTOCOL_VERSION } from "./protocol/index.js";
+import { RestClient } from "./rest-client.js";
 
 type CallGatewayBaseOptions = {
   url?: string;
@@ -176,17 +177,19 @@ export function buildGatewayConnectionDetails(
     : undefined;
 
   const allowPrivateWs = process.env.AUTOCRAB_ALLOW_INSECURE_PRIVATE_WS === "1";
-  // Security check: block ALL insecure ws:// to non-loopback addresses (CWE-319, CVSS 9.8)
+
+  // Security check: block ALL insecure ws:// and http:// to non-loopback addresses (CWE-319, CVSS 9.8)
   // This applies to the FINAL resolved URL, regardless of source (config, CLI override, etc).
   // Both credentials and chat/conversation data must not be transmitted over plaintext to remote hosts.
-  if (!isSecureWebSocketUrl(url, { allowPrivateWs })) {
+  const allowPrivateHttp = allowPrivateWs; // Reuse flag for HTTP for simplicity
+  if (!isSecureGatewayUrl(url, { allowPrivateWs, allowPrivateHttp })) {
     throw new Error(
       [
-        `SECURITY ERROR: Gateway URL "${url}" uses plaintext ws:// to a non-loopback address.`,
+        `SECURITY ERROR: Gateway URL "${url}" uses plaintext to a non-loopback address.`,
         "Both credentials and chat data would be exposed to network interception.",
         `Source: ${urlSource}`,
         `Config: ${configPath}`,
-        "Fix: Use wss:// for remote gateway URLs.",
+        "Fix: Use wss:// or https:// for remote gateway URLs.",
         "Safe remote access defaults:",
         "- keep gateway.bind=loopback and use an SSH tunnel (ssh -N -L 18789:127.0.0.1:18789 user@gateway-host)",
         "- or use Tailscale Serve/Funnel for HTTPS remote access",
@@ -605,6 +608,19 @@ async function executeGatewayRequestWithScopes<T>(params: {
 }): Promise<T> {
   const { opts, scopes, url, token, password, tlsFingerprint, timeoutMs, safeTimerTimeoutMs } =
     params;
+
+  // Use REST Client for HTTP(S) endpoints (Python Backend)
+  if (url.startsWith("http:") || url.startsWith("https:")) {
+    // Determine credentials: prefer token, fallback to password as token if supported
+    const authToken = token || password;
+    const client = new RestClient({
+      url,
+      token: authToken,
+      timeoutMs,
+    });
+    return await client.request<T>(opts.method, opts.params);
+  }
+
   return await new Promise<T>((resolve, reject) => {
     let settled = false;
     let ignoreClose = false;

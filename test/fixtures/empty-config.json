@@ -1,0 +1,8 @@
+{
+  "gateway": {
+    "mode": "remote",
+    "auth": {
+      "mode": "none"
+    }
+  }
+}

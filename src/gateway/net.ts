@@ -409,17 +409,18 @@ function parseHostForAddressChecks(
  * Security check for WebSocket URLs (CWE-319: Cleartext Transmission of Sensitive Information).
  *
  * Returns true if the URL is secure for transmitting data:
- * - wss:// (TLS) is always secure
- * - ws:// is secure only for loopback addresses by default
- * - optional break-glass: private ws:// can be enabled for trusted networks
+ * - wss://, https:// (TLS) is always secure
+ * - ws://, http:// is secure only for loopback addresses by default
+ * - optional break-glass: private ws://, http:// can be enabled for trusted networks
  *
- * All other ws:// URLs are considered insecure because both credentials
+ * All other plaintext URLs are considered insecure because both credentials
  * AND chat/conversation data would be exposed to network interception.
  */
-export function isSecureWebSocketUrl(
+export function isSecureGatewayUrl(
   url: string,
   opts?: {
     allowPrivateWs?: boolean;
+    allowPrivateHttp?: boolean;
   },
 ): boolean {
   let parsed: URL;
@@ -429,30 +430,42 @@ export function isSecureWebSocketUrl(
     return false;
   }
 
-  if (parsed.protocol === "wss:") {
+  if (parsed.protocol === "wss:" || parsed.protocol === "https:") {
     return true;
   }
 
-  if (parsed.protocol !== "ws:") {
+  if (parsed.protocol !== "ws:" && parsed.protocol !== "http:") {
     return false;
   }
 
-  // Default policy stays strict: loopback-only plaintext ws://.
+  // Default policy stays strict: loopback-only plaintext.
   if (isLoopbackHost(parsed.hostname)) {
     return true;
   }
   // Optional break-glass for trusted private-network overlays.
-  if (opts?.allowPrivateWs) {
+  if (opts?.allowPrivateWs || opts?.allowPrivateHttp) {
     if (isPrivateOrLoopbackHost(parsed.hostname)) {
       return true;
     }
     // Hostnames may resolve to private networks (for example in VPN/Tailnet DNS),
     // but resolution is not available in this synchronous validator.
-    const hostForIpCheck =
-      parsed.hostname.startsWith("[") && parsed.hostname.endsWith("]")
-        ? parsed.hostname.slice(1, -1)
-        : parsed.hostname;
-    return net.isIP(hostForIpCheck) === 0;
+    // Allow if explicitly enabled and hostname looks private-ish or user knows what they are doing.
+    // For now, strict IP check or explicit override flag is safer.
+    return false;
   }
+
   return false;
+}
+
+/**
+ * Legacy alias for backward compatibility.
+ * @deprecated Use isSecureGatewayUrl instead.
+ */
+export function isSecureWebSocketUrl(
+  url: string,
+  opts?: {
+    allowPrivateWs?: boolean;
+  },
+): boolean {
+  return isSecureGatewayUrl(url, { allowPrivateWs: opts?.allowPrivateWs });
 }

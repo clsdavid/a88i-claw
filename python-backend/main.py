@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse, JSONResponse
 import json
@@ -37,6 +37,102 @@ class ChatCompletionRequest(BaseModel):
     top_p: Optional[float] = 1.0
     presence_penalty: Optional[float] = 0.0
     frequency_penalty: Optional[float] = 0.0
+    tools: Optional[List[Dict[str, Any]]] = None
+    tool_choice: Optional[Any] = None
+
+
+@app.get("/health")
+async def health_check():
+    return {
+        "ok": True,
+        "backend": "python",
+        "model": settings.model_name
+    }
+
+@app.websocket("/")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    
+    # Send connect.challenge
+    nonce = str(uuid.uuid4())
+    await websocket.send_json({
+        "event": "connect.challenge",
+        "payload": {"nonce": nonce}
+    })
+    
+    try:
+        while True:
+            data = await websocket.receive_text()
+            try:
+                msg = json.loads(data)
+            except json.JSONDecodeError:
+                continue
+                
+            msg_type = msg.get("type")
+            
+            if msg_type == "req":
+                req_id = msg.get("id")
+                method = msg.get("method")
+                
+                if method == "connect":
+                    await websocket.send_json({
+                         "id": req_id,
+                         "ok": True,
+                         "payload": {
+                             "features": {
+                                 "methods": ["health", "channels.status", "doctor.memory.status"]
+                             }
+                         }
+                    })
+                elif method == "health":
+                     await websocket.send_json({
+                         "id": req_id,
+                         "ok": True,
+                         "payload": {
+                             "ok": True,
+                             "backend": "python",
+                             "model": settings.model_name,
+                             "ts": int(time.time() * 1000),
+                             "durationMs": 0,
+                             "channels": {},
+                             "channelOrder": [],
+                             "channelLabels": {},
+                             "heartbeatSeconds": 0,
+                             "defaultAgentId": "default",
+                             "agents": [],
+                             "sessions": {
+                                 "path": "/tmp",
+                                 "count": 0,
+                                 "recent": []
+                             }
+                         }
+                     })
+                elif method == "channels.status":
+                     await websocket.send_json({
+                         "id": req_id,
+                         "ok": True,
+                         "payload": {}
+                     })
+                elif method == "doctor.memory.status":
+                     await websocket.send_json({
+                         "id": req_id,
+                         "ok": True,
+                         "payload": {
+                            "agentId": "default",
+                            "embedding": {"ok": True, "error": None},
+                            "provider": "python-local"
+                         }
+                     })
+                else:
+                     await websocket.send_json({
+                         "id": req_id,
+                         "ok": False,
+                         "error": f"Method {method} not implemented in Python backend"
+                     })
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"WebSocket Error: {e}")
 
 @app.post("/v1/chat/completions")
 async def chat_completions(request: ChatCompletionRequest):
@@ -56,9 +152,11 @@ async def chat_completions(request: ChatCompletionRequest):
     # Prepare generator
     generator = model_client.chat_completions(
         messages=truncated_messages,
-        stream=True, # We always stream from backend to here, but checking request.stream for response
+        stream=request.stream,
         temperature=request.temperature,
-        max_tokens=request.max_tokens
+        max_tokens=request.max_tokens,
+        tools=request.tools,
+        tool_choice=request.tool_choice
     )
 
     if request.stream:
@@ -67,31 +165,46 @@ async def chat_completions(request: ChatCompletionRequest):
             media_type="text/event-stream"
         )
     else:
-        # Collect full response
-        full_content = ""
-        async for chunk in generator:
-            full_content += chunk
-            
-        return JSONResponse({
-            "id": f"chatcmpl-{uuid.uuid4()}",
-            "object": "chat.completion",
-            "created": int(time.time()),
-            "model": model_name,
-            "choices": [{
-                "index": 0,
-                "message": {
-                    "role": "assistant",
-                    "content": full_content
-                },
-                "finish_reason": "stop"
-            }],
-            "usage": {
-                "prompt_tokens": truncated_count,
-                "completion_tokens": get_token_count(full_content),
-                "total_tokens": truncated_count + get_token_count(full_content)
-            }
-        })
+        # For non-streaming requests, we expect a single full response object from the generator
+        full_response = None
+        async for item in generator:
+            full_response = item
+            break # Should be only one
+        
+        if full_response:
+             if "error" in full_response:
+                 raise HTTPException(status_code=500, detail=full_response["error"])
+             
+             # The backend response should already match OpenAI format if it's direct passthrough.
+             # However, model_client wraps it slightly differently based on backend.
+             # If using OpenAI backend, it's exact.
+             # If using Ollama/Llama.cpp, ensure format matches.
+             # Our model_client simply runs response.json().
+             return JSONResponse(full_response)
+        
+        raise HTTPException(status_code=500, detail="Empty response from model backend")
 
+
+@app.get("/v1/channels")
+async def get_channels_status():
+    """Mock channel status for CLI compatibility"""
+    return {}
+
+@app.get("/v1/doctor/memory")
+async def get_memory_status():
+    """Mock memory status for CLI compatibility"""
+    return {
+        "agentId": "default",
+        "embedding": {
+            "ok": True,
+            "error": None
+        },
+        "provider": "python-local"
+    }
+
+@app.get("/v1/system/status")
+async def system_status():
+    return {"ok": True, "version": "1.0.0", "backend": "python"}
 
 @app.get("/api/health")
 async def health_check():
@@ -113,11 +226,20 @@ async def list_models():
     }
 
 async def stream_generator(generator, model_name):
-    """Wraps content chunks into OpenAI SSE format"""
+    """Wraps delta chunks into OpenAI SSE format"""
     chat_id = f"chatcmpl-{uuid.uuid4()}"
     created = int(time.time())
     
-    async for content in generator:
+    # We iterate over delta dictionaries from the model_client
+    async for delta in generator:
+        if "error" in delta:
+            # If an error object is yielded, send it. 
+            # Standard OpenAI stream usually doesn't send error as data event but as HTTP error.
+            # But if stream started, we must break it.
+            # Let's send a final chunk with error content for now or just log it.
+            print(f"Error in stream: {delta['error']}")
+            continue
+
         chunk = {
             "id": chat_id,
             "object": "chat.completion.chunk",
@@ -125,7 +247,7 @@ async def stream_generator(generator, model_name):
             "model": model_name,
             "choices": [{
                 "index": 0,
-                "delta": {"content": content},
+                "delta": delta,
                 "finish_reason": None
             }]
         }
@@ -138,11 +260,12 @@ async def stream_generator(generator, model_name):
 # Mount static files at root, but ensure API routes take precedence
 UI_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../dist/control-ui"))
 if os.path.exists(UI_DIR):
-    app.mount("/", StaticFiles(directory=UI_DIR, html=True, check_dir=False), name="ui")
-    
-    # Simple workaround for SPA routing (FastAPI StaticFiles doesn't do fallback by default easily)
-    # But for a basic "index.html" serve it works if you hit /.
-    # For deep links, we might need a catch-all exceptions handler or route.
+    # Mount /assets explicitly if it exists to avoid catch-all interference for static assets
+    assets_dir = os.path.join(UI_DIR, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+    # Catch-all for SPA - serves index.html for any non-API route
     @app.exception_handler(404)
     async def not_found_exception_handler(request, exc):
         # Fallback to index.html for SPA client-side routing
@@ -151,5 +274,30 @@ if os.path.exists(UI_DIR):
              from fastapi.responses import FileResponse
              return FileResponse(index_path)
         return {"detail": "Not Found"}
+
+    # Also mount root to static files, but careful with ordering.
+    # Actually, a better pattern for SPA is to catch 404s and serve index.html.
+    # If we mount named static file directory directly, it might shadow if path matches.
+    # Let's use the 404 handler approach combined with specific asset mounting.
+    # If we mount "/" to StaticFiles(html=True), it catches everything.
+    # So instead, let's just rely on the 404 handler to serve index.html?
+    # No, that's inefficient.
+    # The standard way is:
+    # 1. Mount /assets
+    # 2. Mount other specific static folders.
+    # 3. Use a catch-all route at the end for index.html.
+
+    from fastapi.responses import FileResponse
+
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Check if file exists in UI_DIR
+        potential_path = os.path.join(UI_DIR, full_path)
+        if os.path.exists(potential_path) and os.path.isfile(potential_path):
+             return FileResponse(potential_path)
+        
+        # Otherwise serve index.html
+        return FileResponse(os.path.join(UI_DIR, "index.html"))
+
 else:
     print(f"Warning: UI directory not found at {UI_DIR}. Frontend will not be served.")
