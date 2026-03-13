@@ -2,6 +2,7 @@ import fs from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import path from "node:path";
 import type { AutoCrabConfig } from "../../config/config.js";
+import { resolveAutoCrabPackageRootSync } from "../../infra/autocrab-root.js";
 import { openBoundaryFileSync } from "../../infra/boundary-file-read.js";
 import { resolveControlUiRootSync } from "../../infra/control-ui-assets.js";
 import { isWithinDir } from "../../infra/path-safety.js";
@@ -181,25 +182,57 @@ export function handleControlUiAvatarRequest(
     return true;
   }
 
+  const resolveFallbackAvatar = (): string | null => {
+    // Only 'main' agent gets the placeholder for now, to avoid exposing assets on arbitrary agent names
+    if (agentId !== "main") {
+      return null;
+    }
+    const root = resolveAutoCrabPackageRootSync({
+      moduleUrl: import.meta.url,
+      argv1: process.argv[1],
+      cwd: process.cwd(),
+    });
+    if (!root) {
+      return null;
+    }
+    const fallback = path.join(root, "assets", "avatar-placeholder.svg");
+    return fs.existsSync(fallback) ? fallback : null;
+  };
+
   if (url.searchParams.get("meta") === "1") {
     const resolved = opts.resolveAvatar(agentId);
-    const avatarUrl =
+    let avatarUrl =
       resolved.kind === "local"
         ? buildControlUiAvatarUrl(basePath, agentId)
         : resolved.kind === "remote" || resolved.kind === "data"
           ? resolved.url
           : null;
+
+    if (!avatarUrl && resolved.kind === "none") {
+      const fallback = resolveFallbackAvatar();
+      if (fallback) {
+        avatarUrl = buildControlUiAvatarUrl(basePath, agentId);
+      }
+    }
     sendJson(res, 200, { avatarUrl } satisfies ControlUiAvatarMeta);
     return true;
   }
 
   const resolved = opts.resolveAvatar(agentId);
-  if (resolved.kind !== "local") {
+  let filePathToServe: string | null = null;
+
+  if (resolved.kind === "local") {
+    filePathToServe = resolved.filePath;
+  } else if (resolved.kind === "none") {
+    filePathToServe = resolveFallbackAvatar();
+  }
+
+  if (!filePathToServe) {
     respondControlUiNotFound(res);
     return true;
   }
 
-  const safeAvatar = resolveSafeAvatarFile(resolved.filePath);
+  const safeAvatar = resolveSafeAvatarFile(filePathToServe);
   if (!safeAvatar) {
     respondControlUiNotFound(res);
     return true;
