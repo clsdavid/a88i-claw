@@ -222,3 +222,97 @@ The Node.js backend currently stores agent chat history, thread locks, and state
 The workspace includes shared packages like `clawdbot` and `moltbot` which function as internal utility sub-agents or standalone bot instances.
 
 - **Python Equivalent**: Convert these into standard Python submodules or independent Poetry/Pip-managed packages mapped under a `src/packages/` namespace.
+
+---
+
+## 8. User Experience Pain Points & Community Feature Parity
+
+A review of the project's historical issue tracker, contributor roles (`CONTRIBUTING.md`), and patch history (`CHANGELOG.md`) highlights several critical user pain points in the original Node.js architecture. The Python port must actively discard the problematic designs while retaining the community-driven features that make AutoCrab powerful.
+
+### 8.1 Critical User Pain Points to Resolve (The "Bad")
+
+1. **Catastrophic API Costs & Context Loss**:
+   - **The Pain**: Users frequently experience enormous LLM API bills because the ReAct loop blindly feeds raw tool outputs (e.g., massive JSON API responses or full terminal logs) back into the prompt. When `compaction.ts` triggers, users complain that the agent "forgets" specific granular details from earlier in the session.
+   - **The Python Fix**: Implement strict semantic truncation, RAG for tool outputs, and cheaper local summarization models to preserve context without ballooning the frontier model's prompt size.
+
+2. **Fragile Installation & Native Dependencies**:
+   - **The Pain**: The Node.js ecosystem relies heavily on complex native bindings (e.g., `canvas`, `sqlite3`, Opus decoders for Discord voice, `sherpa-onnx-tts`). Users on Windows or edge-case Linux distros constantly encounter `node-gyp` build failures, making the installation wizard highly unreliable.
+   - **The Python Fix**: Python excels at pre-compiled binary distribution (via `pip` wheels). The new backend should favor pure-Python or pre-compiled wheel equivalents, drastically simplifying the onboarding wizard and daemon installation (`systemd`/`launchd`).
+
+3. **Channel Connection Reliability (Duplicate Messages & Drops)**:
+   - **The Pain**: The monolithic event loop often struggles with concurrent flood events from high-traffic Discord, Slack, or Telegram servers. Users report duplicate assistant replies (due to race conditions in deduplication logic) or dropped messages during listener watchdog timeouts.
+   - **The Python Fix**: Decouple the webhook / websocket listeners from the core Agent ReAct loop using a robust asynchronous message broker (e.g., Redis Queue or Celery) powered by FastAPI background tasks.
+
+4. **Plugin Authoring Complexity**:
+   - **The Pain**: Community members struggle to write plugins because the Node.js dynamic `import()` ecosystem enforces strict strict ESM/CommonJS boundaries, leading to constant `require is not defined in ES module scope` runtime crashes.
+   - **The Python Fix**: Provide a heavily typed, decorator-based plugin SDK (e.g., `@autocrab.plugin()`) that uses standard Python `importlib`, making it instantly accessible to the massive Python AI developer community.
+
+### 8.2 Essential Community Features to Retain (The "Good")
+
+The open-source community has built a massive ecosystem around AutoCrab. The Python rewrite **must** achieve 1:1 parity with the following community-driven subsystems:
+
+- **Rich Messaging Ecosystem Capabilities**:
+  - The Python backend must natively support platform-specific rich features, including **Threads & Topics** (Discord, Telegram, Slack), **Reactions** (emoji acks), **Voice Notes** (speech-to-text integration), and **Interactive UI Cards** (Feishu/Slack blocks).
+- **Subagents & Background Cron**:
+  - Retain the ability for the main agent to spawn isolated `sessions_spawn` child workers, and maintain the Cron scheduling engine for autonomous daily tasks.
+- **Native OS App Integrations**:
+  - Ensure the API contracts remain stable so the native Swift (iOS/macOS) and Kotlin (Android) apps can continue to leverage deep OS connections (Share Extensions, Home screen Widgets, Local Notifications).
+- **Media Understanding**:
+  - Retain the multimodal ingestion pipelines (handling PDFs, images, and audio files sent by users via chat apps).
+
+---
+
+## 9. Project Management, Testing, & CI/CD Operations
+
+From a Project Management perspective, ensuring a stable, safe, and verifiable port to Python requires understanding the rigorous operational setup of the original Node.js codebase. Any new Python architecture must integrate deeply with these existing workflows.
+
+### 9.1 Testing Strategy
+
+The original project relies heavily on a partitioned testing strategy using `vitest`:
+
+- **Scopes**: Tests are rigidly separated into `vitest.unit.config.ts`, `vitest.e2e.config.ts`, `vitest.channels.config.ts`, and `vitest.gateway.config.ts`.
+- **The Python Requirement**: The port must utilize **`pytest`** and replicate this localized test suite structure. The CI expects to run isolated unit tests separately from heavy, Docker-dependent End-to-End (E2E) tests.
+
+### 9.2 CI/CD Pipelines
+
+AutoCrab uses GitHub Actions (`.github/workflows/ci.yml`) as its primary CI/CD engine.
+
+- **Matrix Builds**: The CI matrix currently builds the Node.js backend alongside native Swift (macOS/iOS via Xcode 16.1) and Kotlin (Android via Gradle) frontends.
+- **The Python Requirement**: The GitHub Actions matrix must be updated to install Python 3.12 (using `actions/setup-python`) and `poetry`/`pip` instead of `pnpm`, while **strictly keeping the native iOS and Android build steps intact** to ensure the new Python backend doesn't break frontend API contracts.
+
+### 9.3 Security, Sandboxing, & Secrets
+
+Because the Agent controls a computer, security is paramount.
+
+- **Docker Sandboxing**: The codebase utilizes specifically crafted Dockerfiles (`Dockerfile.sandbox`, `Dockerfile.sandbox-browser`) backed by deployment scripts (`setup-podman.sh`, `docker-compose.yml`) to ensure AI tool execution happens in an isolated container instance, not on the host OS natively. Python's `docker` SDK must replace the Node.js equivalent to orchestrate these sandbox spins.
+- **Secrets Management**: The project runs Git pre-commit hooks utilizing `detect-secrets` (generating `.secrets.baseline`) and `zizmor` to prevent API key leaks in CI. The Python conversion should retain these exact tools as they are already language-agnostic.
+
+---
+
+## 10. Recommended Phased Delivery Plan (Python Port)
+
+A "big bang" rewrite of this monorepo is highly risky. As a Project Manager, I recommend the following strict, phased rollout strategy for the development team:
+
+**Phase 1: API Gateway & Data Parity (The Skeleton)**
+
+- Stand up the FastAPI Gateway.
+- Replicate the exact REST/WebSocket endpoints and Pydantic schemas corresponding to the original TS interfaces.
+- **Verification**: Connect the existing unmodified Lit Web UI and Swift macOS app to the Python backend; they should boot and authenticate without crashing.
+
+**Phase 2: RAG Database & Prompt Engine (The Brain)**
+
+- Swap the filesystem-based session DB for a Vector Database + Relational setup.
+- Build the LangGraph / LlamaIndex ReAct loops. Connect OpenAI/Anthropic APIs.
+- **Verification**: Ensure the agent can maintain a conversational state using vector embeddings instead of the legacy auto-compaction script.
+
+**Phase 3: Core Tools & Sandboxing (The Hands)**
+
+- Port the tool schemas (Bash, FS, Browser).
+- Integrate the Python Docker SDK to manage the `sandbox-common` containers.
+- **Verification**: Run the existing `test-live-models-docker.sh` equivalent to ensure the LLM can execute a bash command inside the container and parse the `stdout`.
+
+**Phase 4: Ecosystem & Plugins (The Community)**
+
+- Port the `extensions/` (Slack, Discord, Telegram) as FastAPI background workers.
+- Establish the dynamic `importlib` plugin system for community skills.
+- **Verification**: Launch the bot in a test Discord server and verify Rich Messaging (threads, cards) triggers seamlessly.
