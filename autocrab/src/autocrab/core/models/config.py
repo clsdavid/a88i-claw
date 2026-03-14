@@ -32,7 +32,35 @@ class AgentConfig(BaseModel):
     params: Optional[Dict[str, Any]] = None
 
 class AgentsConfig(BaseModel):
+    defaults: Optional[Dict[str, Any]] = None
     list: Optional[List[AgentConfig]] = None
+
+class AgentBindingMatch(BaseModel):
+    channel: str
+    accountId: Optional[str] = None
+    peer: Optional[Dict[str, str]] = None
+    guildId: Optional[str] = None
+    teamId: Optional[str] = None
+    roles: Optional[List[str]] = None
+
+class AgentRouteBinding(BaseModel):
+    type: Optional[Literal["route"]] = "route"
+    agentId: str
+    comment: Optional[str] = None
+    match: AgentBindingMatch
+
+class AgentAcpBinding(BaseModel):
+    type: Literal["acp"]
+    agentId: str
+    comment: Optional[str] = None
+    match: AgentBindingMatch
+    acp: Optional[Dict[str, Any]] = None
+
+AgentBinding = Union[AgentRouteBinding, AgentAcpBinding]
+
+class SessionConfig(BaseModel):
+    dmScope: Optional[Literal["main", "per-peer", "per-channel-peer", "per-account-channel-peer"]] = "main"
+    identityLinks: Optional[Dict[str, List[str]]] = None
 
 class AuthProfileConfig(BaseModel):
     provider: str
@@ -114,6 +142,8 @@ class AutoCrabSettings(BaseSettings):
     agents: Optional[AgentsConfig] = None
     auth: Optional[AuthConfig] = None
     models: Optional[ModelsConfig] = None
+    bindings: Optional[List[AgentBinding]] = None
+    session: Optional[SessionConfig] = SessionConfig()
 
     # Fallback / Local Storage
     session_dir: str = ".sessions"

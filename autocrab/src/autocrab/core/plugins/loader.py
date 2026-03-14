@@ -3,10 +3,15 @@ import inspect
 import sys
 from typing import Callable, Dict, Any, List
 from autocrab.core.models.api import ToolDefinition, FunctionSpec
+from autocrab.core.plugins.base import BasePlugin, ChannelPlugin
 
 # Registry pattern to store dynamically loaded skills
 _SKILL_REGISTRY: Dict[str, Callable] = {}
 _SKILL_SCHEMAS: List[ToolDefinition] = []
+
+# Registry for other plugin types
+_CHANNEL_PLUGINS: Dict[str, ChannelPlugin] = {}
+_INSTALLED_PLUGINS: Dict[str, BasePlugin] = {}
 
 def skill(name: str, description: str):
     """
@@ -63,7 +68,18 @@ def load_plugins_from_directory(directory_path: str):
         if filename.endswith(".py") and not filename.startswith("__"):
             module_name = filename[:-3]
             try:
-                importlib.import_module(module_name)
+                module = importlib.import_module(module_name)
+                # After importing, look for BasePlugin subclasses defined in the module
+                for name, obj in inspect.getmembers(module):
+                    if inspect.isclass(obj) and issubclass(obj, BasePlugin) and obj is not BasePlugin and obj is not ChannelPlugin:
+                        plugin_instance = obj()
+                        _INSTALLED_PLUGINS[plugin_instance.id] = plugin_instance
+                        if isinstance(plugin_instance, ChannelPlugin):
+                            _CHANNEL_PLUGINS[plugin_instance.id] = plugin_instance
+                            print(f"Registered Channel Plugin: {plugin_instance.id}")
+                        else:
+                            print(f"Registered General Plugin: {plugin_instance.id}")
+                
                 print(f"Loaded Plugin Module: {module_name}")
             except Exception as e:
                 print(f"Failed to load plugin {module_name}: {e}")
@@ -77,3 +93,23 @@ def execute_skill(name: str, kwargs: Dict[str, Any]) -> Any:
     if name not in _SKILL_REGISTRY:
         raise ValueError(f"Skill {name} not found in registry.")
     return _SKILL_REGISTRY[name](**kwargs)
+
+def get_channel_plugin(channel_id: str) -> Optional[ChannelPlugin]:
+    return _CHANNEL_PLUGINS.get(channel_id)
+
+def list_channel_plugins() -> List[str]:
+    return list(_CHANNEL_PLUGINS.keys())
+
+async def start_all_channels():
+    for plugin_id, plugin in _CHANNEL_PLUGINS.items():
+        try:
+            await plugin.start()
+        except Exception as e:
+            print(f"Failed to start channel {plugin_id}: {e}")
+
+async def stop_all_channels():
+    for plugin_id, plugin in _CHANNEL_PLUGINS.items():
+        try:
+            await plugin.stop()
+        except Exception as e:
+            print(f"Failed to stop channel {plugin_id}: {e}")
