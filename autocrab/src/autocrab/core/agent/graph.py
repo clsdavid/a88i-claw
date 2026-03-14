@@ -3,6 +3,13 @@ import operator
 from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
 from langgraph.graph import StateGraph, END
 from autocrab.core.agent.memory import HybridMemoryStore
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import SystemMessage, ToolMessage
+from autocrab.core.models.config import settings
+from autocrab.core.tools.bash import BASH_TOOL_SPEC, execute_bash_tool
+from autocrab.core.tools.mcp import McpToolRegistry
+from autocrab.core.plugins.loader import get_registered_schemas, execute_skill
+from autocrab.core.sandbox.manager import SandboxManager
 
 class AgentState(TypedDict):
     """
@@ -33,17 +40,92 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     """
     Node 2: Queries the LLM with the context and the conversation history.
     """
-    # [STUB] This node will eventually securely call the LLM provider.
-    # For Phase 2 validation, we simply append a dummy AI message.
-    dummy_msg = AIMessage(content="[STUB] I am the Brain. I comprehended the context.")
-    return {"messages": [dummy_msg]}
+    
+    llm = ChatOpenAI(
+        model=settings.llm.model_name,
+        api_key=settings.llm.api_key or "sk-dummy",
+        base_url=settings.llm.base_url
+    )
+    
+    # Gather tools
+    tools = [BASH_TOOL_SPEC.model_dump()]
+    
+    # Add plugins
+    plugin_tools = [t.model_dump() for t in get_registered_schemas()]
+    tools.extend(plugin_tools)
+    
+    # Add MCP
+    if settings.features.enable_external_mcp:
+        mcp_registry = McpToolRegistry()
+        remote_schemas = await mcp_registry.fetch_schemas()
+        tools.extend([t.model_dump() for t in remote_schemas])
+        
+    formatted_tools = []
+    for t in tools:
+        if "function" in t:
+            formatted_tools.append(t)
+        else:
+            formatted_tools.append({"type": "function", "function": t})
+
+    if formatted_tools:
+        llm_with_tools = llm.bind_tools(formatted_tools)
+    else:
+        llm_with_tools = llm
+        
+    sys_content = f"You are AutoCrab, an advanced AI agent.\\nContext:\\n{state.get('context', '')}"
+    sys_msg = SystemMessage(content=sys_content)
+    
+    messages = [sys_msg] + list(state["messages"])
+    response = await llm_with_tools.ainvoke(messages)
+    
+    return {"messages": [response]}
 
 async def execute_tools(state: AgentState) -> Dict[str, Any]:
     """
     Node 3: Executes tool calls parsed from the LLM response in a Sandbox.
     """
-    # [STUB] Phase 3 will fill this with Docker SDK sandboxing.
-    return {"messages": []}
+    
+    last_message = state["messages"][-1]
+    tool_messages = []
+    
+    sandbox = None
+    mcp_registry = None
+    
+    if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+        for tool_call in last_message.tool_calls:
+            tool_name = tool_call["name"]
+            tool_args = tool_call["args"]
+            tool_id = tool_call["id"]
+            
+            result_str = f"Error: Tool {tool_name} not found."
+            
+            try:
+                if tool_name == "bash":
+                    if not sandbox:
+                        sandbox = SandboxManager(session_id=state["session_id"])
+                        sandbox.start_sandbox()
+                    result_str = execute_bash_tool(sandbox, tool_args)
+                else:
+                    if not mcp_registry:
+                        mcp_registry = McpToolRegistry()
+                        await mcp_registry.fetch_schemas()
+                    
+                    remote_names = [schema.function.name for schema in mcp_registry.remote_schemas]
+                    
+                    if tool_name in remote_names:
+                        result_str = await mcp_registry.execute_tool(tool_name, tool_args)
+                    else:
+                        result_str = str(execute_skill(tool_name, tool_args))
+                        
+            except Exception as e:
+                result_str = f"Execution error for {tool_name}: {str(e)}"
+                
+            tool_messages.append(ToolMessage(content=result_str, tool_call_id=tool_id))
+            
+    if sandbox:
+        sandbox.teardown()
+        
+    return {"messages": tool_messages}
 
 def should_continue(state: AgentState) -> str:
     """

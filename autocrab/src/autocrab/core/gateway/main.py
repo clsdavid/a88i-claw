@@ -14,6 +14,8 @@ from autocrab.core.models.api import (
 )
 from autocrab.core.db.database import engine, Base
 import autocrab.core.db.models  # Ensure models are loaded map
+from autocrab.core.agent.graph import agent_executor
+from langchain_core.messages import HumanMessage
 
 def create_app() -> FastAPI:
     """
@@ -46,13 +48,23 @@ def create_app() -> FastAPI:
     async def create_response(request: CreateResponseBody):
         """
         Main HTTP endpoint for answering a prompt.
-        Phase 1: Stub implementation returning a static completion.
+        Uses the deployed LangGraph ReAct engine (The Brain) to process the request.
         """
-        # Echo the input format back as a stub validation
-        input_text = request.input if isinstance(request.input, str) else "complex_payload"
+        
+        input_text = request.input if isinstance(request.input, str) else str(request.input)
+        session_id = request.model or f"session_{uuid.uuid4().hex[:8]}"
+        
+        initial_state = {
+            "messages": [HumanMessage(content=input_text)],
+            "session_id": session_id,
+            "context": ""
+        }
+        
+        final_state = await agent_executor.ainvoke(initial_state)
+        last_msg = final_state["messages"][-1]
         
         reply_part = OutputTextContentPart(
-            text=f"[STUB] Received prompt: {input_text}. Brain not connected yet!"
+            text=str(last_msg.content)
         )
         
         message_item = OutputMessageItem(
@@ -74,14 +86,29 @@ def create_app() -> FastAPI:
     async def websocket_endpoint(websocket: WebSocket):
         """
         Main WebSocket endpoint for real-time agent streams.
-        Phase 1: Accept connection and wait.
+        Delegates queries to the LangGraph executor.
         """
+        
         await websocket.accept()
+        session_id = f"ws_{uuid.uuid4().hex[:8]}"
         try:
             while True:
                 data = await websocket.receive_json()
-                # Just echo back for now
-                await websocket.send_json({"type": "ack", "data": data})
+                content = data.get("text", "")
+                if not content:
+                    await websocket.send_json({"type": "ack", "data": data})
+                    continue
+                    
+                initial_state = {
+                    "messages": [HumanMessage(content=content)],
+                    "session_id": session_id,
+                    "context": ""
+                }
+                
+                final_state = await agent_executor.ainvoke(initial_state)
+                last_msg = final_state["messages"][-1]
+                
+                await websocket.send_json({"type": "message", "text": str(last_msg.content)})
         except Exception:
             pass # Handle disconnects gracefully
 

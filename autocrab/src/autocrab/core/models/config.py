@@ -15,6 +15,12 @@ class ExternalFeaturesSettings(BaseModel):
     mcp_provider_url: Optional[str] = None
     master_agent_url: Optional[str] = None
 
+class LLMSettings(BaseModel):
+    provider: Literal["openai", "ollama"] = "openai"
+    model_name: str = "gpt-4o-mini"
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+
 class AutoCrabSettings(BaseSettings):
     """
     Core Configuration Settings for AutoCrab.
@@ -33,6 +39,9 @@ class AutoCrabSettings(BaseSettings):
 
     # External Features (RAG, MCP, Master Agent)
     features: ExternalFeaturesSettings = ExternalFeaturesSettings()
+    
+    # LLM settings
+    llm: LLMSettings = LLMSettings()
     
     # Session storage
     session_dir: str = ".sessions"
