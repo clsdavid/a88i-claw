@@ -7,7 +7,7 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, ToolMessage
 from autocrab.core.models.config import settings
 from autocrab.core.tools.bash import BASH_TOOL_SPEC, execute_bash_tool
-from autocrab.core.tools.fs import fs_tools
+from autocrab.core.tools.fs import fs_tool_specs, execute_fs_read, execute_fs_write, execute_fs_list
 from autocrab.core.tools.browser import browser_tools
 from autocrab.core.tools.mcp import McpToolRegistry
 from autocrab.core.plugins.loader import get_registered_schemas, execute_skill
@@ -19,6 +19,7 @@ class AgentState(TypedDict, total=False):
     """
     messages: Annotated[Sequence[BaseMessage], operator.add]
     session_id: str
+    agent_id: str
     context: str
     instructions: Any
     tool_choice: Any
@@ -27,7 +28,10 @@ async def build_context(state: AgentState) -> Dict[str, Any]:
     """
     Node 1: Pulls the latest conversational context from Hybrid Memory.
     """
-    store = HybridMemoryStore(state["session_id"])
+    store = HybridMemoryStore(
+        session_id=state["session_id"],
+        agent_id=state.get("agent_id", "default")
+    )
     
     # In a full implementation, we extract the latest query text here 
     # to feed into the Hybrid RAG search.
@@ -44,19 +48,56 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     """
     Node 2: Queries the LLM with the context and the conversation history.
     """
+    agent_id = state.get("agent_id", "default")
+    agent_config = None
+    if settings.agents and settings.agents.list:
+        for ac in settings.agents.list:
+            if ac.id == agent_id:
+                agent_config = ac
+                break
+        if not agent_config:
+            # Fallback to default
+            for ac in settings.agents.list:
+                if ac.default:
+                    agent_config = ac
+                    break
+
+    llm_provider = "openai"
+    llm_model = settings.llm.model_name
+    llm_api_key = settings.llm.api_key or "sk-dummy"
+    llm_base_url = settings.llm.base_url
+
+    if agent_config and agent_config.model:
+        if agent_config.model.name:
+            llm_model = agent_config.model.name
+        if getattr(agent_config.model, "provider", None):
+            llm_provider = agent_config.model.provider
+            
+        # Optional API Key selection logic based on original Node.js architecture
+        if settings.auth and settings.auth.profiles and llm_provider in settings.auth.profiles:
+            import os
+            env_key = f"AUTOCRAB_{llm_provider.upper()}_API_KEY"
+            llm_api_key = os.environ.get(env_key, llm_api_key)
+
+        if getattr(agent_config.model, "baseUrl", None):
+            llm_base_url = agent_config.model.baseUrl
     
     llm = ChatOpenAI(
-        model=settings.llm.model_name,
-        api_key=settings.llm.api_key or "sk-dummy",
-        base_url=settings.llm.base_url
+        model=llm_model,
+        api_key=llm_api_key,
+        base_url=llm_base_url
     )
     
     # Gather tools
     tools = [BASH_TOOL_SPEC.model_dump()]
     
-    # Add native python tools
+    # Add native python fs tools
+    for tool_spec in fs_tool_specs:
+        tools.append(tool_spec.model_dump())
+        
+    # Add native browser tools
     from langchain_core.utils.function_calling import convert_to_openai_function
-    for tool in fs_tools + browser_tools:
+    for tool in browser_tools:
         tools.append(convert_to_openai_function(tool))
     
     # Add plugins
@@ -123,14 +164,26 @@ async def execute_tools(state: AgentState) -> Dict[str, Any]:
             result_str = f"Error: Tool {tool_name} not found."
             
             try:
-                if tool_name == "bash":
+                if tool_name in ["bash", "fs_read", "fs_write", "fs_list"]:
                     if not sandbox:
-                        sandbox = SandboxManager(session_id=state["session_id"])
+                        sandbox = SandboxManager(
+                            session_id=state["session_id"], 
+                            agent_id=state.get("agent_id", "default")
+                        )
                         sandbox.start_sandbox()
-                    result_str = execute_bash_tool(sandbox, tool_args)
-                elif tool_name in ["fs_read", "fs_write", "fs_list", "browser_tool"]:
-                    # Native python tools execution mapping
-                    tool_map = {t.name: t for t in fs_tools + browser_tools}
+                        
+                    if tool_name == "bash":
+                        result_str = execute_bash_tool(sandbox, tool_args)
+                    elif tool_name == "fs_read":
+                        result_str = execute_fs_read(sandbox, tool_args)
+                    elif tool_name == "fs_write":
+                        result_str = execute_fs_write(sandbox, tool_args)
+                    elif tool_name == "fs_list":
+                        result_str = execute_fs_list(sandbox, tool_args)
+                        
+                elif tool_name in ["browser_tool"]:
+                    # Native python browser tool execution mapping
+                    tool_map = {t.name: t for t in browser_tools}
                     if tool_name in tool_map:
                         result_str = str(tool_map[tool_name].invoke(tool_args))
                 else:

@@ -21,6 +21,7 @@ dependencies = [
     "docker>=7.1.0",
     "celery>=5.4.0",
     "redis>=5.0.4",
+    "json5>=0.9.27",
 ]
 
 [project.scripts]

@@ -52,11 +52,13 @@ def create_app() -> FastAPI:
         """
         
         input_text = request.input if isinstance(request.input, str) else str(request.input)
-        session_id = request.model or f"session_{uuid.uuid4().hex[:8]}"
+        agent_id = request.model or "default"
+        session_id = f"{agent_id}_{uuid.uuid4().hex[:8]}"
         
         initial_state = {
             "messages": [HumanMessage(content=input_text)],
             "session_id": session_id,
+            "agent_id": agent_id,
             "context": "",
             "instructions": getattr(request, "instructions", None),
             "tool_choice": getattr(request, "tool_choice", None)
@@ -101,9 +103,11 @@ def create_app() -> FastAPI:
                     await websocket.send_json({"type": "ack", "data": data})
                     continue
                     
+                agent_id = data.get("model", "default")
                 initial_state = {
                     "messages": [HumanMessage(content=content)],
                     "session_id": session_id,
+                    "agent_id": agent_id,
                     "context": "",
                     "instructions": data.get("instructions"),
                     "tool_choice": data.get("tool_choice")

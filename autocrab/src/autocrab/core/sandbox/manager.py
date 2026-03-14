@@ -8,16 +8,45 @@ class SandboxManager:
     Manages isolated Docker containers for Agent Tool execution, replacing `setup-podman.sh`.
     Ensures safe, ephemeral execution of bash commands and python scripts.
     """
-    def __init__(self, session_id: str, image_name: str = "ubuntu:22.04"):
+    def __init__(self, session_id: str, agent_id: str = "default", image_name: str = "ubuntu:22.04"):
         self.session_id = session_id
+        self.agent_id = agent_id
         self.image_name = image_name
         self.client = docker.from_env()
         self.container_id = None
         self.container = None
         
-        # Workspace binding
-        self.workspace_dir = f"/tmp/autocrab_workspaces/{self.session_id}"
-        os.makedirs(self.workspace_dir, exist_ok=True)
+        # Workspace binding reflecting Node.js path parity
+        from autocrab.core.models.config import settings
+        from pathlib import Path
+        
+        self.agent_workspace_dir = None
+        self.workspace_access = "none"
+        agent_dir_path_base = Path.home() / ".autocrab" / "agents" / self.agent_id / "agent"
+        
+        is_default = False
+        if settings.agents and settings.agents.list:
+            for ac in settings.agents.list:
+                if ac.id == self.agent_id:
+                    is_default = ac.default
+                    if ac.agentDir:
+                        agent_dir_path_base = Path(ac.agentDir)
+                    if ac.workspace:
+                        self.agent_workspace_dir = Path(ac.workspace)
+                    if ac.sandbox and ac.sandbox.workspaceAccess:
+                        self.workspace_access = ac.sandbox.workspaceAccess
+                    break
+                    
+        if not self.agent_workspace_dir:
+            # Fallback path logic matching the original JS resolver
+            if is_default or self.agent_id == "default":
+                self.agent_workspace_dir = Path(os.getcwd()) / "autocrab" / "workspace"
+            else:
+                self.agent_workspace_dir = Path.home() / ".autocrab" / f"workspace-{self.agent_id}"
+
+        self.agent_workspace_dir.mkdir(parents=True, exist_ok=True)
+        self.session_workspace_dir = agent_dir_path_base / "sessions" / self.session_id
+        self.session_workspace_dir.mkdir(parents=True, exist_ok=True)
 
     def start_sandbox(self):
         """Spins up the ephemeral container."""
@@ -28,11 +57,20 @@ class SandboxManager:
             print(f"Pulling sandbox image {self.image_name}...")
             self.client.images.pull(self.image_name)
 
+        volumes = {}
+        # Emulating Node.js workspace mounts
+        if self.workspace_access == "rw":
+            volumes[str(self.agent_workspace_dir)] = {'bind': '/workspace', 'mode': 'rw'}
+        else:
+            volumes[str(self.session_workspace_dir)] = {'bind': '/workspace', 'mode': 'rw'}
+            if self.workspace_access == "ro":
+                volumes[str(self.agent_workspace_dir)] = {'bind': '/agent_workspace', 'mode': 'ro'}
+
         self.container = self.client.containers.run(
             self.image_name,
             command="tail -f /dev/null", # Keep alive
             detach=True,
-            volumes={self.workspace_dir: {'bind': '/workspace', 'mode': 'rw'}},
+            volumes=volumes,
             working_dir="/workspace",
             name=f"autocrab_sandbox_{self.session_id}_{uuid.uuid4().hex[:6]}",
             # Security limits matching original architecture
