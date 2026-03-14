@@ -57,7 +57,9 @@ def create_app() -> FastAPI:
         initial_state = {
             "messages": [HumanMessage(content=input_text)],
             "session_id": session_id,
-            "context": ""
+            "context": "",
+            "instructions": getattr(request, "instructions", None),
+            "tool_choice": getattr(request, "tool_choice", None)
         }
         
         final_state = await agent_executor.ainvoke(initial_state)
@@ -102,13 +104,38 @@ def create_app() -> FastAPI:
                 initial_state = {
                     "messages": [HumanMessage(content=content)],
                     "session_id": session_id,
-                    "context": ""
+                    "context": "",
+                    "instructions": data.get("instructions"),
+                    "tool_choice": data.get("tool_choice")
                 }
                 
-                final_state = await agent_executor.ainvoke(initial_state)
-                last_msg = final_state["messages"][-1]
-                
-                await websocket.send_json({"type": "message", "text": str(last_msg.content)})
+                # Stream the graph execution
+                async for update in agent_executor.astream(initial_state):
+                    for node, state in update.items():
+                        if "messages" in state and len(state["messages"]) > 0:
+                            last_msg = state["messages"][-1]
+                            
+                            if hasattr(last_msg, "tool_calls") and last_message.tool_calls:
+                                # Agent decided to use a tool
+                                for call in last_msg.tool_calls:
+                                    await websocket.send_json({
+                                        "type": "tool_call",
+                                        "name": call["name"],
+                                        "args": call["args"]
+                                    })
+                            elif hasattr(last_msg, "type") and last_msg.type == "tool":
+                                # Tool completed
+                                await websocket.send_json({
+                                    "type": "tool_result",
+                                    "name": last_msg.name, # LangGraph ToolMessage usually has name, or we can just send content
+                                    "content": last_msg.content
+                                })
+                            elif hasattr(last_msg, "type") and last_msg.type == "ai" and last_msg.content:
+                                # Final AI response
+                                await websocket.send_json({
+                                    "type": "message", 
+                                    "text": str(last_msg.content)
+                                })
         except Exception:
             pass # Handle disconnects gracefully
 

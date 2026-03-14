@@ -7,17 +7,21 @@ from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, ToolMessage
 from autocrab.core.models.config import settings
 from autocrab.core.tools.bash import BASH_TOOL_SPEC, execute_bash_tool
+from autocrab.core.tools.fs import fs_tools
+from autocrab.core.tools.browser import browser_tools
 from autocrab.core.tools.mcp import McpToolRegistry
 from autocrab.core.plugins.loader import get_registered_schemas, execute_skill
 from autocrab.core.sandbox.manager import SandboxManager
 
-class AgentState(TypedDict):
+class AgentState(TypedDict, total=False):
     """
     The state dictionary passed between nodes in the LangGraph.
     """
     messages: Annotated[Sequence[BaseMessage], operator.add]
     session_id: str
     context: str
+    instructions: Any
+    tool_choice: Any
 
 async def build_context(state: AgentState) -> Dict[str, Any]:
     """
@@ -50,6 +54,11 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     # Gather tools
     tools = [BASH_TOOL_SPEC.model_dump()]
     
+    # Add native python tools
+    from langchain_core.utils.function_calling import convert_to_openai_function
+    for tool in fs_tools + browser_tools:
+        tools.append(convert_to_openai_function(tool))
+    
     # Add plugins
     plugin_tools = [t.model_dump() for t in get_registered_schemas()]
     tools.extend(plugin_tools)
@@ -68,11 +77,25 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
             formatted_tools.append({"type": "function", "function": t})
 
     if formatted_tools:
-        llm_with_tools = llm.bind_tools(formatted_tools)
+        tc = state.get("tool_choice")
+        if tc and tc != "auto":
+            if isinstance(tc, dict) and "function" in tc:
+                llm_with_tools = llm.bind_tools(formatted_tools, tool_choice=tc["function"].get("name"))
+            elif tc == "required":
+                llm_with_tools = llm.bind_tools(formatted_tools, tool_choice="any")
+            elif tc == "none":
+                llm_with_tools = llm
+            else:
+                llm_with_tools = llm.bind_tools(formatted_tools)
+        else:
+            llm_with_tools = llm.bind_tools(formatted_tools)
     else:
         llm_with_tools = llm
         
     sys_content = f"You are AutoCrab, an advanced AI agent.\\nContext:\\n{state.get('context', '')}"
+    if state.get("instructions"):
+        sys_content += f"\\n\\nInstructions:\\n{state['instructions']}"
+        
     sys_msg = SystemMessage(content=sys_content)
     
     messages = [sys_msg] + list(state["messages"])
@@ -105,6 +128,11 @@ async def execute_tools(state: AgentState) -> Dict[str, Any]:
                         sandbox = SandboxManager(session_id=state["session_id"])
                         sandbox.start_sandbox()
                     result_str = execute_bash_tool(sandbox, tool_args)
+                elif tool_name in ["fs_read", "fs_write", "fs_list", "browser_tool"]:
+                    # Native python tools execution mapping
+                    tool_map = {t.name: t for t in fs_tools + browser_tools}
+                    if tool_name in tool_map:
+                        result_str = str(tool_map[tool_name].invoke(tool_args))
                 else:
                     if not mcp_registry:
                         mcp_registry = McpToolRegistry()
