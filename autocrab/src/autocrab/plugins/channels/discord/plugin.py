@@ -52,39 +52,61 @@ class DiscordPlugin(ChannelPlugin):
 
         @self.client.event
         async def on_message(message: discord.Message):
-            # 1. Ignore own messages
-            if message.author == self.client.user:
-                return
-
-            # 2. Basic Filtering (Parity with Node.js monitor)
-            # Todo: Implement more complex allowlist/denylist checks here
-            
-            # 3. Dispatch to internal event handler if registered
-            if self.on_event:
-                try:
-                    event = ChannelEvent(
-                        channel="discord",
-                        account_id=str(self.client.user.id),
-                        peer={
-                            "kind": "channel" if message.guild else "direct", 
-                            "id": str(message.channel.id)
-                        },
-                        text=message.content,
-                        raw_payload={
-                            "message_id": str(message.id),
-                            "author_id": str(message.author.id),
-                            "author_tag": str(message.author)
-                        },
-                        guild_id=str(message.guild.id) if message.guild else None,
-                        member_role_ids=[str(r.id) for r in message.author.roles] if hasattr(message.author, 'roles') else []
-                    )
-                    await self.on_event(event)
-                except Exception as e:
-                    print(f"[Discord] Error dispatching event: {e}")
+            await self._handle_message(message)
 
         # Run client in background task to not block the main process
         print("[Discord] Starting background client task...")
         self._task = asyncio.create_task(self.client.start(token))
+
+    async def _handle_message(self, message: discord.Message):
+        """Internal handler for incoming Discord messages."""
+        # 1. Ignore own messages
+        if self.client and message.author == self.client.user:
+            return
+
+        # 2. Basic Filtering (Parity with Node.js monitor)
+        group_policy = "allowlist"
+        require_mention = False
+        
+        if settings.channels and settings.channels.discord:
+            group_policy = settings.channels.discord.groupPolicy or "allowlist"
+            require_mention = settings.channels.discord.requireMention or False
+            
+            # Per-guild override
+            if message.guild:
+                guild_id = str(message.guild.id)
+                if settings.channels.discord.guilds and guild_id in settings.channels.discord.guilds:
+                    ge = settings.channels.discord.guilds[guild_id]
+                    if ge.requireMention is not None:
+                        require_mention = ge.requireMention
+
+        # 3. Mention check for groups
+        if message.guild and require_mention:
+            if self.client and not self.client.user.mentioned_in(message):
+                return
+
+        # 4. Dispatch to internal event handler if registered
+        if self.on_event:
+            try:
+                event = ChannelEvent(
+                    channel="discord",
+                    account_id=str(self.client.user.id) if self.client else "unknown",
+                    peer={
+                        "kind": "channel" if message.guild else "direct", 
+                        "id": str(message.channel.id)
+                    },
+                    text=message.content,
+                    raw_payload={
+                        "message_id": str(message.id),
+                        "author_id": str(message.author.id),
+                        "author_tag": str(message.author)
+                    },
+                    guild_id=str(message.guild.id) if message.guild else None,
+                    member_role_ids=[str(r.id) for r in message.author.roles] if hasattr(message.author, 'roles') else []
+                )
+                await self.on_event(event)
+            except Exception as e:
+                print(f"[Discord] Error dispatching event: {e}")
 
     async def stop(self):
         if self.client:

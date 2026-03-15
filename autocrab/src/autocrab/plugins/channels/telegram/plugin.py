@@ -34,27 +34,7 @@ class TelegramPlugin(ChannelPlugin):
         self.application = ApplicationBuilder().token(token).build()
 
         async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if not update.effective_message or not update.effective_message.text:
-                return
-
-            if self.on_event:
-                try:
-                    event = ChannelEvent(
-                        channel="telegram",
-                        account_id="default", # Static for now
-                        peer={
-                            "kind": "chat", 
-                            "id": str(update.effective_chat.id)
-                        },
-                        text=update.effective_message.text,
-                        raw_payload={
-                            "message_id": update.effective_message.message_id,
-                            "from_user": str(update.effective_user.username) if update.effective_user else "unknown"
-                        }
-                    )
-                    await self.on_event(event)
-                except Exception as e:
-                    print(f"[Telegram] Error processing message: {e}")
+            await self._handle_message(update, context)
 
         self.application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), message_handler))
 
@@ -68,6 +48,33 @@ class TelegramPlugin(ChannelPlugin):
             self._task = asyncio.create_task(self.application.updater.start_polling())
         else:
             print("[Telegram] Error: Updater not initialized.")
+
+    async def _handle_message(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Internal handler for incoming Telegram messages."""
+        if not update.effective_message or not update.effective_message.text:
+            return
+
+        bot_info = await context.bot.get_me()
+        account_id = str(bot_info.id)
+
+        if self.on_event:
+            try:
+                event = ChannelEvent(
+                    channel="telegram",
+                    account_id=account_id,
+                    peer={
+                        "kind": "chat", 
+                        "id": str(update.effective_chat.id)
+                    },
+                    text=update.effective_message.text,
+                    raw_payload={
+                        "message_id": update.effective_message.message_id,
+                        "from_user": str(update.effective_user.username) if update.effective_user else "unknown"
+                    }
+                )
+                await self.on_event(event)
+            except Exception as e:
+                print(f"[Telegram] Error processing message: {e}")
 
     async def stop(self):
         if self.application:

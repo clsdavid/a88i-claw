@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any, Union, Callable, Coroutine
+from pydantic import BaseModel
 
 class ChannelEvent(BaseModel):
     channel: str

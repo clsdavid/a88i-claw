@@ -12,26 +12,25 @@ async def handle_channel_event(event: ChannelEvent):
     """
     # 1. Resolve agent routing
     route = resolve_agent_route(
-        cfg=settings,
         channel=event.channel,
-        accountId=event.account_id,
-        guildId=event.guild_id,
-        teamId=event.team_id,
-        memberRoleIds=event.member_role_ids or [],
+        account_id=event.account_id,
+        guild_id=event.guild_id,
+        team_id=event.team_id,
+        member_role_ids=event.member_role_ids or [],
         peer=event.peer
     )
     
     # 2. Build session key (important for HybridMemory persistence)
-    scope = "main"
+    dm_scope = "main"
     if event.peer["kind"] == "direct":
-        scope = getattr(settings.session, "dmScope", "main")
+        dm_scope = getattr(settings.session, "dmScope", "main")
         
     session_key = build_agent_session_key(
-        agentId=route.agent_id,
+        agent_id=route.agent_id,
         channel=event.channel,
-        accountId=event.account_id,
+        account_id=event.account_id,
         peer=event.peer,
-        scope=scope
+        dm_scope=dm_scope
     )
     
     # 3. Invoke the LangGraph Brain
