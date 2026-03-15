@@ -1,0 +1,14 @@
+// Copy to LocalSigning.xcconfig for personal local signing overrides.
+// This file is only an example and should stay committed.
+
+AUTOCRAB_CODE_SIGN_STYLE = Automatic
+AUTOCRAB_DEVELOPMENT_TEAM = P5Z8X89DJL
+
+AUTOCRAB_APP_BUNDLE_ID = ai.autocrab.ios.test.mariano
+AUTOCRAB_SHARE_BUNDLE_ID = ai.autocrab.ios.test.mariano.share
+AUTOCRAB_WATCH_APP_BUNDLE_ID = ai.autocrab.ios.test.mariano.watchkitapp
+AUTOCRAB_WATCH_EXTENSION_BUNDLE_ID = ai.autocrab.ios.test.mariano.watchkitapp.extension
+
+// Leave empty with automatic signing.
+AUTOCRAB_APP_PROFILE =
+AUTOCRAB_SHARE_PROFILE =

@@ -24,6 +24,7 @@
   },
   "ignorePatterns": [
     "assets/",
+    "autocrab/frontend/",
     "dist/",
     "docs/_layouts/",
     "extensions/",

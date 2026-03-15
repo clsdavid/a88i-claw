@@ -1,0 +1,17 @@
+// Default signing values for shared/repo builds.
+// Auto-selected local team overrides live in .local-signing.xcconfig (git-ignored).
+// Manual local overrides can go in LocalSigning.xcconfig (git-ignored).
+
+AUTOCRAB_CODE_SIGN_STYLE = Manual
+AUTOCRAB_DEVELOPMENT_TEAM = Y5PE65HELJ
+
+AUTOCRAB_APP_BUNDLE_ID = ai.autocrab.ios
+AUTOCRAB_SHARE_BUNDLE_ID = ai.autocrab.ios.share
+
+AUTOCRAB_APP_PROFILE = ai.autocrab.ios Development
+AUTOCRAB_SHARE_PROFILE = ai.autocrab.ios.share Development
+
+// Keep local includes after defaults: xcconfig is evaluated top-to-bottom,
+// so later assignments in local files override the defaults above.
+#include? ".local-signing.xcconfig"
+#include? "LocalSigning.xcconfig"
