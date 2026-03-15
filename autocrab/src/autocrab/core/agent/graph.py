@@ -1,3 +1,4 @@
+import os
 from typing import TypedDict, Annotated, Sequence, Dict, Any
 import operator
 from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
@@ -63,9 +64,20 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
                     break
 
     llm_provider = "openai"
-    llm_model = settings.llm.model_name
-    llm_api_key = settings.llm.api_key or "sk-dummy"
-    llm_base_url = settings.llm.base_url
+    llm_model = "gpt-4o" # default
+    llm_api_key = os.environ.get("OPENAI_API_KEY", "sk-dummy")
+    llm_base_url = None
+
+    # Try to get defaults from settings.models if available
+    if settings.models and settings.models.providers:
+        # Just pick the first provider for now or look for 'openai'
+        provider_name = "openai"
+        if provider_name in settings.models.providers:
+            p_config = settings.models.providers[provider_name]
+            llm_base_url = p_config.baseUrl
+            llm_api_key = p_config.apiKey or llm_api_key
+            if p_config.models and len(p_config.models) > 0:
+                llm_model = p_config.models[0].name
 
     if agent_config and agent_config.model:
         if agent_config.model.name:
@@ -75,12 +87,14 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
             
         # Optional API Key selection logic based on original Node.js architecture
         if settings.auth and settings.auth.profiles and llm_provider in settings.auth.profiles:
-            import os
             env_key = f"AUTOCRAB_{llm_provider.upper()}_API_KEY"
             llm_api_key = os.environ.get(env_key, llm_api_key)
 
         if getattr(agent_config.model, "baseUrl", None):
             llm_base_url = agent_config.model.baseUrl
+        
+        if getattr(agent_config.model, "apiKey", None):
+            llm_api_key = agent_config.model.apiKey
     
     llm = ChatOpenAI(
         model=llm_model,

@@ -1,6 +1,8 @@
 import uvicorn
-from fastapi import FastAPI, WebSocket, HTTPException, Depends
+import os
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import time
 import uuid
 
@@ -25,12 +27,12 @@ def create_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
     
     app = FastAPI(
-        title="AutoCrab Gateway API",
+        title="AutoCrab Gateway",
         version="1.0.0",
         description="The Python-based API Gateway for AutoCrab."
     )
 
-    # Allow connections from the Lit Web UI or Canvas apps
+    # CORS middleware
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -39,6 +41,16 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # 1. Resolve UI Path
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # /home/chenl/Projects/a88i-claw/autocrab/src/autocrab/core/gateway/main.py
+    # We need to go up 5 levels to reach Projects/a88i-claw
+    root_path = current_dir
+    for _ in range(5):
+        root_path = os.path.dirname(root_path)
+    ui_path = os.path.join(root_path, "dist", "control-ui")
+
+    # 2. Add Health Check
     @app.get("/health")
     async def health_check():
         """Simple health check endpoint."""
@@ -86,7 +98,8 @@ def create_app() -> FastAPI:
             usage=Usage(input_tokens=0, output_tokens=0, total_tokens=0)
         )
 
-    @app.websocket("/v1/events")
+    # 3. Add WebSocket
+    @app.websocket("/gateway")
     async def websocket_endpoint(websocket: WebSocket):
         """
         Main WebSocket endpoint for real-time agent streams.
@@ -128,7 +141,7 @@ def create_app() -> FastAPI:
                         )
                         
                         hello_ok = HelloOk(
-                            protocol=1,
+                            protocol=3,
                             server={"version": app.version, "name": "AutoCrab Python"},
                             features={"caps": ["chat", "tools", "plugins"]},
                             snapshot=snapshot,
@@ -179,28 +192,73 @@ def create_app() -> FastAPI:
                                 if "messages" in state and len(state["messages"]) > 0:
                                     last_msg = state["messages"][-1]
                                     
-                                    if hasattr(last_msg, "tool_calls") and last_msg.tool_calls:
-                                        for call in last_msg.tool_calls:
-                                            event = EventFrame(
-                                                event="tool_call",
-                                                payload={"name": call["name"], "args": call["args"]}
-                                            )
-                                            await websocket.send_json(event.model_dump())
+                                    if hasattr(last_msg, "additional_kwargs") and "tool_calls" in last_msg.additional_kwargs:
+                                        for tool_call in last_msg.additional_kwargs["tool_calls"]:
+                                            # Send agent tool event
+                                            event = {
+                                                "type": "event",
+                                                "event": "agent",
+                                                "payload": {
+                                                    "runId": session_id,
+                                                    "sessionKey": session_id,
+                                                    "stream": "tool",
+                                                    "ts": int(time.time() * 1000),
+                                                    "data": {
+                                                        "toolCallId": tool_call.get("id", "call_1"),
+                                                        "name": tool_call.get("function", {}).get("name", "tool"),
+                                                        "phase": "start",
+                                                        "args": tool_call.get("function", {}).get("arguments", "{}")
+                                                    }
+                                                }
+                                            }
+                                            await websocket.send_json(event)
                                     elif hasattr(last_msg, "type") and last_msg.type == "tool":
-                                        event = EventFrame(
-                                            event="tool_result",
-                                            payload={"name": last_msg.name, "content": last_msg.content}
-                                        )
-                                        await websocket.send_json(event.model_dump())
+                                        # Send agent tool result event
+                                        event = {
+                                            "type": "event",
+                                            "event": "agent",
+                                            "payload": {
+                                                "runId": session_id,
+                                                "sessionKey": session_id,
+                                                "stream": "tool",
+                                                "ts": int(time.time() * 1000),
+                                                "data": {
+                                                    "toolCallId": getattr(last_msg, "tool_call_id", "call_1"), # Assuming tool_call_id might be available
+                                                    "name": last_msg.name,
+                                                    "phase": "end",
+                                                    "output": last_msg.content
+                                                }
+                                            }
+                                        }
+                                        await websocket.send_json(event)
                                     elif hasattr(last_msg, "type") and last_msg.type == "ai" and last_msg.content:
-                                        event = EventFrame(
-                                            event="chat.send.delta",
-                                            payload={"text": str(last_msg.content)}
-                                        )
-                                        await websocket.send_json(event.model_dump())
+                                        event = {
+                                            "type": "event",
+                                            "event": "chat",
+                                            "payload": {
+                                                "runId": session_id,
+                                                "sessionKey": session_id,
+                                                "state": "delta",
+                                                "message": {
+                                                    "role": "assistant",
+                                                    "content": [{"type": "text", "text": str(last_msg.content)}],
+                                                    "timestamp": int(time.time() * 1000)
+                                                }
+                                            }
+                                        }
+                                        await websocket.send_json(event)
                                         
-                        # Send chat.send.completion event when done
-                        await websocket.send_json(EventFrame(event="chat.send.completion", payload={}).model_dump())
+                        # Send final chat event when done
+                        final_event = {
+                            "type": "event",
+                            "event": "chat",
+                            "payload": {
+                                "runId": session_id,
+                                "sessionKey": session_id,
+                                "state": "final"
+                            }
+                        }
+                        await websocket.send_json(final_event)
 
                     elif method == "ping":
                          await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload="pong").model_dump())
@@ -217,26 +275,37 @@ def create_app() -> FastAPI:
             print(f"WS Error: {str(e)}")
             pass # Handle disconnects gracefully
 
+    # 4. Add catch-all UI serving at the END
+    if os.path.exists(ui_path):
+        from fastapi.responses import FileResponse
+        
+        @app.get("/{full_path:path}")
+        async def serve_ui(full_path: str):
+            # Ensure the path is safe
+            if ".." in full_path:
+                return FileResponse(os.path.join(ui_path, "index.html"))
+            
+            target_path = os.path.join(ui_path, full_path)
+            if full_path and os.path.isfile(target_path):
+                return FileResponse(target_path)
+            
+            # Fallback to index.html for SPA routing or missing files
+            return FileResponse(os.path.join(ui_path, "index.html"))
+            
+        print(f"Serving UI from {ui_path} via catch-all route")
+    else:
+        print(f"Warning: UI path {ui_path} not found. Static serving disabled.")
+
     @app.on_event("startup")
     async def startup_event():
         """
         Runs on API startup.
         Initializes and connects all configured ecosystem channel plugins.
         """
-        import os
-        from fastapi.staticfiles import StaticFiles
         from autocrab.core.plugins.loader import load_plugins_from_directory, start_all_channels
         from autocrab.core.plugins.handler import handle_channel_event
         
-        # 1. Mount Static Files for UI
-        ui_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "dist", "control-ui"))
-        if os.path.exists(ui_path):
-            app.mount("/", StaticFiles(directory=ui_path, html=True), name="ui")
-            print(f"Mounted UI from {ui_path}")
-        else:
-            print(f"Warning: UI path {ui_path} not found. Static serving disabled.")
-
-        # 2. Discover Plugins
+        # Discover Plugins
         plugin_base = os.path.join(os.path.dirname(__file__), "..", "..", "plugins", "channels")
         if os.path.exists(plugin_base):
             for subdir in os.listdir(plugin_base):
@@ -244,7 +313,7 @@ def create_app() -> FastAPI:
                 if os.path.isdir(plugin_dir):
                     load_plugins_from_directory(plugin_dir)
         
-        # 3. Start all discovered channel plugins with the central handler
+        # Start all discovered channel plugins
         print("Starting ecosystem channel plugins...")
         await start_all_channels(on_event=handle_channel_event)
 
