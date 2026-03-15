@@ -143,6 +143,34 @@ def create_app() -> FastAPI:
         except Exception:
             pass # Handle disconnects gracefully
 
+    @app.on_event("startup")
+    async def startup_event():
+        """
+        Runs on API startup.
+        Initializes and connects all configured ecosystem channel plugins.
+        """
+        import os
+        from autocrab.core.plugins.loader import load_plugins_from_directory, start_all_channels
+        from autocrab.core.plugins.handler import handle_channel_event
+        
+        # 1. Discover Plugins
+        plugin_base = os.path.join(os.path.dirname(__file__), "..", "..", "plugins", "channels")
+        if os.path.exists(plugin_base):
+            for subdir in os.listdir(plugin_base):
+                plugin_dir = os.path.join(plugin_base, subdir)
+                if os.path.isdir(plugin_dir):
+                    load_plugins_from_directory(plugin_dir)
+        
+        # 2. Start all discovered channel plugins with the central handler
+        print("Starting ecosystem channel plugins...")
+        await start_all_channels(on_event=handle_channel_event)
+
+    @app.on_event("shutdown")
+    async def shutdown_event():
+        """Gracefully shuts down ecosystem plugins."""
+        from autocrab.core.plugins.loader import stop_all_channels
+        await stop_all_channels()
+
     return app
 
 # The default application instance

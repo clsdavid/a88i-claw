@@ -86,6 +86,40 @@ class ModelsConfig(BaseModel):
     mode: Optional[str] = None
     providers: Optional[Dict[str, ModelProviderConfig]] = None
 
+class DiscordGuildChannelConfig(BaseModel):
+    allow: Optional[bool] = True
+    requireMention: Optional[bool] = None
+    enabled: Optional[bool] = True
+    users: Optional[List[str]] = None
+    roles: Optional[List[str]] = None
+
+class DiscordGuildEntry(BaseModel):
+    slug: Optional[str] = None
+    requireMention: Optional[bool] = None
+    channels: Optional[Dict[str, DiscordGuildChannelConfig]] = None
+
+class DiscordAccountConfig(BaseModel):
+    name: Optional[str] = None
+    enabled: Optional[bool] = True
+    token: Optional[Union[str, Dict[str, Any]]] = None
+    allowBots: Optional[Union[bool, Literal["mentions"]]] = False
+    groupPolicy: Optional[Literal["open", "disabled", "allowlist"]] = "allowlist"
+    guilds: Optional[Dict[str, DiscordGuildEntry]] = None
+
+class DiscordConfig(DiscordAccountConfig):
+    accounts: Optional[Dict[str, DiscordAccountConfig]] = None
+    defaultAccount: Optional[str] = None
+
+class TelegramConfig(BaseModel):
+    enabled: Optional[bool] = True
+    token: Optional[str] = None
+    # Add more Telegram specific fields as needed
+
+class ChannelsConfig(BaseModel):
+    discord: Optional[DiscordConfig] = None
+    telegram: Optional[TelegramConfig] = None
+    # Add other channels as needed
+
 class GatewaySettings(BaseModel):
     port: int = 5174
     mode: Literal["local", "remote"] = "local"
@@ -142,6 +176,7 @@ class AutoCrabSettings(BaseSettings):
     agents: Optional[AgentsConfig] = None
     auth: Optional[AuthConfig] = None
     models: Optional[ModelsConfig] = None
+    channels: Optional[ChannelsConfig] = None
     bindings: Optional[List[AgentBinding]] = None
     session: Optional[SessionConfig] = SessionConfig()
 

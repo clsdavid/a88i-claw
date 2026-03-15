@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict, Any, Union
-from pydantic import BaseModel
+from typing import Optional, List, Dict, Any, Union, Callable, Coroutine
 
 class ChannelEvent(BaseModel):
     channel: str
@@ -26,6 +25,8 @@ class BasePlugin(ABC):
         pass
 
 class ChannelPlugin(BasePlugin, ABC):
+    on_event: Optional[Callable[[ChannelEvent], Coroutine[Any, Any, None]]] = None
+
     @abstractmethod
     async def start(self):
         """Start the channel (connect to WS, register webhooks, etc.)"""

@@ -1,9 +1,10 @@
 import importlib
 import inspect
 import sys
-from typing import Callable, Dict, Any, List
+import os
+from typing import Callable, Dict, Any, List, Optional, Coroutine
 from autocrab.core.models.api import ToolDefinition, FunctionSpec
-from autocrab.core.plugins.base import BasePlugin, ChannelPlugin
+from autocrab.core.plugins.base import BasePlugin, ChannelPlugin, ChannelEvent
 
 # Registry pattern to store dynamically loaded skills
 _SKILL_REGISTRY: Dict[str, Callable] = {}
@@ -62,29 +63,34 @@ def load_plugins_from_directory(directory_path: str):
     if not os.path.exists(directory_path):
         return
         
-    sys.path.insert(0, directory_path)
-    
     for filename in os.listdir(directory_path):
         if filename.endswith(".py") and not filename.startswith("__"):
-            module_name = filename[:-3]
+            file_path = os.path.join(directory_path, filename)
+            # Create a unique module name for the registry
+            rel_path = os.path.relpath(file_path, os.getcwd())
+            module_name = rel_path.replace(os.path.sep, ".").strip(".")
+            
             try:
-                module = importlib.import_module(module_name)
-                # After importing, look for BasePlugin subclasses defined in the module
-                for name, obj in inspect.getmembers(module):
-                    if inspect.isclass(obj) and issubclass(obj, BasePlugin) and obj is not BasePlugin and obj is not ChannelPlugin:
-                        plugin_instance = obj()
-                        _INSTALLED_PLUGINS[plugin_instance.id] = plugin_instance
-                        if isinstance(plugin_instance, ChannelPlugin):
-                            _CHANNEL_PLUGINS[plugin_instance.id] = plugin_instance
-                            print(f"Registered Channel Plugin: {plugin_instance.id}")
-                        else:
-                            print(f"Registered General Plugin: {plugin_instance.id}")
+                spec = importlib.util.spec_from_file_location(module_name, file_path)
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    sys.modules[module_name] = module
+                    spec.loader.exec_module(module)
+                    
+                    # After importing, look for BasePlugin subclasses defined in the module
+                    for name, obj in inspect.getmembers(module):
+                        if inspect.isclass(obj) and issubclass(obj, BasePlugin) and obj is not BasePlugin and obj is not ChannelPlugin:
+                            plugin_instance = obj()
+                            _INSTALLED_PLUGINS[plugin_instance.id] = plugin_instance
+                            if isinstance(plugin_instance, ChannelPlugin):
+                                _CHANNEL_PLUGINS[plugin_instance.id] = plugin_instance
+                                print(f"Registered Channel Plugin: {plugin_instance.id}")
+                            else:
+                                print(f"Registered General Plugin: {plugin_instance.id}")
                 
-                print(f"Loaded Plugin Module: {module_name}")
+                    print(f"Loaded Plugin Module: {module_name}")
             except Exception as e:
                 print(f"Failed to load plugin {module_name}: {e}")
-                
-    sys.path.pop(0)
 
 def get_registered_schemas() -> List[ToolDefinition]:
     return _SKILL_SCHEMAS
@@ -100,9 +106,15 @@ def get_channel_plugin(channel_id: str) -> Optional[ChannelPlugin]:
 def list_channel_plugins() -> List[str]:
     return list(_CHANNEL_PLUGINS.keys())
 
-async def start_all_channels():
+from typing import Callable, Dict, Any, List, Optional, Coroutine
+
+# ... (rest of imports)
+
+async def start_all_channels(on_event: Optional[Callable[[ChannelEvent], Coroutine[Any, Any, None]]] = None):
     for plugin_id, plugin in _CHANNEL_PLUGINS.items():
         try:
+            if on_event:
+                plugin.on_event = on_event
             await plugin.start()
         except Exception as e:
             print(f"Failed to start channel {plugin_id}: {e}")
