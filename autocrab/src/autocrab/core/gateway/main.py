@@ -200,7 +200,9 @@ def create_app() -> FastAPI:
                                     "chat.send", "chat.history", "system-presence", "system-event",
                                     "config.get", "config.schema", "sessions.list",
                                     "skills.status", "skills.bins", "skills.install",
+                                    "channels.status", "cron.runs", "cron.list", "cron.status",
                                     "agents.list", "models.list", "tools.catalog", "ping",
+                                    "status", "health", "last-heartbeat",
                                     "exec.approvals.get", "exec.approvals.set",
                                     "agents.files.list", "agents.files.get", "agents.files.set"
                                 ],
@@ -598,6 +600,46 @@ def create_app() -> FastAPI:
                         # Stub install success
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"ok": True, "message": "Skill installed (stub)"}).model_dump())
 
+                    elif method == "channels.status":
+                        from autocrab.core.models.gateway import ChannelStatusEntry, ChannelsStatusResult
+                        from autocrab.core.plugins.loader import get_channel_plugins
+
+                        channels_data = []
+                        plugins = get_channel_plugins()
+
+                        for p_id, plugin in plugins.items():
+                            is_connected = False
+                            status_text = "disconnected"
+                            
+                            # Inspect the plugin instance for status details if available
+                            if hasattr(plugin, "client") and plugin.client:
+                                try:
+                                    if hasattr(plugin.client, "is_ready") and callable(plugin.client.is_ready) and plugin.client.is_ready():
+                                        is_connected = True
+                                        status_text = "connected"
+                                except:
+                                    pass
+                            # Check for generic connected property
+                            elif hasattr(plugin, "connected"):
+                                is_connected = bool(plugin.connected)
+                                status_text = "connected" if is_connected else "disconnected"
+
+                            account_val = None
+                            if hasattr(plugin, "account"):
+                                account_val = str(plugin.account)
+                                
+                            channels_data.append(ChannelStatusEntry(
+                                id=plugin.id,
+                                name=plugin.id.capitalize(),
+                                status=status_text,
+                                connected=is_connected,
+                                version=plugin.version,
+                                account=account_val
+                            ))
+                            
+                        result = ChannelsStatusResult(channels=channels_data)
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=result.model_dump()).model_dump())
+
                     elif method == "agents.list":
                         from autocrab.core.models.gateway import AgentsListResult, AgentSummary, AgentIdentity
                         agent_summaries = []
@@ -831,6 +873,47 @@ def create_app() -> FastAPI:
                         )
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
 
+                    elif method == "cron.runs":
+                        from autocrab.core.models.gateway import CronRunsResult, CronRunLogEntry
+                        # Stub response with empty list
+                        params = req.params or {}
+                        limit = params.get("limit", 50)
+                        
+                        runs_result = CronRunsResult(
+                            entries=[], # No runs yet
+                            total=0,
+                            limit=limit,
+                            offset=0,
+                            hasMore=False
+                        )
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=runs_result.model_dump()).model_dump())
+
+                    elif method == "cron.list":
+                        from autocrab.core.models.gateway import CronJobsListResult
+                        # Stub response with empty list
+                        params = req.params or {}
+                        limit = params.get("limit", 50)
+                        
+                        jobs_result = CronJobsListResult(
+                            jobs=[], # No jobs yet
+                            total=0,
+                            limit=limit,
+                            offset=0,
+                            hasMore=False
+                        )
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=jobs_result.model_dump()).model_dump())
+
+                    elif method == "cron.status":
+                        from autocrab.core.models.gateway import CronStatus
+                        
+                        # Stub response assuming cron engine is not yet active/configured
+                        status = CronStatus(
+                            enabled=False,
+                            jobs=0,
+                            nextWakeAtMs=None
+                        )
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=status.model_dump()).model_dump())
+
                     elif method == "tools.catalog":
                         # Returning basic catalog for now
                         payload = {
@@ -853,6 +936,33 @@ def create_app() -> FastAPI:
                             ]
                         }
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload).model_dump())
+
+                    elif method == "status":
+                        status_summary = {
+                            "version": app.version,
+                            "mode": "standalone",
+                            "status": "ok",
+                            "uptimeMs": int((time.time() - START_TIME) * 1000),
+                            "clients": len(presence_store),
+                            "memory": {} 
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=status_summary).model_dump())
+
+                    elif method == "health":
+                        health_snapshot = {
+                            "status": "ok",
+                            "ready": True,
+                            "db": "connected", 
+                            "checks": []
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=health_snapshot).model_dump())
+
+                    elif method == "last-heartbeat":
+                        hb = {
+                            "ts": int(time.time() * 1000),
+                            "ok": True
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=hb).model_dump())
 
                     elif method == "ping":
                          await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload="pong").model_dump())

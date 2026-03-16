@@ -99,6 +99,9 @@ def load_plugins_from_directory(directory_path: str):
 def get_registered_schemas() -> List[ToolDefinition]:
     return _SKILL_SCHEMAS
 
+def get_channel_plugins() -> Dict[str, ChannelPlugin]:
+    return _CHANNEL_PLUGINS
+
 def execute_skill(name: str, kwargs: Dict[str, Any]) -> Any:
     if name in _SKILL_REGISTRY:
         return _SKILL_REGISTRY[name](**kwargs)

@@ -198,14 +198,110 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     else:
         llm_with_tools = llm
         
-    sys_content = f"You are AutoCrab, an advanced AI agent.\\nContext:\\n{state.get('context', '')}"
+    # --- Build structured system prompt (mirrors original system-prompt.ts) ---
+    context = state.get("context", "")
     
-    # Inform about dynamic skill discovery
-    sys_content += "\n\nAvailable Capabilities:\n- If you need a capability you don't currently have (e.g. weather, crypto, system control, GitHub issues), use 'search_skills' to find relevant tools.\n- After finding a skill, use 'get_skill_info' to read its manual and command examples.\n- Finally, use the 'bash' tool to execute any required commands found in the skill info."
+    # Parse SOUL.md and MEMORY.md out of context if they were injected by load_permanent_memory
+    soul_content = ""
+    memory_content = ""
+    import re as _re
+    if "<AGENT_SOUL>" in context:
+        soul_match = _re.search(r"<AGENT_SOUL>(.*?)</AGENT_SOUL>", context, _re.DOTALL)
+        if soul_match:
+            soul_content = soul_match.group(1).strip()
+        context = _re.sub(r"<AGENT_SOUL>.*?</AGENT_SOUL>\n*", "", context, flags=_re.DOTALL).strip()
+    if "<PERMANENT_MEMORY>" in context:
+        mem_match = _re.search(r"<PERMANENT_MEMORY>(.*?)</PERMANENT_MEMORY>", context, _re.DOTALL)
+        if mem_match:
+            memory_content = mem_match.group(1).strip()
+        context = _re.sub(r"<PERMANENT_MEMORY>.*?</PERMANENT_MEMORY>\n*", "", context, flags=_re.DOTALL).strip()
     
-    if state.get("instructions"):
-        sys_content += f"\\n\\nInstructions:\\n{state['instructions']}"
+    # Build tool name listing for system prompt
+    tool_names = []
+    for t in formatted_tools:
+        fn = t.get("function", t)
+        name = fn.get("name", "")
+        desc = fn.get("description", "")
+        if name:
+            tool_names.append(f"- {name}" + (f": {desc[:80]}" if desc else ""))
+    tool_listing = "\n".join(tool_names) if tool_names else "- bash: execute shell commands\n- fs_read, fs_write, fs_list: filesystem access"
+    
+    # Resolve workspace dir
+    workspace_dir = str(settings.config_root / "workspace")
+    if settings.agents and settings.agents.list:
+        for ac in settings.agents.list:
+            if ac.id == agent_id and ac.workspace:
+                workspace_dir = ac.workspace
+                break
+    
+    # Build sections matching original system-prompt.ts structure
+    prompt_sections = []
+    
+    # Base identity: use SOUL.md if present, else default
+    if soul_content:
+        prompt_sections.append("You are a personal assistant running inside AutoCrab.\n")
+    else:
+        prompt_sections.append("You are AutoCrab, a helpful, witty, and slightly crab-obsessed AI assistant. Be concise, technical, and prioritize safety.\n")
+    
+    # ## Tooling
+    prompt_sections.append("## Tooling\nTool availability:\nTool names are case-sensitive. Call tools exactly as listed.\n" + tool_listing)
+    
+    prompt_sections.append("\n## Tool Call Style\nDefault: do not narrate routine, low-risk tool calls (just call the tool).\nNarrate only when it helps: multi-step work, complex problems, or sensitive actions.\nKeep narration brief; avoid repeating obvious steps.")
+    
+    # ## Safety (mirrors original safetySection)
+    prompt_sections.append(
+        "\n## Safety\n"
+        "You have no independent goals: do not pursue self-preservation, replication, resource acquisition, or power-seeking.\n"
+        "Prioritize safety and human oversight over completion. Comply with stop/pause/audit requests.\n"
+        "Do not manipulate anyone to expand access or disable safeguards."
+    )
+    
+    # ## Skills (on-demand discovery)
+    prompt_sections.append(
+        "\n## Skills (on-demand discovery)\n"
+        "Before replying, if you need a capability you don't have (e.g. weather, crypto, GitHub):\n"
+        "- Use 'search_skills' to find relevant skill tools.\n"
+        "- After finding a skill, use 'get_skill_info' to read its manual and command examples.\n"
+        "- Use the 'bash' tool to execute commands found in the skill info.\n"
+        "Do not read more than one skill up front. Only read after selecting."
+    )
+    
+    # ## Workspace
+    prompt_sections.append(
+        f"\n## Workspace\n"
+        f"Your working directory is: {workspace_dir}\n"
+        "Treat this directory as the single global workspace for file operations unless explicitly instructed otherwise."
+    )
+    
+    # ## Project Context (SOUL.md + MEMORY.md) -- mirrors contextFiles injection in original
+    if soul_content or memory_content:
+        prompt_sections.append("\n# Project Context\nThe following project context files have been loaded:")
+        if soul_content:
+            prompt_sections.append("If SOUL.md is present, embody its persona and tone. Avoid stiff, generic replies; follow its guidance unless higher-priority instructions override it.\n")
+            prompt_sections.append(f"## SOUL.md\n\n{soul_content}\n")
+        if memory_content:
+            prompt_sections.append(f"## MEMORY.md\n\n{memory_content}\n")
+    
+    # ## Runtime
+    import platform as _platform
+    import socket as _socket
+    rt_os = _platform.system().lower()
+    rt_host = _socket.gethostname()
+    prompt_sections.append(
+        f"\n## Runtime\n"
+        f"Runtime: agent={agent_id} | host={rt_host} | os={rt_os} | model={llm_model}"
+    )
+    
+    # ## Session context and dynamic transcript remainder (if any)
+    if context:
+        prompt_sections.append(f"\n## Session Context\n{context}")
         
+    if state.get("instructions"):
+        prompt_sections.append(f"\n## Instructions\n{state['instructions']}")
+
+    sys_content = "\n".join(prompt_sections)
+    # -------------------------------------------------------------------
+    
     sys_msg = SystemMessage(content=sys_content)
     
     messages = [sys_msg] + list(state["messages"])

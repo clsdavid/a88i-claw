@@ -13,7 +13,7 @@ Serving UI from /home/chenl/Projects/a88i-claw/dist/control-ui via catch-all rou
         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
         
   @app.on_event("shutdown")
-INFO:     Started server process [3038142]
+INFO:     Started server process [3069418]
 INFO:     Waiting for application startup.
 Registered Channel Plugin: telegram
 Loaded Plugin Module: src.autocrab.plugins.channels.telegram.plugin.py
@@ -37,30 +37,57 @@ Starting Signal Channel Plugin (Stub)...
 Starting Slack Channel Plugin (Stub)...
 Starting Whatsapp Channel Plugin (Stub)...
 Starting Imessage Channel Plugin (Stub)...
-WS: New connection from Address(host='127.0.0.1', port=52956)
-INFO:     127.0.0.1:52956 - "WebSocket /" [accepted]
+WS: New connection from Address(host='127.0.0.1', port=59932)
+INFO:     127.0.0.1:59932 - "WebSocket /" [accepted]
 INFO:     connection open
-WS: Sending hello-ok for 8ee44b12-4022-4dbe-a701-3d54d2b4945a
-WS: Sending connect.ack for 8ee44b12-4022-4dbe-a701-3d54d2b4945a
+WS: Sending hello-ok for 066c1886-a5e6-4be8-bdfa-3b6d81f8589f
+WS: Sending connect.ack for 066c1886-a5e6-4be8-bdfa-3b6d81f8589f
 WS: agents.list result: {'defaultId': 'main', 'mainKey': 'main', 'scope': 'per-sender', 'agents': [{'id': 'main', 'name': 'AutoCrab', 'identity': {'name': 'AutoCrab', 'theme': None, 'emoji': '🦀', 'avatar': None, 'avatarUrl': None}}]}
 [Discord] Logged in as autocrab#7391 (ID: 1481869639213514986)
-WS: New connection from Address(host='127.0.0.1', port=48026)
-INFO:     127.0.0.1:48026 - "WebSocket /" [accepted]
-INFO:     connection open
-WS: Sending hello-ok for 9d0a4999-99f7-41ae-8664-43025ac4dceb
-WS: Sending connect.ack for 9d0a4999-99f7-41ae-8664-43025ac4dceb
-WS: Cleaning up presence for 9d0a4999-99f7-41ae-8664-43025ac4dceb
-WS: Connection closed for 9d0a4999-99f7-41ae-8664-43025ac4dceb
+WS: Cleaning up presence for 066c1886-a5e6-4be8-bdfa-3b6d81f8589f
+WS: Connection closed for 066c1886-a5e6-4be8-bdfa-3b6d81f8589f
 INFO:     connection closed
-WS: Cleaning up presence for 8ee44b12-4022-4dbe-a701-3d54d2b4945a
-WS: Connection closed for 8ee44b12-4022-4dbe-a701-3d54d2b4945a
-INFO:     connection closed
-WS: New connection from Address(host='127.0.0.1', port=56108)
-INFO:     127.0.0.1:56108 - "WebSocket /" [accepted]
+WS: New connection from Address(host='127.0.0.1', port=37348)
+INFO:     127.0.0.1:37348 - "WebSocket /" [accepted]
 INFO:     connection open
-WS: Sending hello-ok for b4871e3a-93bd-4d2a-b2f1-75d15bfd861b
-WS: Sending connect.ack for b4871e3a-93bd-4d2a-b2f1-75d15bfd861b
+WS: Sending hello-ok for a17847ab-faef-4268-ac7f-cbdaa53bd82b
+WS: Sending connect.ack for a17847ab-faef-4268-ac7f-cbdaa53bd82b
 WS: agents.list result: {'defaultId': 'main', 'mainKey': 'main', 'scope': 'per-sender', 'agents': [{'id': 'main', 'name': 'AutoCrab', 'identity': {'name': 'AutoCrab', 'theme': None, 'emoji': '🦀', 'avatar': None, 'avatarUrl': None}}]}
-WS: Starting astream_events for session_key=main (conn=ws_b4871e3a, flush=True)
+Discovered 52 markdown skills.
+WS: models.list result: {'models': [{'id': 'ollama/qwen3.5:35b', 'name': 'Qwen 3.5 35B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}, {'id': 'ollama/qwen3:14b', 'name': 'Qwen 3 14B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}]}
+WS: Starting astream_events for session_key=main (conn=ws_a17847ab, flush=True)
 WS: astream_events loop finished for main
-WS: Sent ResponseFrame for chat.send 27b660cb-782d-44cd-9850-4a8f4896972b
+WS: Sent ResponseFrame for chat.send 01e9282f-3aa9-4635-8715-bd23d05e83d3
+WS: system-presence requested, count=1
+WS: agents.list result: {'defaultId': 'main', 'mainKey': 'main', 'scope': 'per-sender', 'agents': [{'id': 'main', 'name': 'AutoCrab', 'identity': {'name': 'AutoCrab', 'theme': None, 'emoji': '🦀', 'avatar': None, 'avatarUrl': None}}]}
+WS: models.list result: {'models': [{'id': 'ollama/qwen3.5:35b', 'name': 'Qwen 3.5 35B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}, {'id': 'ollama/qwen3:14b', 'name': 'Qwen 3 14B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}]}
+WS: Connection closed for a17847ab-faef-4268-ac7f-cbdaa53bd82b
+INFO:     connection closed
+WS: New connection from Address(host='127.0.0.1', port=48436)
+INFO:     127.0.0.1:48436 - "WebSocket /" [accepted]
+INFO:     connection open
+WS: Sending hello-ok for 1d8e0a22-e1b6-4833-a240-2e136559d1ff
+WS: Sending connect.ack for 1d8e0a22-e1b6-4833-a240-2e136559d1ff
+WS: agents.list result: {'defaultId': 'main', 'mainKey': 'main', 'scope': 'per-sender', 'agents': [{'id': 'main', 'name': 'AutoCrab', 'identity': {'name': 'AutoCrab', 'theme': None, 'emoji': '🦀', 'avatar': None, 'avatarUrl': None}}]}
+WS: models.list result: {'models': [{'id': 'ollama/qwen3.5:35b', 'name': 'Qwen 3.5 35B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}, {'id': 'ollama/qwen3:14b', 'name': 'Qwen 3 14B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}]}
+WS: Cleaning up presence for 1d8e0a22-e1b6-4833-a240-2e136559d1ff
+WS: Connection closed for 1d8e0a22-e1b6-4833-a240-2e136559d1ff
+INFO:     connection closed
+WS: New connection from Address(host='127.0.0.1', port=45590)
+INFO:     127.0.0.1:45590 - "WebSocket /" [accepted]
+INFO:     connection open
+WS: Sending hello-ok for b71548ab-75fc-40ea-8c58-cf3af2ee5f5f
+WS: Sending connect.ack for b71548ab-75fc-40ea-8c58-cf3af2ee5f5f
+WS: agents.list result: {'defaultId': 'main', 'mainKey': 'main', 'scope': 'per-sender', 'agents': [{'id': 'main', 'name': 'AutoCrab', 'identity': {'name': 'AutoCrab', 'theme': None, 'emoji': '🦀', 'avatar': None, 'avatarUrl': None}}]}
+WS: system-presence requested, count=1
+WS: models.list result: {'models': [{'id': 'ollama/qwen3.5:35b', 'name': 'Qwen 3.5 35B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}, {'id': 'ollama/qwen3:14b', 'name': 'Qwen 3 14B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}]}
+WS: system-presence requested, count=1
+INFO:     Shutting down
+WS: models.list result: {'models': [{'id': 'ollama/qwen3.5:35b', 'name': 'Qwen 3.5 35B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}, {'id': 'ollama/qwen3:14b', 'name': 'Qwen 3 14B', 'provider': 'ollama', 'contextWindow': None, 'reasoning': False}]}
+WS: agents.list result: {'defaultId': 'main', 'mainKey': 'main', 'scope': 'per-sender', 'agents': [{'id': 'main', 'name': 'AutoCrab', 'identity': {'name': 'AutoCrab', 'theme': None, 'emoji': '🦀', 'avatar': None, 'avatarUrl': None}}]}
+WS: Cleaning up presence for b71548ab-75fc-40ea-8c58-cf3af2ee5f5f
+WS: Connection closed for b71548ab-75fc-40ea-8c58-cf3af2ee5f5f
+INFO:     connection closed
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [3069418]

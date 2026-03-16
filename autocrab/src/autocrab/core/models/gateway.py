@@ -123,6 +123,18 @@ class SkillStatusReport(BaseModel):
     managedSkillsDir: str
     skills: List[SkillStatusEntry]
 
+class ChannelStatusEntry(BaseModel):
+    id: str
+    name: str 
+    status: str
+    connected: bool
+    version: str
+    error: Optional[str] = None
+    account: Optional[str] = None
+
+class ChannelsStatusResult(BaseModel):
+    channels: List[ChannelStatusEntry]
+
 class UpdateAvailable(BaseModel):
     currentVersion: str
     latestVersion: str
@@ -180,6 +192,48 @@ class AgentsFilesSetResult(BaseModel):
     workspace: str
     file: AgentFileEntry
 
+class CronRunUsage(BaseModel):
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
+    cache_read_tokens: Optional[int] = None
+    cache_write_tokens: Optional[int] = None
+
+class CronRunLogEntry(BaseModel):
+    ts: int  # Timestamp
+    jobId: str
+    jobName: Optional[str] = None
+    status: Optional[str] = None # "ok", "error", "skipped", "unknown"
+    durationMs: Optional[int] = None
+    error: Optional[str] = None
+    summary: Optional[str] = None
+    deliveryStatus: Optional[str] = None # "delivered", "not-delivered", "unknown", "not-requested"
+    deliveryError: Optional[str] = None
+    delivered: Optional[bool] = None
+    runAtMs: Optional[int] = None
+    nextRunAtMs: Optional[int] = None
+    model: Optional[str] = None
+    provider: Optional[str] = None
+    usage: Optional[CronRunUsage] = None
+    sessionId: Optional[str] = None
+    sessionKey: Optional[str] = None
+
+class CronRunsResult(BaseModel):
+    entries: List[CronRunLogEntry]
+    total: Optional[int] = 0
+    offset: Optional[int] = 0
+    limit: Optional[int] = 50
+    hasMore: Optional[bool] = False
+    nextOffset: Optional[int] = None
+
+class CronJobsListResult(BaseModel):
+    jobs: List[Dict[str, Any]]
+    total: Optional[int] = 0
+    offset: Optional[int] = 0
+    limit: Optional[int] = 50
+    hasMore: Optional[bool] = False
+    nextOffset: Optional[int] = None
+
 class Snapshot(BaseModel):
     presence: List[PresenceEntry] = []
     health: Any = None
@@ -212,6 +266,11 @@ class AuthParams(BaseModel):
     token: Optional[str] = None
     deviceToken: Optional[str] = None
     password: Optional[str] = None
+
+class CronStatus(BaseModel):
+    enabled: bool
+    jobs: int
+    nextWakeAtMs: Optional[int] = None
 
 class ConnectParams(BaseModel):
     minProtocol: int
