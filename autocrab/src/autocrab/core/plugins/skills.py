@@ -25,10 +25,12 @@ class SkillEntry(BaseModel):
     filePath: str
     baseDir: str
     metadata: Optional[SkillMetadata] = None
+    body: str = ""
+    commands: List[str] = []
 
 class SkillMdParser:
     """
-    Parses SKILL.md files to extract metadata and description.
+    Parses SKILL.md files to extract metadata, description, and instructions.
     """
     @staticmethod
     def parse_file(file_path: Path) -> Optional[SkillEntry]:
@@ -76,6 +78,9 @@ class SkillMdParser:
                                 break
                         break
             
+            # Extract bash commands from code blocks
+            commands = re.findall(r"```bash\n(.*?)\n```", body, re.DOTALL)
+            
             # Map frontmatter to SkillMetadata
             autocrab = frontmatter.get("autocrab", {})
             metadata = SkillMetadata(
@@ -98,7 +103,9 @@ class SkillMdParser:
                 bundled=False,
                 filePath=str(file_path),
                 baseDir=str(file_path.parent),
-                metadata=metadata
+                metadata=metadata,
+                body=body,
+                commands=commands
             )
         except Exception as e:
             print(f"Error parsing {file_path}: {e}")

@@ -54,6 +54,9 @@ class ModelChoice(BaseModel):
     contextWindow: Optional[int] = None
     reasoning: Optional[bool] = None
 
+class ModelsListResult(BaseModel):
+    models: List[ModelChoice]
+
 class ConfigIssue(BaseModel):
     path: str
     message: str
@@ -72,6 +75,7 @@ class ConfigFileSnapshot(BaseModel):
     legacyIssues: List[Any] = []
 
 class SessionEntry(BaseModel):
+    key: str # UI expects .key
     sessionId: str
     updatedAt: int
     systemSent: bool = False
@@ -85,14 +89,14 @@ class SessionEntry(BaseModel):
     totalTokensFresh: bool = False
 
 class SessionsListResult(BaseModel):
-    sessions: List[Dict[str, SessionEntry]]
+    sessions: List[SessionEntry]
 
 class SkillRequirement(BaseModel):
     bins: List[str] = []
     anyBins: List[str] = []
-    node: Optional[str] = None
-    python: Optional[str] = None
     env: List[str] = []
+    config: List[str] = []
+    os: List[str] = []
 
 class SkillStatusEntry(BaseModel):
     name: str
@@ -109,8 +113,8 @@ class SkillStatusEntry(BaseModel):
     disabled: bool = False
     blockedByAllowlist: bool = False
     eligible: bool = True
-    requirements: Any = None
-    missing: Any = None
+    requirements: SkillRequirement = Field(default_factory=SkillRequirement)
+    missing: SkillRequirement = Field(default_factory=SkillRequirement)
     configChecks: List[Any] = []
     install: List[Any] = []
 
@@ -161,7 +165,7 @@ class ConnectParams(BaseModel):
     minProtocol: int
     maxProtocol: int
     client: ClientInfo
-    caps: List[str] = []
+    caps: Optional[List[str]] = []
     commands: Optional[List[str]] = None
     permissions: Optional[Dict[str, bool]] = None
     pathEnv: Optional[str] = None
@@ -172,15 +176,28 @@ class ConnectParams(BaseModel):
     locale: Optional[str] = None
     userAgent: Optional[str] = None
 
+class HelloOkPolicy(BaseModel):
+    maxPayload: int = 10 * 1024 * 1024
+    maxBufferedBytes: int = 100 * 1024 * 1024
+    tickIntervalMs: int = 5000
+
+class HelloOkFeatures(BaseModel):
+    methods: List[str] = []
+    events: List[str] = []
+
+class HelloOkServer(BaseModel):
+    version: str
+    connId: str
+
 class HelloOk(BaseModel):
     type: Literal["hello-ok"] = "hello-ok"
     protocol: int
-    server: Dict[str, str]
-    features: Dict[str, List[str]]
+    server: HelloOkServer
+    features: HelloOkFeatures
     snapshot: Snapshot
     canvasHostUrl: Optional[str] = None
     auth: Optional[Dict[str, Any]] = None
-    policy: Dict[str, int]
+    policy: HelloOkPolicy
 
 class ErrorShape(BaseModel):
     code: str

@@ -14,6 +14,8 @@ from autocrab.core.tools.mcp import McpToolRegistry
 from autocrab.core.plugins.loader import get_registered_schemas, execute_skill
 from autocrab.core.sandbox.manager import SandboxManager
 
+_CACHED_TOOLS = None
+
 class AgentState(TypedDict, total=False):
     """
     The state dictionary passed between nodes in the LangGraph.
@@ -142,37 +144,43 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     llm = ChatOpenAI(
         model=llm_model,
         api_key=llm_api_key,
-        base_url=llm_base_url
+        base_url=llm_base_url,
+        streaming=True
     )
     
-    # Gather tools
-    tools = [BASH_TOOL_SPEC.model_dump()]
-    
-    # Add native python fs tools
-    for tool_spec in fs_tool_specs:
-        tools.append(tool_spec.model_dump())
+    global _CACHED_TOOLS
+    if _CACHED_TOOLS is None:
+        # Gather tools
+        tools = [BASH_TOOL_SPEC.model_dump()]
         
-    # Add native browser tools
-    from langchain_core.utils.function_calling import convert_to_openai_function
-    for tool in browser_tools:
-        tools.append(convert_to_openai_function(tool))
-    
-    # Add plugins
-    plugin_tools = [t.model_dump() for t in get_registered_schemas()]
-    tools.extend(plugin_tools)
-    
-    # Add MCP
-    if settings.features.enable_external_mcp:
-        mcp_registry = McpToolRegistry()
-        remote_schemas = await mcp_registry.fetch_schemas()
-        tools.extend([t.model_dump() for t in remote_schemas])
+        # Add native python fs tools
+        for tool_spec in fs_tool_specs:
+            tools.append(tool_spec.model_dump())
+            
+        # Add native browser tools
+        from langchain_core.utils.function_calling import convert_to_openai_function
+        for tool in browser_tools:
+            tools.append(convert_to_openai_function(tool))
         
-    formatted_tools = []
-    for t in tools:
-        if "function" in t:
-            formatted_tools.append(t)
-        else:
-            formatted_tools.append({"type": "function", "function": t})
+        # Add plugins
+        plugin_tools = [t.model_dump() for t in get_registered_schemas()]
+        tools.extend(plugin_tools)
+        
+        # Add MCP
+        if settings.features.enable_external_mcp:
+            mcp_registry = McpToolRegistry()
+            remote_schemas = await mcp_registry.fetch_schemas()
+            tools.extend([t.model_dump() for t in remote_schemas])
+            
+        formatted_tools = []
+        for t in tools:
+            if "function" in t:
+                formatted_tools.append(t)
+            else:
+                formatted_tools.append({"type": "function", "function": t})
+        _CACHED_TOOLS = formatted_tools
+
+    formatted_tools = _CACHED_TOOLS
 
     if formatted_tools:
         tc = state.get("tool_choice")
@@ -191,6 +199,10 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
         llm_with_tools = llm
         
     sys_content = f"You are AutoCrab, an advanced AI agent.\\nContext:\\n{state.get('context', '')}"
+    
+    # Inform about dynamic skill discovery
+    sys_content += "\n\nAvailable Capabilities:\n- If you need a capability you don't currently have (e.g. weather, crypto, system control, GitHub issues), use 'search_skills' to find relevant tools.\n- After finding a skill, use 'get_skill_info' to read its manual and command examples.\n- Finally, use the 'bash' tool to execute any required commands found in the skill info."
+    
     if state.get("instructions"):
         sys_content += f"\\n\\nInstructions:\\n{state['instructions']}"
         

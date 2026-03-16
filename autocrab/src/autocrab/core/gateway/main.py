@@ -23,8 +23,9 @@ import platform
 import hashlib
 import json
 
-# Presence tracking (simple in-memory store)
+# Global state tracking
 presence_store = {}
+START_TIME = time.time()
 
 def create_app() -> FastAPI:
     """
@@ -113,10 +114,10 @@ def create_app() -> FastAPI:
         Main WebSocket endpoint for real-time agent streams.
         Implements the AutoCrab Gateway protocol (connect handshake, req/res framing).
         """
-        print(f"WS: New connection from {websocket.client}")
+        print(f"WS: New connection from {websocket.client}", flush=True)
         from autocrab.core.models.gateway import (
             ConnectParams, HelloOk, RequestFrame, ResponseFrame, EventFrame, 
-            Snapshot, StateVersion, ErrorShape
+            Snapshot, StateVersion, ErrorShape, ModelsListResult, ModelChoice
         )
         
         await websocket.accept()
@@ -175,8 +176,10 @@ def create_app() -> FastAPI:
                                 default_id = settings.agents.list[0].id
                                     
                         snapshot = Snapshot(
+                            presence=[],
+                            health={}, # Non-null as required by schema
                             stateVersion=StateVersion(presence=1, health=1),
-                            uptimeMs=int(time.time() * 1000),
+                            uptimeMs=int((time.time() - START_TIME) * 1000),
                             sessionDefaults=SessionDefaults(
                                 defaultAgentId=default_id,
                                 mainKey="main",
@@ -184,12 +187,22 @@ def create_app() -> FastAPI:
                             )
                         )
                         
+                        from autocrab.core.models.gateway import HelloOkServer, HelloOkFeatures, HelloOkPolicy
+                        
                         hello_ok = HelloOk(
                             protocol=3,
-                            server={"version": app.version, "name": "AutoCrab Python"},
-                            features={"caps": ["chat", "tools", "plugins"]},
+                            server=HelloOkServer(version=app.version, connId=conn_id),
+                            features=HelloOkFeatures(
+                                methods=[
+                                    "chat.send", "chat.history", "system-presence", "system-event",
+                                    "config.get", "config.schema", "sessions.list",
+                                    "skills.status", "skills.bins", "skills.install",
+                                    "agents.list", "models.list", "tools.catalog", "ping"
+                                ],
+                                events=["chat", "agent", "connect.challenge", "connect.ack"]
+                            ),
                             snapshot=snapshot,
-                            policy={"handshakeTimeoutMs": 30000}
+                            policy=HelloOkPolicy()
                         )
                         
                         res = ResponseFrame(
@@ -197,7 +210,20 @@ def create_app() -> FastAPI:
                             ok=True,
                             payload=hello_ok.model_dump()
                         )
+                        print(f"WS: Sending hello-ok for {conn_id}", flush=True)
                         await websocket.send_json(res.model_dump())
+                        
+                        # 3. Send connect.ack to finalize handshake
+                        print(f"WS: Sending connect.ack for {conn_id}", flush=True)
+                        await websocket.send_json({
+                            "type": "event",
+                            "event": "connect.ack",
+                            "payload": {
+                                "connId": conn_id,
+                                "snapshot": snapshot.model_dump()
+                            }
+                        })
+                        
                         client_connected = True
                         continue
                     else:
@@ -236,115 +262,118 @@ def create_app() -> FastAPI:
                             "tool_choice": params.get("tool_choice")
                         }
                         
-                        # Send initial 'ack' or similar if needed (optional for req/res)
-                        # The response to the request should be 'ok' true once the stream starts or finishes.
-                        # Original protocol usually sends 'res' once the request is accepted, then 'event' for data.
-                        
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True).model_dump())
-                        
-                        async for update in agent_executor.astream(initial_state):
-                            for node, state in update.items():
-                                if "messages" in state and len(state["messages"]) > 0:
-                                    last_msg = state["messages"][-1]
-                                    
-                                    # Handle Start of Tool Calls (AIMessage with tool_calls)
-                                    tool_calls = getattr(last_msg, "tool_calls", [])
-                                    if not tool_calls and hasattr(last_msg, "additional_kwargs"):
-                                        tool_calls = last_msg.additional_kwargs.get("tool_calls", [])
+                        print(f"WS: Starting astream_events for session_key={session_key} (conn={session_id}, flush=True)")
+                        try:
+                            # Use agent_executor from module import. 
+                            # If using a multi-agent system, we'd look up the specific executor here.
+                            async for event_data in agent_executor.astream_events(initial_state, version="v2"):
+                                kind = event_data["event"]
+                                # print(f"WS: Event kind={kind}", flush=True) # Aggressive debug
+                                
+                                # Real-time Token Streaming
+                                if kind == "on_chat_model_stream":
+                                    chunk = event_data["data"]["chunk"]
+                                    if hasattr(chunk, "content") and chunk.content:
+                                        text_delta = chunk.content
+                                        if isinstance(text_delta, list):
+                                            text_delta = "".join([c.get("text", "") for c in text_delta if isinstance(c, dict) and "text" in c])
                                         
-                                    if tool_calls:
-                                        for tool_call in tool_calls:
-                                            # Normalize tool_call format
-                                            t_name = ""
-                                            t_args = ""
-                                            t_id = ""
-                                            
-                                            if isinstance(tool_call, dict):
-                                                t_id = tool_call.get("id", str(uuid.uuid4()))
-                                                t_name = tool_call.get("name") or tool_call.get("function", {}).get("name", "tool")
-                                                t_args = tool_call.get("args") or tool_call.get("function", {}).get("arguments", "{}")
-                                            else:
-                                                t_id = getattr(tool_call, "id", str(uuid.uuid4()))
-                                                t_name = getattr(tool_call, "name", "tool")
-                                                t_args = json.dumps(getattr(tool_call, "args", {}))
-
-                                            event = {
+                                        if text_delta:
+                                            ws_event = {
                                                 "type": "event",
-                                                "event": "agent",
+                                                "event": "chat",
                                                 "payload": {
-                                                    "runId": session_id,
-                                                    "sessionKey": session_id,
-                                                    "stream": "tool",
-                                                    "ts": int(time.time() * 1000),
-                                                    "data": {
-                                                        "toolCallId": t_id,
-                                                        "name": t_name,
-                                                        "phase": "start",
-                                                        "args": t_args
+                                                    "runId": session_key,
+                                                    "sessionKey": session_key,
+                                                    "state": "delta",
+                                                    "message": {
+                                                        "role": "assistant",
+                                                        "text": str(text_delta), # Standard text field (trim safety)
+                                                        "content": [{"type": "text", "text": str(text_delta)}],
+                                                        "timestamp": int(time.time() * 1000)
                                                     }
                                                 }
                                             }
-                                            await websocket.send_json(event)
-                                            print(f"WS: Emitted tool start: {t_name}")
+                                            await websocket.send_json(ws_event)
+                                            full_ai_response += str(text_delta)
 
-                                    # Handle End of Tool Calls (ToolMessage)
-                                    elif hasattr(last_msg, "type") and last_msg.type == "tool":
-                                        t_id = getattr(last_msg, "tool_call_id", "call_1")
-                                        t_name = getattr(last_msg, "name", "tool")
-                                        
-                                        event = {
-                                            "type": "event",
-                                            "event": "agent",
-                                            "payload": {
-                                                "runId": session_id,
-                                                "sessionKey": session_id,
-                                                "stream": "tool",
-                                                "ts": int(time.time() * 1000),
-                                                "data": {
-                                                    "toolCallId": t_id,
-                                                    "name": t_name,
-                                                    "phase": "end",
-                                                    "output": str(last_msg.content)
-                                                }
+                                # Tool Start Events
+                                elif kind == "on_tool_start":
+                                    t_name = event_data["name"]
+                                    t_args = json.dumps(event_data["data"].get("input", {}))
+                                    t_id = event_data["run_id"]
+                                    
+                                    ws_event = {
+                                        "type": "event",
+                                        "event": "agent",
+                                        "payload": {
+                                            "runId": session_key,
+                                            "sessionKey": session_key,
+                                            "stream": "tool",
+                                            "ts": int(time.time() * 1000),
+                                            "data": {
+                                                "toolCallId": t_id,
+                                                "name": t_name,
+                                                "phase": "start",
+                                                "args": t_args
                                             }
                                         }
-                                        await websocket.send_json(event)
-                                        print(f"WS: Emitted tool end: {t_name}")
-                                    elif hasattr(last_msg, "type") and last_msg.type == "ai" and last_msg.content:
-                                        event = {
-                                            "type": "event",
-                                            "event": "chat",
-                                            "payload": {
-                                                "runId": session_id,
-                                                "sessionKey": session_id,
-                                                "state": "delta",
-                                                "message": {
-                                                    "role": "assistant",
-                                                    "content": [{"type": "text", "text": str(last_msg.content)}],
-                                                    "timestamp": int(time.time() * 1000)
-                                                }
+                                    }
+                                    await websocket.send_json(ws_event)
+                                    print(f"WS: Emitted tool start: {t_name}", flush=True)
+
+                                # Tool End Events
+                                elif kind == "on_tool_end":
+                                    t_name = event_data["name"]
+                                    t_output = str(event_data["data"].get("output", ""))
+                                    t_id = event_data["run_id"]
+                                    
+                                    ws_event = {
+                                        "type": "event",
+                                        "event": "agent",
+                                        "payload": {
+                                            "runId": session_key,
+                                            "sessionKey": session_key,
+                                            "stream": "tool",
+                                            "ts": int(time.time() * 1000),
+                                            "data": {
+                                                "toolCallId": t_id,
+                                                "name": t_name,
+                                                "phase": "end",
+                                                "output": t_output
                                             }
                                         }
-                                        await websocket.send_json(event)
-                                        
-                                        # Accumulate for persistence
-                                        full_ai_response += str(last_msg.content)
-                                        
+                                    }
+                                    await websocket.send_json(ws_event)
+                                    print(f"WS: Emitted tool end: {t_name}", flush=True)
+                            print(f"WS: astream_events loop finished for {session_key}", flush=True)
+                                    
+                        except Exception as e:
+                            print(f"WS: Error in astream_events for session {session_key}: {e}", flush=True)
+                            import traceback
+                            traceback.print_exc()
+
                         # Final Persistence: Record Assistant message
                         if full_ai_response:
                             await store.add_interaction("assistant", full_ai_response)
+                        else:
+                            print(f"WS: No response captured for session {session_key}", flush=True)
                             
                         # Send final chat event when done
                         final_event = {
                             "type": "event",
                             "event": "chat",
                             "payload": {
-                                "runId": session_id,
-                                "sessionKey": session_id,
+                                "runId": session_key,
+                                "sessionKey": session_key,
                                 "state": "final"
                             }
                         }
                         await websocket.send_json(final_event)
+                        
+                        # Finally, acknowledge the original request is COMPLETE
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True).model_dump())
+                        print(f"WS: Sent ResponseFrame for chat.send {req.id}", flush=True)
 
                     elif method == "chat.history":
                         params = req.params or {}
@@ -380,7 +409,7 @@ def create_app() -> FastAPI:
 
                     elif method == "system-presence":
                         # Return all active entries
-                        print(f"WS: system-presence requested, count={len(presence_store)}")
+                        print(f"WS: system-presence requested, count={len(presence_store)}", flush=True)
                         now_ms = int(time.time() * 1000)
                         # Basic cleanup: remove entries older than 5 minutes
                         expired = [k for k, v in presence_store.items() if now_ms - v.ts > 300000]
@@ -440,20 +469,68 @@ def create_app() -> FastAPI:
 
                     elif method == "sessions.list":
                         agent_id = req.params.get("agentId", "main") if req.params else "main"
-                        sessions_file = settings.config_root / "agents" / agent_id / "sessions" / "sessions.json"
                         sessions_data = []
                         
-                        if sessions_file.exists():
-                            try:
-                                with open(sessions_file, "r", encoding="utf-8") as f:
-                                    raw_sessions = json.load(f)
-                                    # Convert to sessions list format expected by UI
-                                    # The original format is a map of sessionKey -> sessionEntry
-                                    for key, entry in raw_sessions.items():
-                                        sessions_data.append({key: entry})
-                            except Exception as e:
-                                print(f"Error loading sessions.json: {e}")
+                        # We check two possible locations for sessions:
+                        # 1. New Python structure: agents/<agent_id>/agent/sessions/<session_id>/
+                        # 2. Legacy/Alternative structure: agents/<agent_id>/sessions/
+                        
+                        search_paths = [
+                            settings.config_root / "agents" / agent_id / "agent" / "sessions",
+                            settings.config_root / "agents" / agent_id / "sessions"
+                        ]
+                        
+                        seen_keys = set()
+                        
+                        for base_path in search_paths:
+                            if not base_path.exists():
+                                continue
                                 
+                            # If sessions.json exists in this folder, use it as a legacy registry
+                            registry_file = base_path / "sessions.json"
+                            if registry_file.exists():
+                                try:
+                                    with open(registry_file, "r", encoding="utf-8") as f:
+                                        raw_sessions = json.load(f)
+                                        for key, entry in raw_sessions.items():
+                                            if key not in seen_keys:
+                                                if isinstance(entry, dict):
+                                                    entry["key"] = str(entry.get("key", key))
+                                                    entry["sessionId"] = str(entry.get("sessionId", key))
+                                                    entry["label"] = str(entry.get("label", entry["sessionId"]))
+                                                    entry["updatedAt"] = int(entry.get("updatedAt", int(time.time() * 1000)))
+                                                    entry["model"] = str(entry.get("model", "main"))
+                                                    entry["modelProvider"] = str(entry.get("modelProvider", "ollama"))
+                                                    sessions_data.append(entry)
+                                                else:
+                                                    sessions_data.append({
+                                                        "key": key,
+                                                        "sessionId": key,
+                                                        "label": key,
+                                                        "updatedAt": int(time.time() * 1000),
+                                                        "model": "main",
+                                                        "modelProvider": "ollama"
+                                                    })
+                                                seen_keys.add(key)
+                                except:
+                                    pass
+                                    
+                            # Also scan directory for session folders (Python structure)
+                            # Each folder name is a session key
+                            if base_path.is_dir():
+                                for item in base_path.iterdir():
+                                    if item.is_dir() and item.name not in seen_keys:
+                                        # Basic entry for the folder
+                                        sessions_data.append({
+                                            "key": item.name,
+                                            "sessionId": item.name,
+                                            "label": item.name,
+                                            "updatedAt": int(item.stat().st_mtime * 1000),
+                                            "model": "main",
+                                            "modelProvider": "ollama"
+                                        })
+                                        seen_keys.add(item.name)
+                                        
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"sessions": sessions_data}).model_dump())
 
                     elif method == "skills.status":
@@ -619,8 +696,14 @@ def create_app() -> FastAPI:
                         ).model_dump())
 
         except Exception as e:
-            print(f"WS Error: {str(e)}")
-            pass # Handle disconnects gracefully
+            if not isinstance(e, WebSocketDisconnect):
+                print(f"WS Error from {conn_id}: {str(e)}", flush=True)
+        finally:
+            # Clean up presence strictly on disconnect
+            if conn_id in presence_store:
+                print(f"WS: Cleaning up presence for {conn_id}", flush=True)
+                del presence_store[conn_id]
+            print(f"WS: Connection closed for {conn_id}", flush=True)
 
     # 4. Add catch-all UI serving at the END
     if os.path.exists(ui_path):
@@ -639,9 +722,9 @@ def create_app() -> FastAPI:
             # Fallback to index.html for SPA routing or missing files
             return FileResponse(os.path.join(ui_path, "index.html"))
             
-        print(f"Serving UI from {ui_path} via catch-all route")
+        print(f"Serving UI from {ui_path} via catch-all route", flush=True)
     else:
-        print(f"Warning: UI path {ui_path} not found. Static serving disabled.")
+        print(f"Warning: UI path {ui_path} not found. Static serving disabled.", flush=True)
 
     @app.on_event("startup")
     async def startup_event():
@@ -661,7 +744,7 @@ def create_app() -> FastAPI:
                     load_plugins_from_directory(plugin_dir)
         
         # Start all discovered channel plugins
-        print("Starting ecosystem channel plugins...")
+        print("Starting ecosystem channel plugins...", flush=True)
         await start_all_channels(on_event=handle_channel_event)
 
     @app.on_event("shutdown")

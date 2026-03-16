@@ -100,9 +100,18 @@ def get_registered_schemas() -> List[ToolDefinition]:
     return _SKILL_SCHEMAS
 
 def execute_skill(name: str, kwargs: Dict[str, Any]) -> Any:
-    if name not in _SKILL_REGISTRY:
-        raise ValueError(f"Skill {name} not found in registry.")
-    return _SKILL_REGISTRY[name](**kwargs)
+    if name in _SKILL_REGISTRY:
+        return _SKILL_REGISTRY[name](**kwargs)
+    
+    # Check markdown skills
+    for md_skill in get_markdown_skills():
+        if md_skill.name == name:
+            # Return instructions to the agent so it knows how to proceed with bash
+            result = f"Skill '{name}' instructions:\n{md_skill.body}\n\n"
+            result += "Please use the 'bash' tool to execute the appropriate commands based on these instructions."
+            return result
+            
+    raise ValueError(f"Skill {name} not found in registry.")
 
 def get_channel_plugin(channel_id: str) -> Optional[ChannelPlugin]:
     return _CHANNEL_PLUGINS.get(channel_id)
@@ -163,3 +172,33 @@ def get_markdown_skills() -> List[SkillMdEntry]:
     if not _MARKDOWN_SKILLS:
         discover_markdown_skills()
     return _MARKDOWN_SKILLS
+
+# -----------------------------------------------------------------------
+# Built-in discovery skills
+# -----------------------------------------------------------------------
+
+@skill(name="search_skills", description="Search the AutoCrab skill repository for capabilities, domains, or keywords. Use this when you need a capability you don't currently have.")
+def search_skills(query: str) -> str:
+    """
+    Searches markdown-based skills.
+    """
+    matches = []
+    query_lower = query.lower()
+    for s in get_markdown_skills():
+        if query_lower in s.name.lower() or query_lower in s.description.lower():
+            matches.append(f"- {s.name}: {s.description}")
+            
+    if not matches:
+        return f"No skills found matching '{query}'."
+    
+    return "Found the following skills:\n" + "\n".join(matches[:15]) + ("\n... more results available" if len(matches) > 15 else "")
+
+@skill(name="get_skill_info", description="Retrieve the full manual and command examples for a specific skill. Only call this after finding a skill via search_skills.")
+def get_skill_info(name: str) -> str:
+    """
+    Returns full body of a skill.
+    """
+    for s in get_markdown_skills():
+        if s.name == name:
+            return f"INSTRUCTIONS FOR SKILL '{s.name}':\n\n{s.body}\n\nNote: Please use the 'bash' tool to execute any commands found here."
+    return f"Skill '{name}' not found. Use search_skills to find the correct name."
