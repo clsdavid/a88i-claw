@@ -135,17 +135,22 @@ class ExternalFeaturesSettings(BaseModel):
 
 class AutoCrabJsonSource(PydanticBaseSettingsSource):
     """
-    Custom Pydantic Settings Source that reads from the Node.js legacy ~./autocrab/autocrab.json
-    using JSON5 to seamlessly ingest the configuration while allowing ENV overriding.
+    Custom Pydantic Settings Source that reads from the Node.js legacy config directory 
+    (defaulting to ~/.autocrab_v2) using JSON5 to seamlessly ingest the configuration 
+    while allowing ENV overriding.
     """
-    def __init__(self, settings_cls):
+    def __init__(self, settings_cls, config_root: Path):
         super().__init__(settings_cls)
+        self.config_root = config_root
         self._config_data = self._load_data()
 
     def _load_data(self) -> Dict[str, Any]:
-        config_path = Path.home() / ".autocrab" / "autocrab.json"
+        config_path = self.config_root / "autocrab.json"
+        
+        # Priority 1: Direct path from ENV
         if env_path := os.environ.get("AUTOCRAB_CONFIG_PATH"):
             config_path = Path(env_path)
+            
         if config_path.exists():
             try:
                 with open(config_path, "r", encoding="utf-8") as f:
@@ -169,6 +174,13 @@ class AutoCrabSettings(BaseSettings):
         extra="ignore"
     )
 
+    # Bootstrapping
+    home_dir: str = str(Path.home() / ".autocrab_v2")
+    
+    @property
+    def config_root(self) -> Path:
+        return Path(os.environ.get("AUTOCRAB_HOME", self.home_dir))
+
     gateway: GatewaySettings = GatewaySettings()
     features: ExternalFeaturesSettings = ExternalFeaturesSettings()
     
@@ -181,8 +193,14 @@ class AutoCrabSettings(BaseSettings):
     session: Optional[SessionConfig] = SessionConfig()
 
     # Fallback / Local Storage
-    session_dir: str = ".sessions"
-    db_url: str = "sqlite:///autocrab.db"
+    session_dir: Optional[str] = None
+    db_url: Optional[str] = None
+
+    def model_post_init(self, __context: Any) -> None:
+        if not self.session_dir:
+            self.session_dir = str(self.config_root / "sessions")
+        if not self.db_url:
+            self.db_url = f"sqlite:///{self.config_root}/autocrab.db"
 
     @classmethod
     def settings_customise_sources(
@@ -193,11 +211,14 @@ class AutoCrabSettings(BaseSettings):
         dotenv_settings,
         file_secret_settings,
     ):
+        home_dir = Path.home() / ".autocrab_v2"
+        config_root = Path(os.environ.get("AUTOCRAB_HOME", str(home_dir)))
+        
         return (
             init_settings,
             env_settings,
             dotenv_settings,
-            AutoCrabJsonSource(settings_cls),
+            AutoCrabJsonSource(settings_cls, config_root),
             file_secret_settings,
         )
 

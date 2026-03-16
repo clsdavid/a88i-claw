@@ -16,7 +16,7 @@ class TranscriptWriter:
         self.agent_id = agent_id
         
         from autocrab.core.models.config import settings
-        agent_dir_path = Path.home() / ".autocrab" / "agents" / self.agent_id / "agent"
+        agent_dir_path = settings.config_root / "agents" / self.agent_id / "agent"
         if settings.agents and settings.agents.list:
             for ac in settings.agents.list:
                 if ac.id == self.agent_id and ac.agentDir:
@@ -80,19 +80,24 @@ class HybridMemoryStore:
         if not self.workspace_dir:
             # Fallback path logic
             if is_default or self.agent_id == "default":
-                # Default agents use the global ./autocrab/workspace
-                # We assume the user runs the portal from the project root or it's mounted
-                self.workspace_dir = Path(os.getcwd()) / "autocrab" / "workspace"
+                # Default agents use the global workspace in the config root
+                self.workspace_dir = settings.config_root / "workspace"
             else:
-                self.workspace_dir = Path.home() / ".autocrab" / f"workspace-{self.agent_id}"
+                self.workspace_dir = settings.config_root / f"workspace-{self.agent_id}"
                 
     def load_permanent_memory(self) -> str:
         """Looks for MEMORY.md or memory.md in the workspace directory."""
         if not self.workspace_dir:
             return ""
             
-        for file_name in ["MEMORY.md", "memory.md"]:
-            mem_path = self.workspace_dir / file_name
+        search_paths = [
+            self.workspace_dir / "MEMORY.md",
+            self.workspace_dir / "memory.md",
+            self.workspace_dir / "memory" / "MEMORY.md",
+            self.workspace_dir / "memory" / "memory.md",
+        ]
+        
+        for mem_path in search_paths:
             if mem_path.exists():
                 try:
                     content = mem_path.read_text(encoding="utf-8").strip()

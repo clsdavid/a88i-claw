@@ -27,7 +27,35 @@ class SessionDefaults(BaseModel):
     defaultAgentId: str
     mainKey: str
     mainSessionKey: str
-    scope: Optional[str] = None
+    scope: Optional[str] = "global"
+
+class AgentIdentity(BaseModel):
+    name: Optional[str] = None
+    theme: Optional[str] = None
+    emoji: Optional[str] = None
+    avatar: Optional[str] = None
+    avatarUrl: Optional[str] = None
+
+class AgentSummary(BaseModel):
+    id: str
+    name: Optional[str] = None
+    identity: Optional[AgentIdentity] = None
+
+class AgentsListResult(BaseModel):
+    defaultId: str
+    mainKey: str
+    scope: str = "global"
+    agents: List[AgentSummary]
+
+class ModelChoice(BaseModel):
+    id: str
+    name: str
+    provider: str
+    contextWindow: Optional[int] = None
+    reasoning: Optional[bool] = None
+
+class ModelsListResult(BaseModel):
+    models: List[ModelChoice]
 
 class UpdateAvailable(BaseModel):
     currentVersion: str

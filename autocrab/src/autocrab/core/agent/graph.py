@@ -68,16 +68,56 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     llm_api_key = os.environ.get("OPENAI_API_KEY", "sk-dummy")
     llm_base_url = None
 
-    # Try to get defaults from settings.models if available
+    # 1. Check for primary model in agents.defaults
+    primary_model_id = None
+    if settings.agents and settings.agents.defaults and settings.agents.defaults.get("model"):
+        primary_model_id = settings.agents.defaults["model"].get("primary")
+
+    # 2. Resolve provider and model from settings.models
     if settings.models and settings.models.providers:
-        # Just pick the first provider for now or look for 'openai'
-        provider_name = "openai"
-        if provider_name in settings.models.providers:
-            p_config = settings.models.providers[provider_name]
+        found_provider = None
+        
+        # If we have a primary model ID like "ollama/qwen3.5:35b", parse provider
+        if primary_model_id and "/" in primary_model_id:
+            provider_name = primary_model_id.split("/")[0]
+            if provider_name in settings.models.providers:
+                found_provider = provider_name
+        
+        # Fallback to first available provider if not found
+        if not found_provider:
+            # Prefer ollama or openai if available
+            for p in ["ollama", "openai"]:
+                if p in settings.models.providers:
+                    found_provider = p
+                    break
+        
+        if not found_provider and settings.models.providers:
+             found_provider = list(settings.models.providers.keys())[0]
+
+        if found_provider:
+            p_config = settings.models.providers[found_provider]
+            llm_provider = found_provider
             llm_base_url = p_config.baseUrl
             llm_api_key = p_config.apiKey or llm_api_key
+            
+            # If Ollama, append /v1 for OpenAI compatibility if missing
+            if llm_provider == "ollama" and llm_base_url and not llm_base_url.endswith("/v1"):
+                llm_base_url = llm_base_url.rstrip("/") + "/v1"
+            
             if p_config.models and len(p_config.models) > 0:
-                llm_model = p_config.models[0].name
+                # Use primary model name if it matches the provider
+                if primary_model_id and primary_model_id.startswith(f"{llm_provider}/"):
+                    for m in p_config.models:
+                        if m.id == primary_model_id:
+                            llm_model = m.name # Or m.id? LangChain usually expects the tag/name
+                            # Some providers need the ID (like 'gpt-4o'), Ollama needs the tag (like 'qwen3.5:35b')
+                            if llm_provider == "ollama":
+                                llm_model = primary_model_id.replace("ollama/", "")
+                            else:
+                                llm_model = m.id
+                            break
+                else:
+                    llm_model = p_config.models[0].name
 
     if agent_config and agent_config.model:
         if agent_config.model.name:
@@ -95,6 +135,9 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
         
         if getattr(agent_config.model, "apiKey", None):
             llm_api_key = agent_config.model.apiKey
+    
+    # If using local Ollama, we don't want it to fail on missing key if 'sk-dummy' is present
+    # but Ollama ignores it anyway.
     
     llm = ChatOpenAI(
         model=llm_model,
@@ -215,7 +258,7 @@ async def execute_tools(state: AgentState) -> Dict[str, Any]:
             except Exception as e:
                 result_str = f"Execution error for {tool_name}: {str(e)}"
                 
-            tool_messages.append(ToolMessage(content=result_str, tool_call_id=tool_id))
+            tool_messages.append(ToolMessage(content=result_str, tool_call_id=tool_id, name=tool_name))
             
     if sandbox:
         sandbox.teardown()

@@ -100,11 +100,13 @@ def create_app() -> FastAPI:
 
     # 3. Add WebSocket
     @app.websocket("/gateway")
+    @app.websocket("/")
     async def websocket_endpoint(websocket: WebSocket):
         """
         Main WebSocket endpoint for real-time agent streams.
         Implements the AutoCrab Gateway protocol (connect handshake, req/res framing).
         """
+        print(f"WS: New connection from {websocket.client}")
         from autocrab.core.models.gateway import (
             ConnectParams, HelloOk, RequestFrame, ResponseFrame, EventFrame, 
             Snapshot, StateVersion, ErrorShape
@@ -135,9 +137,27 @@ def create_app() -> FastAPI:
                         req = RequestFrame(**data)
                         
                         # Send hello-ok response
+                        from autocrab.core.models.gateway import SessionDefaults
+                        
+                        default_id = "main"
+                        if settings.agents and settings.agents.list:
+                            has_default = False
+                            for agent in settings.agents.list:
+                                if agent.default:
+                                    default_id = agent.id
+                                    has_default = True
+                                    break
+                            if not has_default and settings.agents.list:
+                                default_id = settings.agents.list[0].id
+                                    
                         snapshot = Snapshot(
                             stateVersion=StateVersion(presence=1, health=1),
-                            uptimeMs=int(time.time() * 1000), # Simple uptime for now
+                            uptimeMs=int(time.time() * 1000),
+                            sessionDefaults=SessionDefaults(
+                                defaultAgentId=default_id,
+                                mainKey="main",
+                                mainSessionKey="main"
+                            )
                         )
                         
                         hello_ok = HelloOk(
@@ -192,9 +212,27 @@ def create_app() -> FastAPI:
                                 if "messages" in state and len(state["messages"]) > 0:
                                     last_msg = state["messages"][-1]
                                     
-                                    if hasattr(last_msg, "additional_kwargs") and "tool_calls" in last_msg.additional_kwargs:
-                                        for tool_call in last_msg.additional_kwargs["tool_calls"]:
-                                            # Send agent tool event
+                                    # Handle Start of Tool Calls (AIMessage with tool_calls)
+                                    tool_calls = getattr(last_msg, "tool_calls", [])
+                                    if not tool_calls and hasattr(last_msg, "additional_kwargs"):
+                                        tool_calls = last_msg.additional_kwargs.get("tool_calls", [])
+                                        
+                                    if tool_calls:
+                                        for tool_call in tool_calls:
+                                            # Normalize tool_call format
+                                            t_name = ""
+                                            t_args = ""
+                                            t_id = ""
+                                            
+                                            if isinstance(tool_call, dict):
+                                                t_id = tool_call.get("id", str(uuid.uuid4()))
+                                                t_name = tool_call.get("name") or tool_call.get("function", {}).get("name", "tool")
+                                                t_args = tool_call.get("args") or tool_call.get("function", {}).get("arguments", "{}")
+                                            else:
+                                                t_id = getattr(tool_call, "id", str(uuid.uuid4()))
+                                                t_name = getattr(tool_call, "name", "tool")
+                                                t_args = json.dumps(getattr(tool_call, "args", {}))
+
                                             event = {
                                                 "type": "event",
                                                 "event": "agent",
@@ -204,16 +242,21 @@ def create_app() -> FastAPI:
                                                     "stream": "tool",
                                                     "ts": int(time.time() * 1000),
                                                     "data": {
-                                                        "toolCallId": tool_call.get("id", "call_1"),
-                                                        "name": tool_call.get("function", {}).get("name", "tool"),
+                                                        "toolCallId": t_id,
+                                                        "name": t_name,
                                                         "phase": "start",
-                                                        "args": tool_call.get("function", {}).get("arguments", "{}")
+                                                        "args": t_args
                                                     }
                                                 }
                                             }
                                             await websocket.send_json(event)
+                                            print(f"WS: Emitted tool start: {t_name}")
+
+                                    # Handle End of Tool Calls (ToolMessage)
                                     elif hasattr(last_msg, "type") and last_msg.type == "tool":
-                                        # Send agent tool result event
+                                        t_id = getattr(last_msg, "tool_call_id", "call_1")
+                                        t_name = getattr(last_msg, "name", "tool")
+                                        
                                         event = {
                                             "type": "event",
                                             "event": "agent",
@@ -223,14 +266,15 @@ def create_app() -> FastAPI:
                                                 "stream": "tool",
                                                 "ts": int(time.time() * 1000),
                                                 "data": {
-                                                    "toolCallId": getattr(last_msg, "tool_call_id", "call_1"), # Assuming tool_call_id might be available
-                                                    "name": last_msg.name,
+                                                    "toolCallId": t_id,
+                                                    "name": t_name,
                                                     "phase": "end",
-                                                    "output": last_msg.content
+                                                    "output": str(last_msg.content)
                                                 }
                                             }
                                         }
                                         await websocket.send_json(event)
+                                        print(f"WS: Emitted tool end: {t_name}")
                                     elif hasattr(last_msg, "type") and last_msg.type == "ai" and last_msg.content:
                                         event = {
                                             "type": "event",
@@ -259,6 +303,97 @@ def create_app() -> FastAPI:
                             }
                         }
                         await websocket.send_json(final_event)
+
+                    elif method == "agents.list":
+                        from autocrab.core.models.gateway import AgentsListResult, AgentSummary, AgentIdentity
+                        agent_summaries = []
+                        if not settings.agents or not settings.agents.list:
+                             agent_summaries.append(AgentSummary(
+                                id="main",
+                                name="AutoCrab",
+                                identity=AgentIdentity(
+                                    name="AutoCrab",
+                                    emoji="🦀"
+                                )
+                            ))
+                        else:
+                            for agent in settings.agents.list:
+                                agent_summaries.append(AgentSummary(
+                                    id=agent.id,
+                                    name=agent.name or agent.id,
+                                    identity=AgentIdentity(
+                                        name=agent.name or agent.id,
+                                        emoji=agent.params.get("emoji") if agent.params else "🤖",
+                                        avatar=agent.params.get("avatar") if agent.params else None
+                                    )
+                                ))
+                        
+                        default_id = "main"
+                        if settings.agents and settings.agents.list:
+                            has_default = False
+                            for agent in settings.agents.list:
+                                if agent.default:
+                                    default_id = agent.id
+                                    has_default = True
+                                    break
+                            if not has_default and settings.agents.list:
+                                default_id = settings.agents.list[0].id
+                        
+                        payload = AgentsListResult(
+                            defaultId=default_id,
+                            mainKey="main",
+                            scope="per-sender",
+                            agents=agent_summaries
+                        )
+                        print(f"WS: agents.list result: {payload.model_dump()}")
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
+
+                    elif method == "models.list":
+                        from autocrab.core.models.gateway import ModelsListResult, ModelChoice
+                        model_choices = []
+                        if settings.models and settings.models.providers:
+                            for p_name, p_config in settings.models.providers.items():
+                                if p_config.models:
+                                    for m in p_config.models:
+                                        m_id = m.id
+                                        # If id doesn't have provider prefix, add it (parity with Node.js)
+                                        if "/" not in m_id:
+                                            m_id = f"{p_name}/{m_id}"
+                                            
+                                        model_choices.append(ModelChoice(
+                                            id=m_id,
+                                            name=m.name,
+                                            provider=p_name,
+                                            contextWindow=m.contextWindow,
+                                            reasoning=m.reasoning
+                                        ))
+                        
+                        payload = ModelsListResult(models=model_choices)
+                        print(f"WS: models.list result: {payload.model_dump()}")
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
+
+                    elif method == "tools.catalog":
+                        # Returning basic catalog for now
+                        payload = {
+                            "agentId": req.params.get("agentId", "main") if req.params else "main",
+                            "profiles": [
+                                {"id": "minimal", "label": "Minimal"},
+                                {"id": "coding", "label": "Coding"},
+                                {"id": "full", "label": "Full"}
+                            ],
+                            "groups": [
+                                {
+                                    "id": "core",
+                                    "label": "Core Tools",
+                                    "source": "core",
+                                    "tools": [
+                                        {"id": "fs_read", "label": "Read File", "description": "Read file content", "source": "core", "defaultProfiles": ["minimal", "coding", "full"]},
+                                        {"id": "fs_list", "label": "List Files", "description": "List files in directory", "source": "core", "defaultProfiles": ["coding", "full"]}
+                                    ]
+                                }
+                            ]
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload).model_dump())
 
                     elif method == "ping":
                          await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload="pong").model_dump())
@@ -327,3 +462,7 @@ def create_app() -> FastAPI:
 
 # The default application instance
 app = create_app()
+
+if __name__ == "__main__":
+    port = int(os.environ.get("AUTOCRAB_GATEWAY_PORT", 5174))
+    uvicorn.run(app, host="0.0.0.0", port=port)
