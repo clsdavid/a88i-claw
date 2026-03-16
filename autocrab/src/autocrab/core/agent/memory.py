@@ -113,26 +113,40 @@ class HybridMemoryStore:
                 self.workspace_dir = settings.config_root / f"workspace-{self.agent_id}"
                 
     def load_permanent_memory(self) -> str:
-        """Looks for MEMORY.md or memory.md in the workspace directory."""
+        """Looks for MEMORY.md and SOUL.md variants in the workspace directory."""
         if not self.workspace_dir:
             return ""
             
-        search_paths = [
-            self.workspace_dir / "MEMORY.md",
-            self.workspace_dir / "memory.md",
-            self.workspace_dir / "memory" / "MEMORY.md",
-            self.workspace_dir / "memory" / "memory.md",
+        search_configs = [
+            {"filename": "MEMORY.md", "tag": "PERMANENT_MEMORY"},
+            {"filename": "memory.md", "tag": "PERMANENT_MEMORY"},
+            {"filename": "SOUL.md", "tag": "AGENT_SOUL"},
+            {"filename": "soul.md", "tag": "AGENT_SOUL"},
+            {"filename": "instructions/SOUL.md", "tag": "AGENT_SOUL"},
+            {"filename": "instructions/soul.md", "tag": "AGENT_SOUL"},
+            {"filename": "memory/MEMORY.md", "tag": "PERMANENT_MEMORY"},
+            {"filename": "memory/memory.md", "tag": "PERMANENT_MEMORY"},
         ]
         
-        for mem_path in search_paths:
+        memories = []
+        seen_tags = set()
+        
+        for cfg in search_configs:
+            # Skip if we already found a better variant for this tag (e.g. found SOUL.md, skip soul.md)
+            if cfg["tag"] in seen_tags:
+                continue
+                
+            mem_path = self.workspace_dir / cfg["filename"]
             if mem_path.exists():
                 try:
                     content = mem_path.read_text(encoding="utf-8").strip()
                     if content:
-                        return f"<PERMANENT_MEMORY>\n{content}\n</PERMANENT_MEMORY>\n\n"
+                        memories.append(f"<{cfg['tag']}>\n{content}\n</{cfg['tag']}>\n\n")
+                        seen_tags.add(cfg["tag"])
                 except Exception as e:
                     print(f"Warning: Failed to read permanent memory at {mem_path}: {e}")
-        return ""
+                    
+        return "".join(memories)
 
     async def add_interaction(self, role: str, content: str):
         """Records an interaction to both sinks."""

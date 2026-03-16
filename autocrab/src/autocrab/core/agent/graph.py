@@ -65,8 +65,8 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
                     agent_config = ac
                     break
 
-    llm_provider = "openai"
-    llm_model = "gpt-4o" # default
+    llm_provider = "ollama"
+    llm_model = "qwen3.5:35b" # default
     llm_api_key = os.environ.get("OPENAI_API_KEY", "sk-dummy")
     llm_base_url = None
 

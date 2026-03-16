@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import time
 import uuid
+from pathlib import Path
 
 from autocrab.core.models.config import settings
 from autocrab.core.models.api import (
@@ -117,7 +118,9 @@ def create_app() -> FastAPI:
         print(f"WS: New connection from {websocket.client}", flush=True)
         from autocrab.core.models.gateway import (
             ConnectParams, HelloOk, RequestFrame, ResponseFrame, EventFrame, 
-            Snapshot, StateVersion, ErrorShape, ModelsListResult, ModelChoice
+            Snapshot, StateVersion, ErrorShape, ModelsListResult, ModelChoice,
+            ExecApprovalsSnapshot, ExecApprovalsFile,
+            AgentsFilesListResult, AgentsFilesGetResult, AgentsFilesSetResult, AgentFileEntry
         )
         
         await websocket.accept()
@@ -197,7 +200,9 @@ def create_app() -> FastAPI:
                                     "chat.send", "chat.history", "system-presence", "system-event",
                                     "config.get", "config.schema", "sessions.list",
                                     "skills.status", "skills.bins", "skills.install",
-                                    "agents.list", "models.list", "tools.catalog", "ping"
+                                    "agents.list", "models.list", "tools.catalog", "ping",
+                                    "exec.approvals.get", "exec.approvals.set",
+                                    "agents.files.list", "agents.files.get", "agents.files.set"
                                 ],
                                 events=["chat", "agent", "connect.challenge", "connect.ack"]
                             ),
@@ -659,6 +664,171 @@ def create_app() -> FastAPI:
                         
                         payload = ModelsListResult(models=model_choices)
                         print(f"WS: models.list result: {payload.model_dump()}")
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
+
+                    elif method == "exec.approvals.get":
+                        approvals_path = settings.config_root / "exec-approvals.json"
+                        exists = approvals_path.exists()
+                        hash_val = "none"
+                        file_data = {"version": 1, "socket": {}, "defaults": {}, "agents": {}}
+                        
+                        if exists:
+                            try:
+                                with open(approvals_path, "r") as f:
+                                    raw = f.read()
+                                    file_data = json.loads(raw)
+                                    hash_val = hashlib.sha256(raw.encode()).hexdigest()
+                            except Exception as e:
+                                print(f"WS Error reading approvals: {e}", flush=True)
+
+                        try:
+                            snapshot = ExecApprovalsSnapshot(
+                                path=str(approvals_path),
+                                exists=exists,
+                                hash=hash_val,
+                                file=ExecApprovalsFile(**file_data)
+                            )
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=snapshot.model_dump()).model_dump())
+                        except Exception as e:
+                            print(f"WS Error creating ExecApprovalsSnapshot: {e}", flush=True)
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=False, error=ErrorShape(code="internal", message=str(e))).model_dump())
+
+                    elif method == "exec.approvals.set":
+                        params = req.params or {}
+                        new_file_data = params.get("file")
+                        
+                        approvals_path = settings.config_root / "exec-approvals.json"
+                        
+                        try:
+                            # Ensure directory exists
+                            os.makedirs(approvals_path.parent, exist_ok=True)
+                            with open(approvals_path, "w") as f:
+                                json.dump(new_file_data, f, indent=2)
+                            
+                            with open(approvals_path, "r") as f:
+                                raw = f.read()
+                                hash_val = hashlib.sha256(raw.encode()).hexdigest()
+
+                            snapshot = ExecApprovalsSnapshot(
+                                path=str(approvals_path),
+                                exists=True,
+                                hash=hash_val,
+                                file=ExecApprovalsFile(**new_file_data)
+                            )
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=snapshot.model_dump()).model_dump())
+                        except Exception as e:
+                            print(f"WS Error saving approvals: {e}", flush=True)
+                            await websocket.send_json(ResponseFrame(
+                                id=req.id, ok=False, 
+                                error=ErrorShape(code="save_failed", message=str(e))
+                            ).model_dump())
+
+                    elif method == "agents.files.list":
+                        agent_id = req.params.get("agentId", "main") if req.params else "main"
+                        workspace_dir = None
+                        if settings.agents and settings.agents.list:
+                            for ac in settings.agents.list:
+                                if ac.id == agent_id:
+                                    if ac.workspace:
+                                        workspace_dir = Path(ac.workspace)
+                                    break
+                        if not workspace_dir:
+                            if agent_id == "main" or agent_id == "default":
+                                workspace_dir = settings.config_root / "workspace"
+                            else:
+                                workspace_dir = settings.config_root / f"workspace-{agent_id}"
+                        
+                        files = []
+                        if workspace_dir.exists():
+                            for f in workspace_dir.iterdir():
+                                if f.is_file():
+                                    files.append(AgentFileEntry(
+                                        name=f.name,
+                                        path=str(f),
+                                        missing=False,
+                                        size=f.stat().st_size,
+                                        updatedAtMs=int(f.stat().st_mtime * 1000)
+                                    ))
+                        
+                        payload = AgentsFilesListResult(
+                            agentId=agent_id,
+                            workspace=str(workspace_dir),
+                            files=files
+                        )
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
+
+                    elif method == "agents.files.get":
+                        params = req.params or {}
+                        agent_id = params.get("agentId", "main")
+                        filename = params.get("name")
+                        
+                        workspace_dir = None
+                        if settings.agents and settings.agents.list:
+                            for ac in settings.agents.list:
+                                if ac.id == agent_id:
+                                    if ac.workspace:
+                                        workspace_dir = Path(ac.workspace)
+                                    break
+                        if not workspace_dir:
+                            if agent_id == "main" or agent_id == "default":
+                                workspace_dir = settings.config_root / "workspace"
+                            else:
+                                workspace_dir = settings.config_root / f"workspace-{agent_id}"
+                        
+                        f_path = workspace_dir / filename
+                        if f_path.exists() and f_path.is_file():
+                            content = f_path.read_text(encoding="utf-8")
+                            payload = AgentsFilesGetResult(
+                                agentId=agent_id,
+                                workspace=str(workspace_dir),
+                                file=AgentFileEntry(
+                                    name=filename,
+                                    path=str(f_path),
+                                    missing=False,
+                                    size=f_path.stat().st_size,
+                                    updatedAtMs=int(f_path.stat().st_mtime * 1000),
+                                    content=content
+                                )
+                            )
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
+                        else:
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=False, error=ErrorShape(code="not_found", message="File not found")).model_dump())
+
+                    elif method == "agents.files.set":
+                        params = req.params or {}
+                        agent_id = params.get("agentId", "main")
+                        filename = params.get("name")
+                        content = params.get("content", "")
+                        
+                        workspace_dir = None
+                        if settings.agents and settings.agents.list:
+                            for ac in settings.agents.list:
+                                if ac.id == agent_id:
+                                    if ac.workspace:
+                                        workspace_dir = Path(ac.workspace)
+                                    break
+                        if not workspace_dir:
+                            if agent_id == "main" or agent_id == "default":
+                                workspace_dir = settings.config_root / "workspace"
+                            else:
+                                workspace_dir = settings.config_root / f"workspace-{agent_id}"
+                        
+                        f_path = workspace_dir / filename
+                        workspace_dir.mkdir(parents=True, exist_ok=True)
+                        f_path.write_text(content, encoding="utf-8")
+                        
+                        payload = AgentsFilesSetResult(
+                            agentId=agent_id,
+                            workspace=str(workspace_dir),
+                            file=AgentFileEntry(
+                                name=filename,
+                                path=str(f_path),
+                                missing=False,
+                                size=len(content),
+                                updatedAtMs=int(time.time() * 1000),
+                                content=content
+                            )
+                        )
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
 
                     elif method == "tools.catalog":

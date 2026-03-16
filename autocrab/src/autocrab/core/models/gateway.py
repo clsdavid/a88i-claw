@@ -128,6 +128,58 @@ class UpdateAvailable(BaseModel):
     latestVersion: str
     channel: str
 
+class ExecApprovalsDefaults(BaseModel):
+    security: Optional[str] = None
+    ask: Optional[str] = None
+    askFallback: Optional[str] = None
+    autoAllowSkills: Optional[bool] = None
+
+class ExecApprovalsAllowlistEntry(BaseModel):
+    id: Optional[str] = None
+    pattern: str
+    lastUsedAt: Optional[int] = None
+    lastUsedCommand: Optional[str] = None
+    lastResolvedPath: Optional[str] = None
+
+class ExecApprovalsAgent(ExecApprovalsDefaults):
+    allowlist: Optional[List[ExecApprovalsAllowlistEntry]] = None
+
+class ExecApprovalsFile(BaseModel):
+    version: Optional[int] = 1
+    socket: Optional[Dict[str, Any]] = None
+    defaults: Optional[ExecApprovalsDefaults] = None
+    agents: Optional[Dict[str, ExecApprovalsAgent]] = None
+
+class ExecApprovalsSnapshot(BaseModel):
+    path: str
+    exists: bool
+    hash: str
+    file: ExecApprovalsFile
+
+class AgentFileEntry(BaseModel):
+    name: str
+    path: str
+    missing: bool
+    size: Optional[int] = None
+    updatedAtMs: Optional[int] = None
+    content: Optional[str] = None
+
+class AgentsFilesListResult(BaseModel):
+    agentId: str
+    workspace: str
+    files: List[AgentFileEntry]
+
+class AgentsFilesGetResult(BaseModel):
+    agentId: str
+    workspace: str
+    file: AgentFileEntry
+
+class AgentsFilesSetResult(BaseModel):
+    ok: bool = True
+    agentId: str
+    workspace: str
+    file: AgentFileEntry
+
 class Snapshot(BaseModel):
     presence: List[PresenceEntry] = []
     health: Any = None
