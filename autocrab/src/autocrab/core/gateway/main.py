@@ -18,6 +18,13 @@ from autocrab.core.db.database import engine, Base
 import autocrab.core.db.models  # Ensure models are loaded map
 from autocrab.core.agent.graph import agent_executor
 from langchain_core.messages import HumanMessage
+import socket
+import platform
+import hashlib
+import json
+
+# Presence tracking (simple in-memory store)
+presence_store = {}
 
 def create_app() -> FastAPI:
     """
@@ -137,8 +144,25 @@ def create_app() -> FastAPI:
                         req = RequestFrame(**data)
                         
                         # Send hello-ok response
-                        from autocrab.core.models.gateway import SessionDefaults
+                        from autocrab.core.models.gateway import SessionDefaults, PresenceEntry
+                        from autocrab.core.agent.memory import HybridMemoryStore
                         
+                        client_info = req.params.get("client") if req.params else None
+                        client_id = client_info.get("id") if client_info else conn_id
+                        
+                        # Register in presence store
+                        presence_store[conn_id] = PresenceEntry(
+                            deviceId=client_id,
+                            instanceId=client_info.get("instanceId") if client_info else None,
+                            host=socket.gethostname(),
+                            ip=socket.gethostbyname(socket.gethostname()),
+                            version=client_info.get("version") if client_info else "1.0.0",
+                            platform=client_info.get("platform") if client_info else platform.system(),
+                            mode=client_info.get("mode") if client_info else "client",
+                            ts=int(time.time() * 1000),
+                            text=f"Client: {client_id}"
+                        )
+
                         default_id = "main"
                         if settings.agents and settings.agents.list:
                             has_default = False
@@ -185,16 +209,27 @@ def create_app() -> FastAPI:
                 if data.get("type") == "req":
                     req = RequestFrame(**data)
                     method = req.method
+                    full_ai_response = "" # Track for persistence
                     
                     if method == "chat.send":
                         params = req.params or {}
-                        content = params.get("text", "")
-                        agent_id = params.get("model", "default")
+                        content = params.get("text", "") # Standard model-agnostic text field
+                        if not content:
+                            content = params.get("message", "") # Fallback to core-compatible 'message' field
+                            
+                        agent_id = params.get("model", "main")
+                        
+                        # sessionKey is the unique ID for the conversation thread
+                        session_key = params.get("sessionKey", "main")
+                        
+                        # Persistence: Record Human message
+                        store = HybridMemoryStore(session_id=session_key, agent_id=agent_id)
+                        await store.add_interaction("human", content)
                         
                         # Start streaming response
                         initial_state = {
                             "messages": [HumanMessage(content=content)],
-                            "session_id": session_id,
+                            "session_id": session_key,
                             "agent_id": agent_id,
                             "context": "",
                             "instructions": params.get("instructions"),
@@ -292,6 +327,13 @@ def create_app() -> FastAPI:
                                         }
                                         await websocket.send_json(event)
                                         
+                                        # Accumulate for persistence
+                                        full_ai_response += str(last_msg.content)
+                                        
+                        # Final Persistence: Record Assistant message
+                        if full_ai_response:
+                            await store.add_interaction("assistant", full_ai_response)
+                            
                         # Send final chat event when done
                         final_event = {
                             "type": "event",
@@ -303,6 +345,176 @@ def create_app() -> FastAPI:
                             }
                         }
                         await websocket.send_json(final_event)
+
+                    elif method == "chat.history":
+                        params = req.params or {}
+                        session_key = params.get("sessionKey", "main")
+                        agent_id = params.get("model", "main")
+                        limit = params.get("limit", 200)
+                        
+                        from autocrab.core.agent.memory import HybridMemoryStore
+                        store = HybridMemoryStore(session_id=session_key, agent_id=agent_id)
+                        messages = store.writer.load_messages()
+                        
+                        # Slicing
+                        if len(messages) > limit:
+                            messages = messages[-limit:]
+                            
+                        # Formatting to match original protocol
+                        formatted_messages = []
+                        for m in messages:
+                            formatted_messages.append({
+                                "role": m["role"],
+                                "content": [{"type": "text", "text": m["content"]}],
+                                "timestamp": m["timestamp"]
+                            })
+                            
+                        payload = {
+                            "sessionKey": session_key,
+                            "sessionId": session_key, # Usually same as key in flat-file mode
+                            "messages": formatted_messages,
+                            "thinkingLevel": "none",
+                            "verboseLevel": "none"
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload).model_dump())
+
+                    elif method == "system-presence":
+                        # Return all active entries
+                        print(f"WS: system-presence requested, count={len(presence_store)}")
+                        now_ms = int(time.time() * 1000)
+                        # Basic cleanup: remove entries older than 5 minutes
+                        expired = [k for k, v in presence_store.items() if now_ms - v.ts > 300000]
+                        for k in expired:
+                            del presence_store[k]
+                            
+                        presence_list = [v.model_dump() for v in presence_store.values()]
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=presence_list).model_dump())
+
+                    elif method == "system-event":
+                        # Update presence based on event
+                        params = req.params or {}
+                        text = params.get("text", "Event")
+                        if conn_id in presence_store:
+                            entry = presence_store[conn_id]
+                            entry.text = text
+                            entry.ts = int(time.time() * 1000)
+                            if params.get("mode"):
+                                entry.mode = params.get("mode")
+                        
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"ok": True}).model_dump())
+
+                    elif method == "config.get":
+                        from autocrab.core.models.gateway import ConfigFileSnapshot
+                        config_path = settings.config_root / "autocrab.json"
+                        raw_content = None
+                        if config_path.exists():
+                            with open(config_path, "r", encoding="utf-8") as f:
+                                raw_content = f.read()
+                        
+                        config_hash = hashlib.sha256(raw_content.encode()).hexdigest() if raw_content else None
+                        
+                        snapshot = ConfigFileSnapshot(
+                            path=str(config_path),
+                            exists=config_path.exists(),
+                            valid=True,
+                            raw=raw_content,
+                            parsed=settings.model_dump(),
+                            resolved=settings.model_dump(),
+                            config=settings.model_dump(),
+                            hash=config_hash
+                        )
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=snapshot.model_dump()).model_dump())
+
+                    elif method == "config.schema":
+                        # Basic schema to satisfy UI
+                        schema = {
+                            "type": "object",
+                            "properties": {
+                                "gateway": {"type": "object"},
+                                "agents": {"type": "object"},
+                                "models": {"type": "object"}
+                            },
+                            "uiHints": {}
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=schema).model_dump())
+
+                    elif method == "sessions.list":
+                        agent_id = req.params.get("agentId", "main") if req.params else "main"
+                        sessions_file = settings.config_root / "agents" / agent_id / "sessions" / "sessions.json"
+                        sessions_data = []
+                        
+                        if sessions_file.exists():
+                            try:
+                                with open(sessions_file, "r", encoding="utf-8") as f:
+                                    raw_sessions = json.load(f)
+                                    # Convert to sessions list format expected by UI
+                                    # The original format is a map of sessionKey -> sessionEntry
+                                    for key, entry in raw_sessions.items():
+                                        sessions_data.append({key: entry})
+                            except Exception as e:
+                                print(f"Error loading sessions.json: {e}")
+                                
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"sessions": sessions_data}).model_dump())
+
+                    elif method == "skills.status":
+                        from autocrab.core.models.gateway import SkillStatusReport, SkillStatusEntry
+                        from autocrab.core.plugins.loader import get_registered_schemas, get_markdown_skills
+                        
+                        agent_id = req.params.get("agentId", "main") if req.params else "main"
+                        workspace_dir = settings.config_root / "workspace"
+                        if agent_id != "main":
+                             workspace_dir = settings.config_root / f"workspace-{agent_id}"
+                             
+                        schemas = get_registered_schemas()
+                        skills_status = []
+                        
+                        for schema in schemas:
+                            func = schema.function
+                            skills_status.append(SkillStatusEntry(
+                                name=func.name,
+                                description=func.description,
+                                source="python-plugin",
+                                bundled=False,
+                                filePath="dynamic",
+                                baseDir=str(settings.config_root),
+                                skillKey=func.name,
+                                eligible=True,
+                                requirements={},
+                                missing={}
+                            ))
+                            
+                        # Add Markdown skills
+                        for s in get_markdown_skills():
+                            skills_status.append(SkillStatusEntry(
+                                name=s.name,
+                                description=s.description,
+                                source="autocrab-skill",
+                                bundled=False,
+                                filePath=s.filePath,
+                                baseDir=s.baseDir,
+                                skillKey=s.metadata.skillKey if s.metadata and s.metadata.skillKey else s.name,
+                                emoji=s.metadata.emoji if s.metadata else None,
+                                homepage=s.metadata.homepage if s.metadata else None,
+                                primaryEnv=s.metadata.primaryEnv if s.metadata else None,
+                                eligible=True,
+                                requirements=s.metadata.requires if s.metadata else {},
+                                missing={}
+                            ))
+                            
+                        report = SkillStatusReport(
+                            workspaceDir=str(workspace_dir),
+                            managedSkillsDir=str(settings.config_root / "skills"),
+                            skills=skills_status
+                        )
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=report.model_dump()).model_dump())
+
+                    elif method == "skills.bins":
+                        # Return empty bins for now to satisfy UI
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"bins": []}).model_dump())
+
+                    elif method == "skills.install":
+                        # Stub install success
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"ok": True, "message": "Skill installed (stub)"}).model_dump())
 
                     elif method == "agents.list":
                         from autocrab.core.models.gateway import AgentsListResult, AgentSummary, AgentIdentity

@@ -5,6 +5,9 @@ import os
 from typing import Callable, Dict, Any, List, Optional, Coroutine
 from autocrab.core.models.api import ToolDefinition, FunctionSpec
 from autocrab.core.plugins.base import BasePlugin, ChannelPlugin, ChannelEvent
+from autocrab.core.plugins.skills import load_skills_from_dir, SkillEntry as SkillMdEntry
+from autocrab.core.models.config import settings
+from pathlib import Path
 
 # Registry pattern to store dynamically loaded skills
 _SKILL_REGISTRY: Dict[str, Callable] = {}
@@ -13,6 +16,7 @@ _SKILL_SCHEMAS: List[ToolDefinition] = []
 # Registry for other plugin types
 _CHANNEL_PLUGINS: Dict[str, ChannelPlugin] = {}
 _INSTALLED_PLUGINS: Dict[str, BasePlugin] = {}
+_MARKDOWN_SKILLS: List[SkillMdEntry] = []
 
 def skill(name: str, description: str):
     """
@@ -121,3 +125,41 @@ async def stop_all_channels():
             await plugin.stop()
         except Exception as e:
             print(f"Failed to stop channel {plugin_id}: {e}")
+
+def discover_markdown_skills():
+    """
+    Discovers original AutoCrab skills from the autocrab/skills directory.
+    """
+    global _MARKDOWN_SKILLS
+    # Resolve the skills directory relative to the autocrab project root
+    # settings.config_root is usually ~/.autocrab_v2
+    # But the source skills are copied to the autocrab/skills/ folder in the project.
+    
+    # We can use a search path:
+    # 1. Project root / skills
+    # 2. Config root / skills
+    
+    project_root = Path(os.getcwd())
+    paths_to_check = [
+        project_root / "skills",
+        settings.config_root / "skills"
+    ]
+    
+    all_skills = []
+    seen_names = set()
+    
+    for path in paths_to_check:
+        if path.exists():
+            found = load_skills_from_dir(path)
+            for s in found:
+                if s.name not in seen_names:
+                    all_skills.append(s)
+                    seen_names.add(s.name)
+                    
+    _MARKDOWN_SKILLS = all_skills
+    print(f"Discovered {len(_MARKDOWN_SKILLS)} markdown skills.")
+
+def get_markdown_skills() -> List[SkillMdEntry]:
+    if not _MARKDOWN_SKILLS:
+        discover_markdown_skills()
+    return _MARKDOWN_SKILLS

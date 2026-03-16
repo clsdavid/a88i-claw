@@ -54,8 +54,70 @@ class ModelChoice(BaseModel):
     contextWindow: Optional[int] = None
     reasoning: Optional[bool] = None
 
-class ModelsListResult(BaseModel):
-    models: List[ModelChoice]
+class ConfigIssue(BaseModel):
+    path: str
+    message: str
+
+class ConfigFileSnapshot(BaseModel):
+    path: str
+    exists: bool
+    valid: bool
+    raw: Optional[str] = None
+    parsed: Optional[Dict[str, Any]] = None
+    resolved: Optional[Dict[str, Any]] = None
+    config: Optional[Dict[str, Any]] = None
+    hash: Optional[str] = None
+    issues: List[ConfigIssue] = []
+    warnings: List[ConfigIssue] = []
+    legacyIssues: List[Any] = []
+
+class SessionEntry(BaseModel):
+    sessionId: str
+    updatedAt: int
+    systemSent: bool = False
+    abortedLastRun: bool = False
+    label: Optional[str] = None
+    model: Optional[str] = None
+    modelProvider: Optional[str] = None
+    inputTokens: int = 0
+    outputTokens: int = 0
+    totalTokens: int = 0
+    totalTokensFresh: bool = False
+
+class SessionsListResult(BaseModel):
+    sessions: List[Dict[str, SessionEntry]]
+
+class SkillRequirement(BaseModel):
+    bins: List[str] = []
+    anyBins: List[str] = []
+    node: Optional[str] = None
+    python: Optional[str] = None
+    env: List[str] = []
+
+class SkillStatusEntry(BaseModel):
+    name: str
+    description: str
+    source: str
+    bundled: bool
+    filePath: str
+    baseDir: str
+    skillKey: str
+    primaryEnv: Optional[str] = None
+    emoji: Optional[str] = None
+    homepage: Optional[str] = None
+    always: bool = False
+    disabled: bool = False
+    blockedByAllowlist: bool = False
+    eligible: bool = True
+    requirements: Any = None
+    missing: Any = None
+    configChecks: List[Any] = []
+    install: List[Any] = []
+
+class SkillStatusReport(BaseModel):
+    workspaceDir: str
+    managedSkillsDir: str
+    skills: List[SkillStatusEntry]
 
 class UpdateAvailable(BaseModel):
     currentVersion: str

@@ -36,12 +36,39 @@ class TranscriptWriter:
             self.json_log_path.touch()
 
     def append_message(self, role: str, content: str):
-        """Appends a new conversation block to the flat file"""
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        block = f"## {role.capitalize()} ({timestamp})\n{content}\n\n"
+        """Appends a new conversation block to the flat file and JSON log"""
+        timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S")
+        ts_ms = int(time.time() * 1000)
+        
+        # 1. Markdown block
+        block = f"## {role.capitalize()} ({timestamp_str})\n{content}\n\n"
         with open(self.transcript_path, "a", encoding="utf-8") as f:
             f.write(block)
             
+        # 2. JSONL entry for chat.history
+        import json
+        entry = {
+            "role": role,
+            "content": content,
+            "timestamp": ts_ms
+        }
+        with open(self.json_log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry) + "\n")
+            
+    def load_messages(self) -> List[Dict[str, Any]]:
+        """Reads back the structured JSONL history"""
+        import json
+        messages = []
+        if self.json_log_path.exists():
+            with open(self.json_log_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    if line.strip():
+                        try:
+                            messages.append(json.loads(line))
+                        except:
+                            pass
+        return messages
+
     def load_context(self) -> str:
         """Reads back the markdown transcript"""
         if self.transcript_path.exists():

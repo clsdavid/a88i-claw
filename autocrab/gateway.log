@@ -1,0 +1,55 @@
+/home/chenl/Projects/a88i-claw/autocrab/src/autocrab/core/gateway/main.py:646: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/home/chenl/Projects/a88i-claw/autocrab/src/autocrab/core/gateway/main.py:667: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("shutdown")
+INFO:     Started server process [2760556]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5174 (Press CTRL+C to quit)
+INFO:     127.0.0.1:49350 - "WebSocket /" [accepted]
+INFO:     connection open
+Serving UI from /home/chenl/Projects/a88i-claw/dist/control-ui via catch-all route
+Registered Channel Plugin: telegram
+Loaded Plugin Module: src.autocrab.plugins.channels.telegram.plugin.py
+Registered Channel Plugin: signal
+Loaded Plugin Module: src.autocrab.plugins.channels.signal.plugin.py
+Registered Channel Plugin: discord
+Loaded Plugin Module: src.autocrab.plugins.channels.discord.plugin.py
+Registered Channel Plugin: slack
+Loaded Plugin Module: src.autocrab.plugins.channels.slack.plugin.py
+Registered Channel Plugin: whatsapp
+Loaded Plugin Module: src.autocrab.plugins.channels.whatsapp.plugin.py
+Loaded Plugin Module: src.autocrab.plugins.channels.web.plugin.py
+Registered Channel Plugin: imessage
+Loaded Plugin Module: src.autocrab.plugins.channels.imessage.plugin.py
+Starting ecosystem channel plugins...
+[Telegram] Token not found in ENV or autocrab.json. Skipping.
+Starting Signal Channel Plugin (Stub)...
+[Discord] Starting background client task...
+Starting Slack Channel Plugin (Stub)...
+Starting Whatsapp Channel Plugin (Stub)...
+Starting Imessage Channel Plugin (Stub)...
+WS: New connection from Address(host='127.0.0.1', port=49350)
+WS: agents.list result: {'defaultId': 'main', 'mainKey': 'main', 'scope': 'per-sender', 'agents': [{'id': 'main', 'name': 'AutoCrab', 'identity': {'name': 'AutoCrab', 'theme': None, 'emoji': '🦀', 'avatar': None, 'avatarUrl': None}}]}
+Discovered 52 markdown skills.
+[Discord] Logged in as autocrab#7391 (ID: 1481869639213514986)
+INFO:     127.0.0.1:44124 - "GET /skills HTTP/1.1" 200 OK
+INFO:     connection closed
+INFO:     127.0.0.1:44130 - "WebSocket /" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:34194 - "WebSocket /" [accepted]
+INFO:     connection open
+INFO:     connection closed
+INFO:     127.0.0.1:34196 - "WebSocket /" [accepted]
+INFO:     connection open
