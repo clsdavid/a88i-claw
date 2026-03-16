@@ -202,7 +202,7 @@ def create_app() -> FastAPI:
                                     "skills.status", "skills.bins", "skills.install",
                                     "channels.status", "cron.runs", "cron.list", "cron.status",
                                     "agents.list", "models.list", "tools.catalog", "ping",
-                                    "status", "health", "last-heartbeat",
+                                    "status", "health", "last-heartbeat", "logs.tail",
                                     "exec.approvals.get", "exec.approvals.set",
                                     "agents.files.list", "agents.files.get", "agents.files.set"
                                 ],
@@ -707,6 +707,69 @@ def create_app() -> FastAPI:
                         payload = ModelsListResult(models=model_choices)
                         print(f"WS: models.list result: {payload.model_dump()}")
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
+
+                    elif method == "logs.tail":
+                        params = req.params or {}
+                        cursor = params.get("cursor")
+                        limit = params.get("limit", 100)
+                        max_bytes = params.get("maxBytes", 50000)
+                        
+                        log_path = settings.config_root / "gateway.log"
+                        if not log_path.exists():
+                             log_path = Path("gateway.log") # Try CWD
+                        
+                        lines = []
+                        new_cursor = 0
+                        truncated = False
+                        reset = False
+                        file_size = 0
+                        
+                        if log_path.exists():
+                            try:
+                                file_size = log_path.stat().st_size
+                                
+                                # If cursor is beyond file size, reset (file rotated/truncated)
+                                if cursor is not None and cursor > file_size:
+                                    cursor = None
+                                    reset = True
+
+                                with open(log_path, "rb") as f:
+                                    if cursor is None:
+                                        # Default tail: read last N bytes if no cursor
+                                        if file_size > max_bytes:
+                                            f.seek(file_size - max_bytes)
+                                            # Advance to next newline to avoid partial line at start
+                                            f.readline() 
+                                        else:
+                                            f.seek(0)
+                                    else:
+                                        f.seek(cursor)
+                                    
+                                    start_pos = f.tell()
+                                    chunk = f.read(max_bytes)
+                                    
+                                    if len(chunk) == max_bytes and b'\n' in chunk:
+                                        last_nl = chunk.rfind(b'\n')
+                                        if last_nl != -1:
+                                            chunk = chunk[:last_nl+1]
+                                            truncated = True
+                                        
+                                    new_cursor = start_pos + len(chunk)
+                                    text = chunk.decode("utf-8", errors="replace")
+                                    if text:
+                                        lines = text.splitlines()
+                            except Exception as e:
+                                print(f"Log read error: {e}")
+
+                        payload = {
+                            "file": str(log_path),
+                            "cursor": new_cursor,
+                            "size": file_size,
+                            "lines": lines,
+                            "truncated": truncated,
+                            "reset": reset
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload).model_dump())
 
                     elif method == "exec.approvals.get":
                         approvals_path = settings.config_root / "exec-approvals.json"
