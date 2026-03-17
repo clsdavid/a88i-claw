@@ -198,13 +198,21 @@ def create_app() -> FastAPI:
                             features=HelloOkFeatures(
                                 methods=[
                                     "chat.send", "chat.history", "system-presence", "system-event",
-                                    "config.get", "config.schema", "sessions.list",
-                                    "skills.status", "skills.bins", "skills.install",
-                                    "channels.status", "cron.runs", "cron.list", "cron.status",
+                                    "config.get", "config.schema", "config.set", "config.apply",
+                                    "sessions.list", "sessions.delete", "sessions.patch",
+                                    "sessions.usage", "sessions.usage.logs", "sessions.usage.timeseries",
+                                    "skills.status", "skills.bins", "skills.install", "skills.update",
+                                    "channels.status", "channels.logout",
+                                    "cron.runs", "cron.list", "cron.status",
+                                    "cron.add", "cron.remove", "cron.run", "cron.update",
                                     "agents.list", "models.list", "tools.catalog", "ping",
                                     "status", "health", "last-heartbeat", "logs.tail",
                                     "exec.approvals.get", "exec.approvals.set",
-                                    "agents.files.list", "agents.files.get", "agents.files.set"
+                                    "agents.files.list", "agents.files.get", "agents.files.set",
+                                    "agent.identity.get",
+                                    "device.pair.approve", "device.pair.reject", "device.token.revoke",
+                                    "node.list",
+                                    "update.run", "usage.cost", "whatsapp",
                                 ],
                                 events=["chat", "agent", "connect.challenge", "connect.ack"]
                             ),
@@ -462,17 +470,32 @@ def create_app() -> FastAPI:
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=snapshot.model_dump()).model_dump())
 
                     elif method == "config.schema":
-                        # Basic schema to satisfy UI
-                        schema = {
-                            "type": "object",
-                            "properties": {
-                                "gateway": {"type": "object"},
-                                "agents": {"type": "object"},
-                                "models": {"type": "object"}
-                            },
-                            "uiHints": {}
-                        }
+                        # Use Pydantic's real JSON schema for the settings model
+                        from autocrab.core.models.config import AutoCrabSettings
+                        schema = AutoCrabSettings.model_json_schema()
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=schema).model_dump())
+
+                    elif method == "config.set":
+                        new_config = (req.params or {}).get("config", req.params or {})
+                        config_path = settings.config_root / "autocrab.json"
+                        try:
+                            config_path.parent.mkdir(parents=True, exist_ok=True)
+                            with open(config_path, "w", encoding="utf-8") as f:
+                                json.dump(new_config, f, indent=2)
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"saved": True}).model_dump())
+                        except Exception as e:
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=False, error=ErrorShape(code="CONFIG_WRITE_ERROR", message=str(e))).model_dump())
+
+                    elif method == "config.apply":
+                        new_config = (req.params or {}).get("config", req.params or {})
+                        config_path = settings.config_root / "autocrab.json"
+                        try:
+                            config_path.parent.mkdir(parents=True, exist_ok=True)
+                            with open(config_path, "w", encoding="utf-8") as f:
+                                json.dump(new_config, f, indent=2)
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"applied": True}).model_dump())
+                        except Exception as e:
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=False, error=ErrorShape(code="CONFIG_WRITE_ERROR", message=str(e))).model_dump())
 
                     elif method == "sessions.list":
                         agent_id = req.params.get("agentId", "main") if req.params else "main"
@@ -1029,7 +1052,94 @@ def create_app() -> FastAPI:
 
                     elif method == "ping":
                          await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload="pong").model_dump())
-                    
+
+                    elif method == "agent.identity.get":
+                        agent_id = (req.params or {}).get("agentId", "main")
+                        agent_name = agent_id
+                        if settings.agents and settings.agents.list:
+                            for ac in settings.agents.list:
+                                if ac.id == agent_id and ac.name:
+                                    agent_name = ac.name
+                                    break
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={
+                            "agentId": agent_id,
+                            "name": agent_name,
+                            "version": app.version,
+                        }).model_dump())
+
+                    elif method == "channels.logout":
+                        channel_id = (req.params or {}).get("channelId", "")
+                        # Stub: real implementation would stop the channel plugin
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"channelId": channel_id, "loggedOut": True}).model_dump())
+
+                    elif method == "cron.add":
+                        # Stub: cron persistence not yet implemented
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"added": True, "jobId": str(int(time.time()))}).model_dump())
+
+                    elif method == "cron.remove":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"removed": True}).model_dump())
+
+                    elif method == "cron.run":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"triggered": True}).model_dump())
+
+                    elif method == "cron.update":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"updated": True}).model_dump())
+
+                    elif method == "device.pair.approve":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"approved": True}).model_dump())
+
+                    elif method == "device.pair.reject":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"rejected": True}).model_dump())
+
+                    elif method == "device.token.revoke":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"revoked": True}).model_dump())
+
+                    elif method == "node.list":
+                        import socket as _socket
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"nodes": [
+                            {"id": "local", "name": _socket.gethostname(), "status": "online", "type": "local"}
+                        ]}).model_dump())
+
+                    elif method == "sessions.delete":
+                        session_key = (req.params or {}).get("sessionKey", "")
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"deleted": True, "sessionKey": session_key}).model_dump())
+
+                    elif method == "sessions.patch":
+                        session_key = (req.params or {}).get("sessionKey", "")
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"updated": True, "sessionKey": session_key}).model_dump())
+
+                    elif method == "sessions.usage":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"tokens": 0, "cost": 0.0, "sessions": []}).model_dump())
+
+                    elif method == "sessions.usage.logs":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"logs": []}).model_dump())
+
+                    elif method == "sessions.usage.timeseries":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"series": []}).model_dump())
+
+                    elif method == "skills.update":
+                        skill_id = (req.params or {}).get("skillId", "")
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"skillId": skill_id, "updated": True}).model_dump())
+
+                    elif method == "update.run":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={
+                            "status": "unavailable",
+                            "message": "Self-update not supported in the Python gateway"
+                        }).model_dump())
+
+                    elif method == "usage.cost":
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"totalCost": 0.0, "currency": "USD", "breakdown": []}).model_dump())
+
+                    elif method == "whatsapp":
+                        # Route to WhatsApp channel plugin if registered, otherwise return stub
+                        from autocrab.core.plugins.loader import get_channel_plugin
+                        wa_plugin = get_channel_plugin("whatsapp")
+                        if wa_plugin and hasattr(wa_plugin, "handle_rpc"):
+                            result = await wa_plugin.handle_rpc(req.params or {})
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=result).model_dump())
+                        else:
+                            await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"channel": "whatsapp", "status": "not_configured"}).model_dump())
+
                     else:
                         # Unknown method
                         await websocket.send_json(ResponseFrame(

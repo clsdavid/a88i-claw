@@ -14,7 +14,7 @@ from autocrab.core.tools.mcp import McpToolRegistry
 from autocrab.core.plugins.loader import get_registered_schemas, execute_skill
 from autocrab.core.sandbox.manager import SandboxManager
 
-_CACHED_TOOLS = None
+_CACHED_TOOLS: dict = {}  # keyed by agent_id to support per-agent tool isolation
 
 class AgentState(TypedDict, total=False):
     """
@@ -149,8 +149,9 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     )
     
     global _CACHED_TOOLS
-    if _CACHED_TOOLS is None:
-        # Gather tools
+    cache_key = agent_id
+    if cache_key not in _CACHED_TOOLS:
+        # Gather tools — cached per agent_id so each agent can have its own tool set
         tools = [BASH_TOOL_SPEC.model_dump()]
         
         # Add native python fs tools
@@ -178,9 +179,9 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
                 formatted_tools.append(t)
             else:
                 formatted_tools.append({"type": "function", "function": t})
-        _CACHED_TOOLS = formatted_tools
+        _CACHED_TOOLS[cache_key] = formatted_tools
 
-    formatted_tools = _CACHED_TOOLS
+    formatted_tools = _CACHED_TOOLS[cache_key]
 
     if formatted_tools:
         tc = state.get("tool_choice")
