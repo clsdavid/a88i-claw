@@ -1,5 +1,6 @@
 import uvicorn
 import os
+import asyncio
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -27,6 +28,321 @@ import json
 # Global state tracking
 presence_store = {}
 START_TIME = time.time()
+
+# ---------------------------------------------------------------------------
+# Cron store — reads/writes ~/.autocrab_v2/cron/jobs.json
+# ---------------------------------------------------------------------------
+
+_CRON_DIR = Path.home() / ".autocrab_v2" / "cron"
+_CRON_JOBS_FILE = _CRON_DIR / "jobs.json"
+_CRON_RUNS_DIR = _CRON_DIR / "runs"
+
+
+def _cron_load_jobs() -> list:
+    """Load jobs from disk; return [] if file absent or broken."""
+    try:
+        raw = _CRON_JOBS_FILE.read_text(encoding="utf-8")
+        data = json.loads(raw)
+        return data.get("jobs", [])
+    except Exception:
+        return []
+
+
+def _cron_save_jobs(jobs: list) -> None:
+    """Persist jobs list to disk atomically."""
+    _CRON_DIR.mkdir(parents=True, exist_ok=True)
+    tmp = _CRON_JOBS_FILE.with_suffix(".json.tmp")
+    tmp.write_text(
+        json.dumps({"version": 1, "jobs": jobs}, indent=2), encoding="utf-8"
+    )
+    tmp.replace(_CRON_JOBS_FILE)
+
+
+def _cron_load_runs(job_id: str | None = None, limit: int = 50, offset: int = 0) -> list:
+    """
+    Load run-log entries from JSONL files.
+    If job_id is given, restrict to that job's file; otherwise aggregate all.
+    Returns entries sorted newest-first, sliced by offset/limit.
+    """
+    _CRON_RUNS_DIR.mkdir(parents=True, exist_ok=True)
+    entries = []
+    if job_id:
+        files = [_CRON_RUNS_DIR / f"{job_id}.jsonl"]
+    else:
+        files = sorted(_CRON_RUNS_DIR.glob("*.jsonl"))
+    for f in files:
+        if not f.exists():
+            continue
+        try:
+            for line in f.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line:
+                    try:
+                        entries.append(json.loads(line))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+    # Sort newest first
+    entries.sort(key=lambda e: e.get("ts", 0), reverse=True)
+    return entries[offset : offset + limit], len(entries)
+
+
+def _cron_compute_next_run(schedule: dict, now_ms: int) -> int | None:
+    """Compute the next run timestamp (ms) from a schedule dict relative to now."""
+    kind = schedule.get("kind")
+    if kind == "every":
+        every_ms = schedule.get("everyMs", 0)
+        anchor_ms = schedule.get("anchorMs", now_ms)
+        if every_ms <= 0:
+            return None
+        if anchor_ms >= now_ms:
+            return anchor_ms
+        elapsed = now_ms - anchor_ms
+        periods = elapsed // every_ms
+        return anchor_ms + (periods + 1) * every_ms
+    # For unknown schedule kinds fall back to stored nextRunAtMs
+    return None
+
+
+def _cron_next_run_at(job: dict, now_ms: int | None = None) -> int | None:
+    """Return the next run time for a job, recomputed from the schedule if possible."""
+    if now_ms is None:
+        now_ms = int(time.time() * 1000)
+    schedule = job.get("schedule") or {}
+    computed = _cron_compute_next_run(schedule, now_ms)
+    if computed is not None:
+        return computed
+    state = job.get("state") or {}
+    return state.get("nextRunAtMs")
+
+
+def _cron_enrich_job(job: dict, now_ms: int) -> dict:
+    """Return a shallow copy of job with state.nextRunAtMs recomputed."""
+    import copy
+    j = copy.deepcopy(job)
+    nxt = _cron_next_run_at(j, now_ms)
+    if nxt is not None:
+        if "state" not in j or j["state"] is None:
+            j["state"] = {}
+        j["state"]["nextRunAtMs"] = nxt
+    return j
+
+
+def _cron_status_from_jobs(jobs: list) -> dict:
+    """Derive CronStatus fields from the jobs list."""
+    now_ms = int(time.time() * 1000)
+    enabled_jobs = [j for j in jobs if j.get("enabled", False)]
+    next_run = None
+    for j in enabled_jobs:
+        nxt = _cron_next_run_at(j, now_ms)
+        if nxt and (next_run is None or nxt < next_run):
+            next_run = nxt
+    return {
+        "enabled": len(enabled_jobs) > 0,
+        "jobs": len(jobs),
+        "nextWakeAtMs": next_run,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Cron scheduler — background asyncio loop that fires due jobs
+# ---------------------------------------------------------------------------
+
+_CRON_MAX_SLEEP_S = 60.0          # re-check at least every 60 s
+_CRON_MIN_REFIRE_GAP_MS = 2_000   # min gap between runs of the same job
+_CRON_STUCK_RUN_MS = 10 * 60_000  # clear runningAtMs markers older than 10 min
+_cron_scheduler_task: "asyncio.Task | None" = None
+
+
+def _cron_apply_outcome(job: dict, status: str, error: str | None,
+                        summary: str | None, started_at_ms: int, ended_at_ms: int) -> None:
+    """Update job state after a run and rewrite nextRunAtMs."""
+    if "state" not in job or job["state"] is None:
+        job["state"] = {}
+    st = job["state"]
+    st["runningAtMs"] = None
+    st["lastRunAtMs"] = started_at_ms
+    st["lastRunStatus"] = status
+    st["lastStatus"] = status
+    st["lastDurationMs"] = ended_at_ms - started_at_ms
+    st["lastDeliveryStatus"] = "not-requested"
+    if status == "error":
+        st["consecutiveErrors"] = (st.get("consecutiveErrors") or 0) + 1
+        st["lastError"] = error
+    else:
+        st["consecutiveErrors"] = 0
+        st.pop("lastError", None)
+    # Recompute next run
+    now_ms = int(time.time() * 1000)
+    nxt = _cron_next_run_at(job, now_ms)
+    if nxt is not None:
+        st["nextRunAtMs"] = nxt
+
+
+def _cron_write_run_log(job: dict, status: str, error: str | None,
+                        summary: str | None, started_at_ms: int, ended_at_ms: int) -> None:
+    """Append a finished-run entry to the per-job JSONL run log."""
+    job_id = job.get("id", "")
+    _CRON_RUNS_DIR.mkdir(parents=True, exist_ok=True)
+    now_ms = int(time.time() * 1000)
+    entry = {
+        "ts": now_ms,
+        "jobId": job_id,
+        "action": "finished",
+        "status": status,
+        "summary": summary,
+        "deliveryStatus": "not-requested",
+        "runAtMs": started_at_ms,
+        "durationMs": ended_at_ms - started_at_ms,
+        "nextRunAtMs": (job.get("state") or {}).get("nextRunAtMs"),
+    }
+    if error:
+        entry["error"] = error
+    run_file = _CRON_RUNS_DIR / f"{job_id}.jsonl"
+    with run_file.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(entry) + "\n")
+
+
+async def _cron_execute_job(job: dict) -> tuple[str, str | None, str | None]:
+    """
+    Execute one cron job.  Returns (status, error, summary).
+    - status: "ok" | "error" | "skipped"
+    - error:   error message if status=="error"
+    - summary: last agent text if available
+    """
+    import copy
+    from langchain_core.messages import HumanMessage as HM
+
+    payload = job.get("payload") or {}
+    kind = payload.get("kind", "systemEvent")
+    text = payload.get("text", "")
+
+    if not text:
+        return "skipped", None, "no payload text"
+
+    agent_id = job.get("agentId", "main")
+    session_key = job.get("sessionKey") or f"agent:{agent_id}:main"
+    session_target = job.get("sessionTarget", "main")
+
+    # For isolated target, create a unique per-run session key
+    if session_target == "isolated":
+        run_id = uuid.uuid4().hex[:8]
+        effective_session_key = f"{session_key}:cron:{job.get('id','unknown')}:run:{run_id}"
+    else:
+        effective_session_key = session_key
+
+    try:
+        initial_state = {
+            "messages": [HM(content=text)],
+            "session_id": effective_session_key,
+            "agent_id": agent_id,
+            "context": "",
+            "instructions": None,
+            "tool_choice": None,
+        }
+        final_state = await agent_executor.ainvoke(initial_state)
+        last_msg = final_state["messages"][-1]
+        summary = str(last_msg.content)[:500] if last_msg else None
+        return "ok", None, summary
+    except Exception as exc:
+        return "error", str(exc), None
+
+
+async def _cron_scheduler_loop() -> None:
+    """
+    Background loop: wake at the next due time, run all due jobs, persist, sleep.
+    Mirrors the behaviour of armTimer/onTimer in src/cron/service/timer.ts.
+    """
+    print("CronScheduler: started", flush=True)
+    running_job_ids: set = set()  # guard against concurrent runs of same job
+
+    while True:
+        try:
+            now_ms = int(time.time() * 1000)
+            jobs = _cron_load_jobs()
+
+            # --- clear stuck running markers ---
+            changed_stuck = False
+            for j in jobs:
+                st = j.get("state") or {}
+                rm = st.get("runningAtMs")
+                if isinstance(rm, int) and now_ms - rm > _CRON_STUCK_RUN_MS:
+                    st["runningAtMs"] = None
+                    j["state"] = st
+                    changed_stuck = True
+            if changed_stuck:
+                _cron_save_jobs(jobs)
+
+            # --- find due jobs ---
+            due = [
+                j for j in jobs
+                if j.get("enabled", False)
+                and j.get("id") not in running_job_ids
+                and (j.get("state") or {}).get("runningAtMs") is None
+                and isinstance((j.get("state") or {}).get("nextRunAtMs"), int)
+                and (j.get("state") or {})["nextRunAtMs"] <= now_ms
+            ]
+
+            if due:
+                # Mark all as running immediately and persist
+                now_ms2 = int(time.time() * 1000)
+                for j in due:
+                    if "state" not in j or j["state"] is None:
+                        j["state"] = {}
+                    j["state"]["runningAtMs"] = now_ms2
+                    running_job_ids.add(j["id"])
+                _cron_save_jobs(jobs)
+
+                # Execute each due job (sequentially — matches default concurrency=1)
+                for j in due:
+                    job_name = j.get("name", j.get("id", "?"))
+                    print(f"CronScheduler: running job '{job_name}'", flush=True)
+                    started_at = int(time.time() * 1000)
+                    status, error, summary = await _cron_execute_job(j)
+                    ended_at = int(time.time() * 1000)
+                    print(
+                        f"CronScheduler: job '{job_name}' finished "
+                        f"status={status} duration={ended_at - started_at}ms",
+                        flush=True,
+                    )
+
+                    # Reload to pick up any external changes, then apply outcome
+                    jobs = _cron_load_jobs()
+                    for stored in jobs:
+                        if stored.get("id") == j.get("id"):
+                            _cron_apply_outcome(stored, status, error, summary, started_at, ended_at)
+                            _cron_write_run_log(stored, status, error, summary, started_at, ended_at)
+                            break
+
+                    running_job_ids.discard(j.get("id"))
+
+                _cron_save_jobs(jobs)
+
+            # --- compute sleep until next wake ---
+            jobs = _cron_load_jobs()
+            now_ms3 = int(time.time() * 1000)
+            next_wake = None
+            for j in jobs:
+                if not j.get("enabled", False):
+                    continue
+                nxt = _cron_next_run_at(j, now_ms3)
+                if nxt and (next_wake is None or nxt < next_wake):
+                    next_wake = nxt
+
+            if next_wake:
+                sleep_s = max(0.5, min((next_wake - now_ms3) / 1000.0, _CRON_MAX_SLEEP_S))
+            else:
+                sleep_s = _CRON_MAX_SLEEP_S
+
+            await asyncio.sleep(sleep_s)
+
+        except asyncio.CancelledError:
+            print("CronScheduler: cancelled", flush=True)
+            break
+        except Exception as exc:
+            print(f"CronScheduler: error in loop: {exc}", flush=True)
+            await asyncio.sleep(10)  # back-off on unexpected errors
 
 def create_app() -> FastAPI:
     """
@@ -561,7 +877,14 @@ def create_app() -> FastAPI:
                                         })
                                         seen_keys.add(item.name)
                                         
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"sessions": sessions_data}).model_dump())
+                        sessions_path = str(settings.config_root / "agents" / agent_id / "sessions")
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={
+                            "ts": int(time.time() * 1000),
+                            "path": sessions_path,
+                            "count": len(sessions_data),
+                            "defaults": {"model": None, "contextTokens": None},
+                            "sessions": sessions_data,
+                        }).model_dump())
 
                     elif method == "skills.status":
                         from autocrab.core.models.gateway import SkillStatusReport, SkillStatusEntry
@@ -960,45 +1283,41 @@ def create_app() -> FastAPI:
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload.model_dump()).model_dump())
 
                     elif method == "cron.runs":
-                        from autocrab.core.models.gateway import CronRunsResult, CronRunLogEntry
-                        # Stub response with empty list
                         params = req.params or {}
-                        limit = params.get("limit", 50)
-                        
-                        runs_result = CronRunsResult(
-                            entries=[], # No runs yet
-                            total=0,
-                            limit=limit,
-                            offset=0,
-                            hasMore=False
-                        )
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=runs_result.model_dump()).model_dump())
+                        limit = int(params.get("limit", 50))
+                        offset = int(params.get("offset", 0))
+                        job_id = params.get("jobId") or None
+                        page, total = _cron_load_runs(job_id=job_id, limit=limit, offset=offset)
+                        payload = {
+                            "entries": page,
+                            "total": total,
+                            "limit": limit,
+                            "offset": offset,
+                            "hasMore": offset + len(page) < total,
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload).model_dump())
 
                     elif method == "cron.list":
-                        from autocrab.core.models.gateway import CronJobsListResult
-                        # Stub response with empty list
                         params = req.params or {}
-                        limit = params.get("limit", 50)
-                        
-                        jobs_result = CronJobsListResult(
-                            jobs=[], # No jobs yet
-                            total=0,
-                            limit=limit,
-                            offset=0,
-                            hasMore=False
-                        )
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=jobs_result.model_dump()).model_dump())
+                        limit = int(params.get("limit", 50))
+                        offset = int(params.get("offset", 0))
+                        all_jobs = _cron_load_jobs()
+                        now_ms = int(time.time() * 1000)
+                        enriched = [_cron_enrich_job(j, now_ms) for j in all_jobs]
+                        page = enriched[offset : offset + limit]
+                        payload = {
+                            "jobs": page,
+                            "total": len(all_jobs),
+                            "limit": limit,
+                            "offset": offset,
+                            "hasMore": offset + len(page) < len(all_jobs),
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=payload).model_dump())
 
                     elif method == "cron.status":
-                        from autocrab.core.models.gateway import CronStatus
-                        
-                        # Stub response assuming cron engine is not yet active/configured
-                        status = CronStatus(
-                            enabled=False,
-                            jobs=0,
-                            nextWakeAtMs=None
-                        )
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=status.model_dump()).model_dump())
+                        all_jobs = _cron_load_jobs()
+                        status = _cron_status_from_jobs(all_jobs)
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload=status).model_dump())
 
                     elif method == "tools.catalog":
                         # Returning basic catalog for now
@@ -1073,17 +1392,80 @@ def create_app() -> FastAPI:
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"channelId": channel_id, "loggedOut": True}).model_dump())
 
                     elif method == "cron.add":
-                        # Stub: cron persistence not yet implemented
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"added": True, "jobId": str(int(time.time()))}).model_dump())
+                        params = req.params or {}
+                        new_id = str(uuid.uuid4())
+                        now_ms = int(time.time() * 1000)
+                        job = {
+                            "id": new_id,
+                            "agentId": params.get("agentId", "main"),
+                            "sessionKey": params.get("sessionKey", ""),
+                            "name": params.get("name", "unnamed"),
+                            "enabled": params.get("enabled", True),
+                            "createdAtMs": now_ms,
+                            "updatedAtMs": now_ms,
+                            "schedule": params.get("schedule", {}),
+                            "sessionTarget": params.get("sessionTarget", "main"),
+                            "wakeMode": params.get("wakeMode", "now"),
+                            "payload": params.get("payload", {}),
+                            "delivery": params.get("delivery", {"mode": "none"}),
+                            "state": params.get("state", {}),
+                        }
+                        jobs = _cron_load_jobs()
+                        jobs.append(job)
+                        _cron_save_jobs(jobs)
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"added": True, "jobId": new_id, "job": job}).model_dump())
 
                     elif method == "cron.remove":
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"removed": True}).model_dump())
+                        params = req.params or {}
+                        job_id = params.get("jobId", "")
+                        jobs = _cron_load_jobs()
+                        jobs = [j for j in jobs if j.get("id") != job_id]
+                        _cron_save_jobs(jobs)
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"removed": True, "jobId": job_id}).model_dump())
 
                     elif method == "cron.run":
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"triggered": True}).model_dump())
+                        # Force-mark the job as due (set nextRunAtMs to now) then wake the scheduler
+                        params = req.params or {}
+                        job_id = params.get("jobId", "")
+                        now_ms = int(time.time() * 1000)
+                        jobs = _cron_load_jobs()
+                        triggered = False
+                        for j in jobs:
+                            if j.get("id") == job_id:
+                                if "state" not in j or j["state"] is None:
+                                    j["state"] = {}
+                                # Clear any running lock and force nextRunAtMs to now
+                                j["state"]["runningAtMs"] = None
+                                j["state"]["nextRunAtMs"] = now_ms
+                                triggered = True
+                                break
+                        if triggered:
+                            _cron_save_jobs(jobs)
+                            # Wake the scheduler immediately if it's sleeping
+                            if _cron_scheduler_task and not _cron_scheduler_task.done():
+                                _cron_scheduler_task.cancel()
+                                _cron_scheduler_task = asyncio.create_task(_cron_scheduler_loop())
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"triggered": triggered, "jobId": job_id}).model_dump())
 
                     elif method == "cron.update":
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"updated": True}).model_dump())
+                        params = req.params or {}
+                        job_id = params.get("jobId", "")
+                        jobs = _cron_load_jobs()
+                        updated = False
+                        for j in jobs:
+                            if j.get("id") == job_id:
+                                # Apply allowed update fields
+                                for field in ("name", "enabled", "schedule", "payload",
+                                              "delivery", "sessionTarget", "wakeMode",
+                                              "agentId", "sessionKey", "state"):
+                                    if field in params:
+                                        j[field] = params[field]
+                                j["updatedAtMs"] = int(time.time() * 1000)
+                                updated = True
+                                break
+                        if updated:
+                            _cron_save_jobs(jobs)
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"updated": updated, "jobId": job_id}).model_dump())
 
                     elif method == "device.pair.approve":
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"approved": True}).model_dump())
@@ -1109,7 +1491,37 @@ def create_app() -> FastAPI:
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"updated": True, "sessionKey": session_key}).model_dump())
 
                     elif method == "sessions.usage":
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"tokens": 0, "cost": 0.0, "sessions": []}).model_dump())
+                        params = req.params or {}
+                        start_date = params.get("startDate", "")
+                        end_date = params.get("endDate", "")
+                        empty_totals = {
+                            "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0,
+                            "totalTokens": 0, "totalCost": 0.0,
+                            "inputCost": 0.0, "outputCost": 0.0,
+                            "cacheReadCost": 0.0, "cacheWriteCost": 0.0,
+                            "missingCostEntries": 0,
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={
+                            "updatedAt": int(time.time() * 1000),
+                            "startDate": start_date,
+                            "endDate": end_date,
+                            "sessions": [],
+                            "totals": empty_totals,
+                            "aggregates": {
+                                "messages": {
+                                    "total": 0, "user": 0, "assistant": 0,
+                                    "toolCalls": 0, "toolResults": 0, "errors": 0,
+                                },
+                                "tools": {
+                                    "totalCalls": 0, "uniqueTools": 0, "tools": [],
+                                },
+                                "byModel": [],
+                                "byProvider": [],
+                                "byAgent": [],
+                                "byChannel": [],
+                                "daily": [],
+                            },
+                        }).model_dump())
 
                     elif method == "sessions.usage.logs":
                         await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"logs": []}).model_dump())
@@ -1128,7 +1540,19 @@ def create_app() -> FastAPI:
                         }).model_dump())
 
                     elif method == "usage.cost":
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={"totalCost": 0.0, "currency": "USD", "breakdown": []}).model_dump())
+                        empty_totals = {
+                            "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0,
+                            "totalTokens": 0, "totalCost": 0.0,
+                            "inputCost": 0.0, "outputCost": 0.0,
+                            "cacheReadCost": 0.0, "cacheWriteCost": 0.0,
+                            "missingCostEntries": 0,
+                        }
+                        await websocket.send_json(ResponseFrame(id=req.id, ok=True, payload={
+                            "updatedAt": int(time.time() * 1000),
+                            "days": 0,
+                            "daily": [],
+                            "totals": empty_totals,
+                        }).model_dump())
 
                     elif method == "whatsapp":
                         # Route to WhatsApp channel plugin if registered, otherwise return stub
@@ -1185,6 +1609,8 @@ def create_app() -> FastAPI:
         Runs on API startup.
         Initializes and connects all configured ecosystem channel plugins.
         """
+        global _cron_scheduler_task
+
         from autocrab.core.plugins.loader import load_plugins_from_directory, start_all_channels
         from autocrab.core.plugins.handler import handle_channel_event
         
@@ -1200,9 +1626,24 @@ def create_app() -> FastAPI:
         print("Starting ecosystem channel plugins...", flush=True)
         await start_all_channels(on_event=handle_channel_event)
 
+        # Start cron scheduler — ensure nextRunAtMs values are up-to-date first
+        jobs = _cron_load_jobs()
+        now_ms = int(time.time() * 1000)
+        enriched = [_cron_enrich_job(j, now_ms) for j in jobs]
+        _cron_save_jobs(enriched)
+        _cron_scheduler_task = asyncio.create_task(_cron_scheduler_loop())
+        print("CronScheduler: task created", flush=True)
+
     @app.on_event("shutdown")
     async def shutdown_event():
-        """Gracefully shuts down ecosystem plugins."""
+        """Gracefully shuts down ecosystem plugins and cron scheduler."""
+        global _cron_scheduler_task
+        if _cron_scheduler_task and not _cron_scheduler_task.done():
+            _cron_scheduler_task.cancel()
+            try:
+                await _cron_scheduler_task
+            except Exception:
+                pass
         from autocrab.core.plugins.loader import stop_all_channels
         await stop_all_channels()
 
