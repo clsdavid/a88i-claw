@@ -1,1 +1,0 @@
-test_ro_memory_content

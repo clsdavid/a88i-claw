@@ -25,6 +25,23 @@ It exposes the exact same WebSocket and REST APIs as the original Node.js gatewa
 
 ---
 
+## Implementation Progress
+
+All phases below have been completed and are live in `src/autocrab/core/gateway/main.py`.
+
+| Phase | Completed | Summary                                                                                                                                                                                                                                                                                                                                                             |
+| ----- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1** | ✅        | Gateway scaffolding: FastAPI app, WebSocket handshake (`challenge` → `hello-ok` → `connect.ack`), REST health endpoint, core RPC dispatch table                                                                                                                                                                                                                     |
+| **2** | ✅        | Architecture gap review: identified 10 missing or incorrect RPC implementations across config, sessions, agents, cron, and tools                                                                                                                                                                                                                                    |
+| **3** | ✅        | Config RPC repairs: wired `config.schema` (backed by `AutoCrabSettings.model_json_schema()`), `config.set` (validates + persists to `autocrab.json`), `config.apply` (hot-reloads settings in-process)                                                                                                                                                              |
+| **4** | ✅        | Tool catalog fix: eliminated `_CACHED_TOOLS` stale-cache bug; `tools.catalog` now reflects live tool state on every call                                                                                                                                                                                                                                            |
+| **5** | ✅        | Remaining RPC stubs wired: `sessions.*`, `agents.*`, `channels.*`, `skills.*`, `cron.*` (initial stubs), `logs.tail`, `device.*`, `node.*`, `exec.approvals.*`; README rewritten                                                                                                                                                                                    |
+| **6** | ✅        | Frontend correctness: `sessions.list` returns full metadata (`count`, `ts`, `path`, `defaults`) — fixes Overview "Sessions: n/a"; `sessions.usage` aggregates reshaped to match TypeScript interface (`totalCalls`, `uniqueTools`, `tools[]`) — fixes Usage page `TypeError` crash                                                                                  |
+| **7** | ✅        | Full cron system: state loaded from `~/.autocrab_v2/cron/jobs.json`; `nextRunAtMs` recomputed from schedule anchor + interval on startup; background `asyncio` scheduler loop executes due jobs via the agent executor, writes per-job JSONL run logs to `~/.autocrab_v2/cron/runs/<jobId>.jsonl`, and persists outcomes; `cron.run` RPC forces immediate execution |
+| **8** | ✅        | Directory audit: `autocrab/autocrab/` confirmed as stale runtime-data artifact (old SQLite DB + auto-generated empty plugin stubs from an earlier dev run with a relative `AUTOCRAB_HOME`) — not a source duplication; all active runtime data lives in `~/.autocrab_v2/`                                                                                           |
+
+---
+
 ## Architecture at a glance
 
 ```
@@ -197,22 +214,22 @@ Server → event            (type, event, payload)
 
 ### Implemented RPC methods
 
-| Category     | Methods                                                                                                                    |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| **Chat**     | `chat.send`, `chat.history`                                                                                                |
-| **Config**   | `config.get`, `config.set`, `config.apply`, `config.schema`                                                                |
-| **Sessions** | `sessions.list`, `sessions.delete`, `sessions.patch`, `sessions.usage`, `sessions.usage.logs`, `sessions.usage.timeseries` |
-| **Agents**   | `agents.list`, `agent.identity.get`, `agents.files.list`, `agents.files.get`, `agents.files.set`                           |
-| **Channels** | `channels.status`, `channels.logout`                                                                                       |
-| **Models**   | `models.list`                                                                                                              |
-| **Skills**   | `skills.status`, `skills.bins`, `skills.install`, `skills.update`                                                          |
-| **Cron**     | `cron.runs`, `cron.list`, `cron.status`, `cron.add`, `cron.remove`, `cron.run`, `cron.update`                              |
-| **Tools**    | `tools.catalog`, `exec.approvals.get`, `exec.approvals.set`                                                                |
-| **Logs**     | `logs.tail`                                                                                                                |
-| **Device**   | `device.pair.approve`, `device.pair.reject`, `device.token.revoke`                                                         |
-| **Nodes**    | `node.list`                                                                                                                |
-| **System**   | `status`, `health`, `last-heartbeat`, `ping`, `system-presence`, `system-event`                                            |
-| **Misc**     | `update.run`, `usage.cost`, `whatsapp`                                                                                     |
+| Category     | Methods                                                                                                                           |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Chat**     | `chat.send`, `chat.history`                                                                                                       |
+| **Config**   | `config.get`, `config.set`, `config.apply`, `config.schema`                                                                       |
+| **Sessions** | `sessions.list`, `sessions.delete`, `sessions.patch`, `sessions.usage`, `sessions.usage.logs`, `sessions.usage.timeseries`        |
+| **Agents**   | `agents.list`, `agent.identity.get`, `agents.files.list`, `agents.files.get`, `agents.files.set`                                  |
+| **Channels** | `channels.status`, `channels.logout`                                                                                              |
+| **Models**   | `models.list`                                                                                                                     |
+| **Skills**   | `skills.status`, `skills.bins`, `skills.install`, `skills.update`                                                                 |
+| **Cron**     | `cron.runs`, `cron.list`, `cron.status`, `cron.add`, `cron.remove`, `cron.run`, `cron.update` — file-backed, background scheduler |
+| **Tools**    | `tools.catalog`, `exec.approvals.get`, `exec.approvals.set`                                                                       |
+| **Logs**     | `logs.tail`                                                                                                                       |
+| **Device**   | `device.pair.approve`, `device.pair.reject`, `device.token.revoke`                                                                |
+| **Nodes**    | `node.list`                                                                                                                       |
+| **System**   | `status`, `health`, `last-heartbeat`, `ping`, `system-presence`, `system-event`                                                   |
+| **Misc**     | `update.run`, `usage.cost`, `whatsapp`                                                                                            |
 
 ---
 
