@@ -1,5 +1,6 @@
 import docker
 import os
+import re
 import uuid
 from typing import Dict, Any, Tuple
 
@@ -66,13 +67,16 @@ class SandboxManager:
             if self.workspace_access == "ro":
                 volumes[str(self.agent_workspace_dir)] = {'bind': '/agent_workspace', 'mode': 'ro'}
 
+        # Docker container names only allow [a-zA-Z0-9_.-]; strip colons,
+        # spaces, and other illegal chars that session IDs may contain.
+        safe_sid = re.sub(r"[^a-zA-Z0-9_.-]", "_", self.session_id)[:48]
         self.container = self.client.containers.run(
             self.image_name,
             command="tail -f /dev/null", # Keep alive
             detach=True,
             volumes=volumes,
             working_dir="/workspace",
-            name=f"autocrab_sandbox_{self.session_id}_{uuid.uuid4().hex[:6]}",
+            name=f"autocrab_sandbox_{safe_sid}_{uuid.uuid4().hex[:6]}",
             # Security limits matching original architecture
             mem_limit="512m",
             network_mode="bridge",

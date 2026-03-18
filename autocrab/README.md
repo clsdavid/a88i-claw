@@ -101,6 +101,96 @@ Open `http://localhost:5174` in your browser.
 
 ---
 
+## Starting, stopping, and restarting the gateway
+
+All commands below assume the virtual environment is activated (`source .venv/bin/activate`)
+and are run from the `autocrab/` directory.
+
+### Start — foreground (development)
+
+```bash
+PYTHONPATH=src python3 -m autocrab.core.gateway.main
+```
+
+Logs stream directly to the terminal. Press `Ctrl-C` to stop.
+
+### Start — foreground with hot reload (development)
+
+```bash
+PYTHONPATH=src python3 -m autocrab.cli.main --reload
+# or equivalently via uvicorn directly:
+PYTHONPATH=src uvicorn autocrab.core.gateway.main:app --reload --port 5174
+```
+
+The server restarts automatically whenever a source file changes.
+
+### Start — background / daemon (production)
+
+```bash
+PYTHONPATH=src nohup python3 -m autocrab.core.gateway.main \
+  > /tmp/autocrab-gateway-py.log 2>&1 &
+echo "Gateway PID: $!"
+```
+
+Logs are written to `/tmp/autocrab-gateway-py.log`.
+
+To follow the log in real time:
+
+```bash
+tail -f /tmp/autocrab-gateway-py.log
+```
+
+### Stop
+
+```bash
+pkill -f "autocrab.core.gateway.main"
+```
+
+To confirm the process is gone:
+
+```bash
+pgrep -a -f "autocrab.core.gateway.main" || echo "gateway stopped"
+```
+
+### Restart
+
+```bash
+pkill -f "autocrab.core.gateway.main" || true
+sleep 1
+PYTHONPATH=src nohup python3 -m autocrab.core.gateway.main \
+  > /tmp/autocrab-gateway-py.log 2>&1 &
+echo "Gateway restarted — PID: $!"
+```
+
+### Check status / verify it is running
+
+```bash
+# Check the process
+pgrep -a -f "autocrab.core.gateway.main"
+
+# Hit the health endpoint
+curl -s http://localhost:5174/health | python3 -m json.tool
+
+# Tail the last 50 log lines
+tail -n 50 /tmp/autocrab-gateway-py.log
+```
+
+### Custom port or host
+
+```bash
+PYTHONPATH=src python3 -m autocrab.cli.main --port 8080 --host 0.0.0.0
+```
+
+Available CLI options:
+
+| Flag              | Default     | Description                                          |
+| ----------------- | ----------- | ---------------------------------------------------- |
+| `--port`          | `5174`      | TCP port to bind                                     |
+| `--host`          | `127.0.0.1` | Interface to bind (use `0.0.0.0` for all interfaces) |
+| `--reload` / `-r` | off         | Enable hot reload (development only)                 |
+
+---
+
 ## Configuration
 
 The gateway loads config from `~/.autocrab_v2/autocrab.json` (JSON5 supported).
