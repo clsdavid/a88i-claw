@@ -26,7 +26,7 @@ def _resolve_agent_dir(agent_id: str) -> Path:
 
 def _resolve_workspace_dir(agent_id: str) -> Path:
     """Helper to cleanly resolve the persistent memory workspace directory."""
-    is_default = (agent_id == "default")
+    is_default = (agent_id == "default" or agent_id == "main")
     if settings.agents and settings.agents.list:
         for ac in settings.agents.list:
             if ac.id == agent_id:
@@ -120,38 +120,49 @@ class HybridMemoryStore:
         self.workspace_dir = _resolve_workspace_dir(self.agent_id)
                 
     def load_permanent_memory(self) -> str:
-        """Looks for MEMORY.md and SOUL.md variants in the workspace directory."""
+        """Looks for context .md configuration files in the workspace directory."""
         if not self.workspace_dir or not self.workspace_dir.exists():
             return ""
             
-        search_configs = [
-            {"filename": "MEMORY.md", "tag": "PERMANENT_MEMORY"},
-            {"filename": "memory.md", "tag": "PERMANENT_MEMORY"},
-            {"filename": "SOUL.md", "tag": "AGENT_SOUL"},
-            {"filename": "soul.md", "tag": "AGENT_SOUL"},
-            {"filename": "instructions/SOUL.md", "tag": "AGENT_SOUL"},
-            {"filename": "instructions/soul.md", "tag": "AGENT_SOUL"},
-            {"filename": "memory/MEMORY.md", "tag": "PERMANENT_MEMORY"},
-            {"filename": "memory/memory.md", "tag": "PERMANENT_MEMORY"},
-        ]
-        
         memories = []
         seen_tags = set()
         
-        for cfg in search_configs:
-            # Skip if we already found a better variant for this tag
-            if cfg["tag"] in seen_tags:
+        # Explicit tags required by the system prompt regex parser
+        special_configs = {
+            "memory.md": "PERMANENT_MEMORY",
+            "soul.md": "AGENT_SOUL",
+            "user.md": "USER_PROFILE"
+        }
+        
+        # Look at workspace root and subdirectories to mimic Node.js dynamic loading
+        directories_to_scan = [
+            self.workspace_dir, 
+            self.workspace_dir / "memory", 
+            self.workspace_dir / "instructions"
+        ]
+        
+        for base in directories_to_scan:
+            if not base.exists():
                 continue
                 
-            mem_path = self.workspace_dir / cfg["filename"]
-            if mem_path.exists():
+            for md_file in base.glob("*.md"):
+                # Safety limit: prevent loading massive RAG dump documents implicitly
+                if md_file.stat().st_size > 50000:  
+                    continue
+                    
+                name_lower = md_file.name.lower()
+                tag = special_configs.get(name_lower, md_file.stem.upper().replace("-", "_"))
+                
+                if tag in seen_tags:
+                    continue
+                    
                 try:
-                    content = mem_path.read_text(encoding="utf-8").strip()
+                    content = md_file.read_text(encoding="utf-8").strip()
                     if content:
-                        memories.append(f"<{cfg['tag']}>\n{content}\n</{cfg['tag']}>\n\n")
-                        seen_tags.add(cfg["tag"])
+                        memories.append(f"<{tag}>\n{content}\n</{tag}>\n\n")
+                        seen_tags.add(tag)
                 except Exception as e:
-                    logger.warning(f"Failed to read permanent memory at {mem_path}: {e}")
+                    logger.warning(f"Failed to read permanent memory at {md_file}: {e}")
                     
         return "".join(memories)
 

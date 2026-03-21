@@ -43,8 +43,6 @@ async def build_context(state: AgentState) -> Dict[str, Any]:
         agent_id=state.get("agent_id", "default")
     )
     
-    # In a full implementation, we extract the latest query text here 
-    # to feed into the Hybrid RAG search.
     query = ""
     if state.get("messages"):
         last_msg = state["messages"][-1]
@@ -52,7 +50,13 @@ async def build_context(state: AgentState) -> Dict[str, Any]:
             query = last_msg.content
             
     recent_context = await store.get_context(query)
-    return {"context": recent_context}
+    permanent_context = store.load_permanent_memory()
+    
+    context_str = recent_context
+    if permanent_context:
+        context_str = f"{permanent_context}\n{recent_context}"
+        
+    return {"context": context_str}
 
 
 def _resolve_llm_settings(agent_id: str) -> tuple[str, str, str, Optional[str]]:
@@ -238,7 +242,7 @@ def _build_system_prompt(
     
     # Base identity: use SOUL.md if present, else default
     if soul_content:
-        prompt_sections.append("You are a personal assistant running inside AutoCrab.\n")
+        prompt_sections.append(f"{soul_content}\n")
     else:
         prompt_sections.append("You are AutoCrab, a helpful, witty, and slightly crab-obsessed AI assistant. Be concise, technical, and prioritize safety.\n")
     
@@ -258,9 +262,9 @@ def _build_system_prompt(
     prompt_sections.append(
         "\n## Skills (on-demand discovery)\n"
         "Before replying, if you need a capability you don't have (e.g. weather, crypto, GitHub):\n"
-        "- Use 'search_skills' to find relevant skill tools.\n"
-        "- After finding a skill, use 'get_skill_info' to read its manual and command examples.\n"
-        "- Use the 'bash' tool to execute commands found in the skill info.\n"
+        "1. You MUST use the 'search_skills' tool to find relevant skill tools first. DO NOT guess or hallucinate bash commands for external integrations.\n"
+        "2. After finding a skill, use 'get_skill_info' to read its manual and command examples.\n"
+        "3. Use the 'bash' tool to execute EXACTLY the commands found in the skill info.\n"
         "Do not read more than one skill up front. Only read after selecting."
     )
     
@@ -271,14 +275,10 @@ def _build_system_prompt(
         "Treat this directory as the single global workspace for file operations unless explicitly instructed otherwise."
     )
     
-    # ## Project Context (SOUL.md + MEMORY.md) -- mirrors contextFiles injection in original
-    if soul_content or memory_content:
+    # ## Project Context (MEMORY.md) -- mirrors contextFiles injection in original
+    if memory_content:
         prompt_sections.append("\n# Project Context\nThe following project context files have been loaded:")
-        if soul_content:
-            prompt_sections.append("If SOUL.md is present, embody its persona and tone. Avoid stiff, generic replies; follow its guidance unless higher-priority instructions override it.\n")
-            prompt_sections.append(f"## SOUL.md\n\n{soul_content}\n")
-        if memory_content:
-            prompt_sections.append(f"## MEMORY.md\n\n{memory_content}\n")
+        prompt_sections.append(f"## MEMORY.md\n\n{memory_content}\n")
     
     # ## Runtime
     rt_os = platform.system().lower()
