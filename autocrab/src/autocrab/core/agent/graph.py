@@ -1,11 +1,16 @@
 import os
-from typing import TypedDict, Annotated, Sequence, Dict, Any
+import re
+import platform
+import socket
+from typing import TypedDict, Annotated, Sequence, Dict, Any, List, Optional, Union
 import operator
-from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
+
+from langchain_core.messages import BaseMessage, AIMessage, HumanMessage, SystemMessage, ToolMessage
+from langchain_core.utils.function_calling import convert_to_openai_function
 from langgraph.graph import StateGraph, END
-from autocrab.core.agent.memory import HybridMemoryStore
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import SystemMessage, ToolMessage
+
+from autocrab.core.agent.memory import HybridMemoryStore
 from autocrab.core.models.config import settings
 from autocrab.core.tools.bash import BASH_TOOL_SPEC, execute_bash_tool
 from autocrab.core.tools.fs import fs_tool_specs, execute_fs_read, execute_fs_write, execute_fs_list
@@ -14,7 +19,8 @@ from autocrab.core.tools.mcp import McpToolRegistry
 from autocrab.core.plugins.loader import get_registered_schemas, execute_skill
 from autocrab.core.sandbox.manager import SandboxManager
 
-_CACHED_TOOLS: dict = {}  # keyed by agent_id to support per-agent tool isolation
+_CACHED_TOOLS: dict[str, list[dict[str, Any]]] = {}  # keyed by agent_id to support per-agent tool isolation
+
 
 class AgentState(TypedDict, total=False):
     """
@@ -26,6 +32,7 @@ class AgentState(TypedDict, total=False):
     context: str
     instructions: Any
     tool_choice: Any
+
 
 async def build_context(state: AgentState) -> Dict[str, Any]:
     """
@@ -39,19 +46,20 @@ async def build_context(state: AgentState) -> Dict[str, Any]:
     # In a full implementation, we extract the latest query text here 
     # to feed into the Hybrid RAG search.
     query = ""
-    if state["messages"]:
+    if state.get("messages"):
         last_msg = state["messages"][-1]
-        if isinstance(last_msg, HumanMessage):
+        if isinstance(last_msg, HumanMessage) and isinstance(last_msg.content, str):
             query = last_msg.content
             
     recent_context = await store.get_context(query)
     return {"context": recent_context}
 
-async def call_model(state: AgentState) -> Dict[str, Any]:
+
+def _resolve_llm_settings(agent_id: str) -> tuple[str, str, str, Optional[str]]:
     """
-    Node 2: Queries the LLM with the context and the conversation history.
+    Resolves the LLM configuration (provider, model, base_url, api_key) for the given agent.
+    Returns: (llm_provider, llm_model, llm_api_key, llm_base_url)
     """
-    agent_id = state.get("agent_id", "default")
     agent_config = None
     if settings.agents and settings.agents.list:
         for ac in settings.agents.list:
@@ -64,7 +72,7 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
                 if ac.default:
                     agent_config = ac
                     break
-
+    # TODO: shall change to read from autocrab.json
     llm_provider = "ollama"
     llm_model = "qwen3.5:35b" # default
     llm_api_key = os.environ.get("OPENAI_API_KEY", "sk-dummy")
@@ -121,7 +129,7 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
                 else:
                     llm_model = p_config.models[0].name
 
-    if agent_config and agent_config.model:
+    if agent_config and getattr(agent_config, "model", None):
         if agent_config.model.name:
             llm_model = agent_config.model.name
         if getattr(agent_config.model, "provider", None):
@@ -137,17 +145,14 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
         
         if getattr(agent_config.model, "apiKey", None):
             llm_api_key = agent_config.model.apiKey
-    
-    # If using local Ollama, we don't want it to fail on missing key if 'sk-dummy' is present
-    # but Ollama ignores it anyway.
-    
-    llm = ChatOpenAI(
-        model=llm_model,
-        api_key=llm_api_key,
-        base_url=llm_base_url,
-        streaming=True
-    )
-    
+
+    return llm_provider, llm_model, llm_api_key, llm_base_url
+
+
+async def _resolve_agent_tools(agent_id: str) -> list[dict[str, Any]]:
+    """
+    Resolves the tools available for the given agent and caches them.
+    """
     global _CACHED_TOOLS
     cache_key = agent_id
     if cache_key not in _CACHED_TOOLS:
@@ -159,7 +164,6 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
             tools.append(tool_spec.model_dump())
             
         # Add native browser tools
-        from langchain_core.utils.function_calling import convert_to_openai_function
         for tool in browser_tools:
             tools.append(convert_to_openai_function(tool))
         
@@ -181,41 +185,34 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
                 formatted_tools.append({"type": "function", "function": t})
         _CACHED_TOOLS[cache_key] = formatted_tools
 
-    formatted_tools = _CACHED_TOOLS[cache_key]
+    return _CACHED_TOOLS[cache_key]
 
-    if formatted_tools:
-        tc = state.get("tool_choice")
-        if tc and tc != "auto":
-            if isinstance(tc, dict) and "function" in tc:
-                llm_with_tools = llm.bind_tools(formatted_tools, tool_choice=tc["function"].get("name"))
-            elif tc == "required":
-                llm_with_tools = llm.bind_tools(formatted_tools, tool_choice="any")
-            elif tc == "none":
-                llm_with_tools = llm
-            else:
-                llm_with_tools = llm.bind_tools(formatted_tools)
-        else:
-            llm_with_tools = llm.bind_tools(formatted_tools)
-    else:
-        llm_with_tools = llm
-        
-    # --- Build structured system prompt (mirrors original system-prompt.ts) ---
-    context = state.get("context", "")
-    
+
+def _build_system_prompt(
+    context: str,
+    agent_id: str,
+    llm_model: str,
+    formatted_tools: list[dict[str, Any]],
+    instructions: Optional[Any] = None
+) -> str:
+    """
+    Builds the structured system prompt dynamically based on the current agent state.
+    """
     # Parse SOUL.md and MEMORY.md out of context if they were injected by load_permanent_memory
     soul_content = ""
     memory_content = ""
-    import re as _re
+    
     if "<AGENT_SOUL>" in context:
-        soul_match = _re.search(r"<AGENT_SOUL>(.*?)</AGENT_SOUL>", context, _re.DOTALL)
+        soul_match = re.search(r"<AGENT_SOUL>(.*?)</AGENT_SOUL>", context, re.DOTALL)
         if soul_match:
             soul_content = soul_match.group(1).strip()
-        context = _re.sub(r"<AGENT_SOUL>.*?</AGENT_SOUL>\n*", "", context, flags=_re.DOTALL).strip()
+        context = re.sub(r"<AGENT_SOUL>.*?</AGENT_SOUL>\n*", "", context, flags=re.DOTALL).strip()
+        
     if "<PERMANENT_MEMORY>" in context:
-        mem_match = _re.search(r"<PERMANENT_MEMORY>(.*?)</PERMANENT_MEMORY>", context, _re.DOTALL)
+        mem_match = re.search(r"<PERMANENT_MEMORY>(.*?)</PERMANENT_MEMORY>", context, re.DOTALL)
         if mem_match:
             memory_content = mem_match.group(1).strip()
-        context = _re.sub(r"<PERMANENT_MEMORY>.*?</PERMANENT_MEMORY>\n*", "", context, flags=_re.DOTALL).strip()
+        context = re.sub(r"<PERMANENT_MEMORY>.*?</PERMANENT_MEMORY>\n*", "", context, flags=re.DOTALL).strip()
     
     # Build tool name listing for system prompt
     tool_names = []
@@ -225,13 +222,14 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
         desc = fn.get("description", "")
         if name:
             tool_names.append(f"- {name}" + (f": {desc[:80]}" if desc else ""))
+            
     tool_listing = "\n".join(tool_names) if tool_names else "- bash: execute shell commands\n- fs_read, fs_write, fs_list: filesystem access"
     
     # Resolve workspace dir
     workspace_dir = str(settings.config_root / "workspace")
     if settings.agents and settings.agents.list:
         for ac in settings.agents.list:
-            if ac.id == agent_id and ac.workspace:
+            if ac.id == agent_id and getattr(ac, "workspace", None):
                 workspace_dir = ac.workspace
                 break
     
@@ -245,8 +243,7 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
         prompt_sections.append("You are AutoCrab, a helpful, witty, and slightly crab-obsessed AI assistant. Be concise, technical, and prioritize safety.\n")
     
     # ## Tooling
-    prompt_sections.append("## Tooling\nTool availability:\nTool names are case-sensitive. Call tools exactly as listed.\n" + tool_listing)
-    
+    prompt_sections.append(f"## Tooling\nTool availability:\nTool names are case-sensitive. Call tools exactly as listed.\n{tool_listing}")
     prompt_sections.append("\n## Tool Call Style\nDefault: do not narrate routine, low-risk tool calls (just call the tool).\nNarrate only when it helps: multi-step work, complex problems, or sensitive actions.\nKeep narration brief; avoid repeating obvious steps.")
     
     # ## Safety (mirrors original safetySection)
@@ -284,10 +281,8 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
             prompt_sections.append(f"## MEMORY.md\n\n{memory_content}\n")
     
     # ## Runtime
-    import platform as _platform
-    import socket as _socket
-    rt_os = _platform.system().lower()
-    rt_host = _socket.gethostname()
+    rt_os = platform.system().lower()
+    rt_host = socket.gethostname()
     prompt_sections.append(
         f"\n## Runtime\n"
         f"Runtime: agent={agent_id} | host={rt_host} | os={rt_os} | model={llm_model}"
@@ -297,87 +292,169 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
     if context:
         prompt_sections.append(f"\n## Session Context\n{context}")
         
-    if state.get("instructions"):
-        prompt_sections.append(f"\n## Instructions\n{state['instructions']}")
+    if instructions:
+        prompt_sections.append(f"\n## Instructions\n{instructions}")
 
-    sys_content = "\n".join(prompt_sections)
-    # -------------------------------------------------------------------
+    return "\n".join(prompt_sections)
+
+
+async def call_model(state: AgentState) -> Dict[str, Any]:
+    """
+    Node 2: Queries the LLM with the context and the conversation history.
+    """
+    agent_id = state.get("agent_id", "default")
+    
+    # Resolve Model settings
+    llm_provider, llm_model, llm_api_key, llm_base_url = _resolve_llm_settings(agent_id)
+    
+    llm = ChatOpenAI(
+        model=llm_model,
+        api_key=llm_api_key,
+        base_url=llm_base_url,
+        streaming=True
+    )
+    
+    # Resolve Tools
+    formatted_tools = await _resolve_agent_tools(agent_id)
+
+    if formatted_tools:
+        tc = state.get("tool_choice")
+        if tc and tc != "auto":
+            if isinstance(tc, dict) and "function" in tc:
+                llm_with_tools = llm.bind_tools(formatted_tools, tool_choice=tc["function"].get("name"))
+            elif tc == "required":
+                llm_with_tools = llm.bind_tools(formatted_tools, tool_choice="any")
+            elif tc == "none":
+                llm_with_tools = llm
+            else:
+                llm_with_tools = llm.bind_tools(formatted_tools)
+        else:
+            llm_with_tools = llm.bind_tools(formatted_tools)
+    else:
+        llm_with_tools = llm
+        
+    # Build prompt
+    context_str = state.get("context", "")
+    sys_content = _build_system_prompt(
+        context=context_str,
+        agent_id=agent_id,
+        llm_model=llm_model,
+        formatted_tools=formatted_tools,
+        instructions=state.get("instructions")
+    )
     
     sys_msg = SystemMessage(content=sys_content)
+    messages = [sys_msg] + list(state.get("messages", []))
     
-    messages = [sys_msg] + list(state["messages"])
     response = await llm_with_tools.ainvoke(messages)
     
     return {"messages": [response]}
 
+
+async def _execute_single_tool(
+    tool_name: str, 
+    tool_args: dict, 
+    sandbox: Optional[SandboxManager], 
+    mcp_registry: Optional[McpToolRegistry]
+) -> str:
+    """Helper method to encapsulate the execution logic of an individual tool."""
+    try:
+        if tool_name in ["bash", "fs_read", "fs_write", "fs_list"]:
+            if not sandbox:
+                return f"Error: Sandbox is not initialized for tool {tool_name}."
+                
+            if tool_name == "bash":
+                return execute_bash_tool(sandbox, tool_args)
+            elif tool_name == "fs_read":
+                return execute_fs_read(sandbox, tool_args)
+            elif tool_name == "fs_write":
+                return execute_fs_write(sandbox, tool_args)
+            elif tool_name == "fs_list":
+                return execute_fs_list(sandbox, tool_args)
+                
+        elif tool_name in ["browser_tool"]:
+            # Native python browser tool execution mapping
+            tool_map = {t.name: t for t in browser_tools}
+            if tool_name in tool_map:
+                return str(tool_map[tool_name].invoke(tool_args))
+        else:
+            if mcp_registry:
+                # If tool_name is an MCP remote tool, run via registry
+                remote_names = [schema.function.name for schema in mcp_registry.remote_schemas]
+                if tool_name in remote_names:
+                    return await mcp_registry.execute_tool(tool_name, tool_args)
+            
+            # Fallback to local python plugin skill
+            return str(execute_skill(tool_name, tool_args))
+            
+    except Exception as e:
+        return f"Execution error for {tool_name}: {str(e)}"
+    
+    return f"Error: Execution pathway for {tool_name} not found."
+
+
 async def execute_tools(state: AgentState) -> Dict[str, Any]:
     """
-    Node 3: Executes tool calls parsed from the LLM response in a Sandbox.
+    Node 3: Executes tool calls parsed from the LLM response.
+    Encapsulates tool execution inside a Try/Finally Sandbox manager.
     """
-    
     last_message = state["messages"][-1]
     tool_messages = []
     
+    if not hasattr(last_message, "tool_calls") or not last_message.tool_calls:
+        return {"messages": []}
+
     sandbox = None
     mcp_registry = None
-    
-    if hasattr(last_message, "tool_calls") and last_message.tool_calls:
+
+    try:
+        # Evaluate if sandbox is required
+        needs_sandbox = any(
+            tc["name"] in ["bash", "fs_read", "fs_write", "fs_list"] 
+            for tc in last_message.tool_calls
+        )
+        
+        if needs_sandbox:
+            sandbox = SandboxManager(
+                session_id=state["session_id"], 
+                agent_id=state.get("agent_id", "default")
+            )
+            sandbox.start_sandbox()
+
+        # Evaluate if mcp is required
+        if settings.features.enable_external_mcp:
+            mcp_registry = McpToolRegistry()
+            await mcp_registry.fetch_schemas()
+
+        # Execute all calls
         for tool_call in last_message.tool_calls:
             tool_name = tool_call["name"]
             tool_args = tool_call["args"]
             tool_id = tool_call["id"]
             
-            result_str = f"Error: Tool {tool_name} not found."
+            result_str = await _execute_single_tool(
+                tool_name=tool_name, 
+                tool_args=tool_args, 
+                sandbox=sandbox, 
+                mcp_registry=mcp_registry
+            )
             
-            try:
-                if tool_name in ["bash", "fs_read", "fs_write", "fs_list"]:
-                    if not sandbox:
-                        sandbox = SandboxManager(
-                            session_id=state["session_id"], 
-                            agent_id=state.get("agent_id", "default")
-                        )
-                        sandbox.start_sandbox()
-                        
-                    if tool_name == "bash":
-                        result_str = execute_bash_tool(sandbox, tool_args)
-                    elif tool_name == "fs_read":
-                        result_str = execute_fs_read(sandbox, tool_args)
-                    elif tool_name == "fs_write":
-                        result_str = execute_fs_write(sandbox, tool_args)
-                    elif tool_name == "fs_list":
-                        result_str = execute_fs_list(sandbox, tool_args)
-                        
-                elif tool_name in ["browser_tool"]:
-                    # Native python browser tool execution mapping
-                    tool_map = {t.name: t for t in browser_tools}
-                    if tool_name in tool_map:
-                        result_str = str(tool_map[tool_name].invoke(tool_args))
-                else:
-                    if not mcp_registry:
-                        mcp_registry = McpToolRegistry()
-                        await mcp_registry.fetch_schemas()
-                    
-                    remote_names = [schema.function.name for schema in mcp_registry.remote_schemas]
-                    
-                    if tool_name in remote_names:
-                        result_str = await mcp_registry.execute_tool(tool_name, tool_args)
-                    else:
-                        result_str = str(execute_skill(tool_name, tool_args))
-                        
-            except Exception as e:
-                result_str = f"Execution error for {tool_name}: {str(e)}"
-                
             tool_messages.append(ToolMessage(content=result_str, tool_call_id=tool_id, name=tool_name))
             
-    if sandbox:
-        sandbox.teardown()
+    finally:
+        if sandbox:
+            sandbox.teardown()
         
     return {"messages": tool_messages}
+
 
 def should_continue(state: AgentState) -> str:
     """
     Routing logic: decides whether to run tools or complete the cycle.
     """
+    if not state.get("messages"):
+        return "end"
+        
     last_message = state["messages"][-1]
     
     # If there are tool calls, route to the 'tools' node

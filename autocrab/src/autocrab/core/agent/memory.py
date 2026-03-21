@@ -1,10 +1,45 @@
 import os
-import httpx
+import json
 import time
+import httpx
+import logging
 from pathlib import Path
-from typing import Dict, Any, List
-from autocrab.core.models.config import settings
+from typing import Dict, Any, List, Optional
+
 from pydantic import BaseModel
+
+from autocrab.core.models.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+def _resolve_agent_dir(agent_id: str) -> Path:
+    """Helper to cleanly resolve agent directory from settings."""
+    agent_dir_path = settings.config_root / "agents" / agent_id / "agent"
+    if settings.agents and settings.agents.list:
+        for ac in settings.agents.list:
+            if ac.id == agent_id and getattr(ac, "agentDir", None):
+                agent_dir_path = Path(ac.agentDir)
+                break
+    return agent_dir_path
+
+
+def _resolve_workspace_dir(agent_id: str) -> Path:
+    """Helper to cleanly resolve the persistent memory workspace directory."""
+    is_default = (agent_id == "default")
+    if settings.agents and settings.agents.list:
+        for ac in settings.agents.list:
+            if ac.id == agent_id:
+                is_default = getattr(ac, "default", is_default)
+                if getattr(ac, "workspace", None):
+                    return Path(ac.workspace)
+                break
+
+    if is_default:
+        return settings.config_root / "workspace"
+    else:
+        return settings.config_root / f"workspace-{agent_id}"
+
 
 class TranscriptWriter:
     """
@@ -15,13 +50,7 @@ class TranscriptWriter:
         self.session_id = session_id
         self.agent_id = agent_id
         
-        from autocrab.core.models.config import settings
-        agent_dir_path = settings.config_root / "agents" / self.agent_id / "agent"
-        if settings.agents and settings.agents.list:
-            for ac in settings.agents.list:
-                if ac.id == self.agent_id and ac.agentDir:
-                    agent_dir_path = Path(ac.agentDir)
-                    break
+        agent_dir_path = _resolve_agent_dir(self.agent_id)
                     
         self.base_dir = agent_dir_path / "sessions" / self.session_id
         self.base_dir.mkdir(parents=True, exist_ok=True)
@@ -29,13 +58,13 @@ class TranscriptWriter:
         self.json_log_path = self.base_dir / "events.jsonl"
         self._ensure_files()
 
-    def _ensure_files(self):
+    def _ensure_files(self) -> None:
         if not self.transcript_path.exists():
             self.transcript_path.write_text(f"# Agent Session: {self.session_id}\n\n", encoding="utf-8")
         if not self.json_log_path.exists():
             self.json_log_path.touch()
 
-    def append_message(self, role: str, content: str):
+    def append_message(self, role: str, content: str) -> None:
         """Appends a new conversation block to the flat file and JSON log"""
         timestamp_str = time.strftime("%Y-%m-%d %H:%M:%S")
         ts_ms = int(time.time() * 1000)
@@ -46,7 +75,6 @@ class TranscriptWriter:
             f.write(block)
             
         # 2. JSONL entry for chat.history
-        import json
         entry = {
             "role": role,
             "content": content,
@@ -57,7 +85,6 @@ class TranscriptWriter:
             
     def load_messages(self) -> List[Dict[str, Any]]:
         """Reads back the structured JSONL history"""
-        import json
         messages = []
         if self.json_log_path.exists():
             with open(self.json_log_path, "r", encoding="utf-8") as f:
@@ -65,8 +92,8 @@ class TranscriptWriter:
                     if line.strip():
                         try:
                             messages.append(json.loads(line))
-                        except:
-                            pass
+                        except json.JSONDecodeError as e:
+                            logger.warning(f"Error decoding JSON transcript line: {e}")
         return messages
 
     def load_context(self) -> str:
@@ -74,6 +101,7 @@ class TranscriptWriter:
         if self.transcript_path.exists():
             return self.transcript_path.read_text(encoding="utf-8")
         return ""
+
 
 class HybridMemoryStore:
     """
@@ -86,35 +114,14 @@ class HybridMemoryStore:
         self.agent_id = agent_id
         self.writer = TranscriptWriter(session_id, agent_id)
         
-        from autocrab.core.models.config import settings
-        
         self.use_rag = settings.features.enable_external_rag
-        self.rag_url = settings.features.rag_system_url
+        self.rag_url = getattr(settings.features, "rag_system_url", None)
         
-        # 1. Resolve Workspace Directory for Permanent Memory
-        from pathlib import Path
-        
-        self.workspace_dir = None
-        is_default = False
-        if settings.agents and settings.agents.list:
-            for ac in settings.agents.list:
-                if ac.id == self.agent_id:
-                    is_default = ac.default
-                    if ac.workspace:
-                        self.workspace_dir = Path(ac.workspace)
-                    break
-                    
-        if not self.workspace_dir:
-            # Fallback path logic
-            if is_default or self.agent_id == "default":
-                # Default agents use the global workspace in the config root
-                self.workspace_dir = settings.config_root / "workspace"
-            else:
-                self.workspace_dir = settings.config_root / f"workspace-{self.agent_id}"
+        self.workspace_dir = _resolve_workspace_dir(self.agent_id)
                 
     def load_permanent_memory(self) -> str:
         """Looks for MEMORY.md and SOUL.md variants in the workspace directory."""
-        if not self.workspace_dir:
+        if not self.workspace_dir or not self.workspace_dir.exists():
             return ""
             
         search_configs = [
@@ -132,7 +139,7 @@ class HybridMemoryStore:
         seen_tags = set()
         
         for cfg in search_configs:
-            # Skip if we already found a better variant for this tag (e.g. found SOUL.md, skip soul.md)
+            # Skip if we already found a better variant for this tag
             if cfg["tag"] in seen_tags:
                 continue
                 
@@ -144,11 +151,11 @@ class HybridMemoryStore:
                         memories.append(f"<{cfg['tag']}>\n{content}\n</{cfg['tag']}>\n\n")
                         seen_tags.add(cfg["tag"])
                 except Exception as e:
-                    print(f"Warning: Failed to read permanent memory at {mem_path}: {e}")
+                    logger.warning(f"Failed to read permanent memory at {mem_path}: {e}")
                     
         return "".join(memories)
 
-    async def add_interaction(self, role: str, content: str):
+    async def add_interaction(self, role: str, content: str) -> None:
         """Records an interaction to both sinks."""
         # 1. Guarantee backward compatibility via flat-file stream
         self.writer.append_message(role, content)
@@ -165,13 +172,12 @@ class HybridMemoryStore:
                 async with httpx.AsyncClient() as client:
                     await client.post(f"{self.rag_url}/ingest", json=payload, timeout=2.0)
             except Exception as e:
-                # Silently fail RAG ingestions to prevent breaking the ReAct loop
-                pass
+                logger.debug(f"Failed to ingest interaction to RAG: {e}")
 
     async def get_context(self, query: str = "") -> str:
         """
         Retrieves working context for the LLM. 
-        Prepend permanent memory, then appends local file chunks or RAG semantic search.
+        Prepends permanent memory, then appends local file chunks or RAG semantic search.
         """
         permanent_memory = self.load_permanent_memory()
         dynamic_memory = ""
@@ -179,12 +185,18 @@ class HybridMemoryStore:
         if self.use_rag and self.rag_url and query:
             try:
                 async with httpx.AsyncClient() as client:
-                    resp = await client.get(f"{self.rag_url}/search", params={"session_id": self.session_id, "q": query}, timeout=2.0)
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        dynamic_memory = "\\n".join([item["content"] for item in data.get("results", [])])
-            except Exception:
-                pass
+                    resp = await client.get(
+                        f"{self.rag_url}/search", 
+                        params={"session_id": self.session_id, "q": query}, 
+                        timeout=2.0
+                    )
+                    resp.raise_for_status()
+                    data = resp.json()
+                    dynamic_memory = "\n".join([item.get("content", "") for item in data.get("results", [])])
+            except httpx.HTTPError as e:
+                logger.debug(f"Failed to search RAG system: {e}")
+            except Exception as e:
+                logger.debug(f"Unexpected error in RAG search: {e}")
         
         if not dynamic_memory:
             # Default flat-file read logic
