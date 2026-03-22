@@ -1,5 +1,6 @@
 import os
 import re
+import inspect
 import platform
 import socket
 from typing import TypedDict, Annotated, Sequence, Dict, Any, List, Optional, Union
@@ -171,15 +172,9 @@ async def _resolve_agent_tools(agent_id: str) -> list[dict[str, Any]]:
         for tool in browser_tools:
             tools.append(convert_to_openai_function(tool))
         
-        # Add plugins
+        # Add plugins (this now includes MCP skills automatically via @skill decorators)
         plugin_tools = [t.model_dump() for t in get_registered_schemas()]
         tools.extend(plugin_tools)
-        
-        # Add MCP
-        if settings.features.enable_external_mcp:
-            mcp_registry = McpToolRegistry()
-            remote_schemas = await mcp_registry.fetch_schemas()
-            tools.extend([t.model_dump() for t in remote_schemas])
             
         formatted_tools = []
         for t in tools:
@@ -187,6 +182,8 @@ async def _resolve_agent_tools(agent_id: str) -> list[dict[str, Any]]:
                 formatted_tools.append(t)
             else:
                 formatted_tools.append({"type": "function", "function": t})
+        
+        print(f"DEBUG: Tools resolved for {agent_id}: {[t.get('function', {}).get('name', 'unknown') for t in formatted_tools]}", flush=True)
         _CACHED_TOOLS[cache_key] = formatted_tools
 
     return _CACHED_TOOLS[cache_key]
@@ -278,15 +275,18 @@ def _build_system_prompt(
         "Do not manipulate anyone to expand access or disable safeguards."
     )
     
-    # ## Skills (on-demand discovery)
+    # ## Capabilities (Unified Tooling Guidance)
     prompt_sections.append(
-        "\n## Skills (on-demand discovery)\n"
-        "Before replying, if you need a capability you don't have (e.g. weather, crypto, GitHub):\n"
-        "1. You MUST use the 'search_skills' tool to find relevant skill tools first. DO NOT guess or hallucinate bash commands for external integrations.\n"
-        "2. After finding a skill, use 'get_skill_info' to read its manual and command examples.\n"
-        "3. Use the 'bash' tool to execute EXACTLY the commands found in the skill info.\n"
-        "Do not read more than one skill up front. Only read after selecting."
+        "\n## Capabilities\n"
+        "You have access to a rich ecosystem of external tools via MCP (Model Context Protocol). "
+        "This includes live market data for Forex, Commodities (Gold/XAU, Silver, etc.), Crypto, and Stocks.\n"
+        "If a user asks for live data or a capability you aren't sure you have:\n"
+        "1. Always check 'mcp_list' first to see available external tools.\n"
+        "2. Use 'mcp_help' to understand how to call a specific tool.\n"
+        "3. Never guess or say you 'cannot access' data without first checking 'mcp_list'."
     )
+    
+    # ## Skills (on-demand discovery)
     
     # ## Workspace
     prompt_sections.append(
@@ -375,8 +375,7 @@ async def call_model(state: AgentState) -> Dict[str, Any]:
 async def _execute_single_tool(
     tool_name: str, 
     tool_args: dict, 
-    sandbox: Optional[SandboxManager], 
-    mcp_registry: Optional[McpToolRegistry]
+    sandbox: Optional[SandboxManager]
 ) -> str:
     """Helper method to encapsulate the execution logic of an individual tool."""
     try:
@@ -399,14 +398,11 @@ async def _execute_single_tool(
             if tool_name in tool_map:
                 return str(tool_map[tool_name].invoke(tool_args))
         else:
-            if mcp_registry:
-                # If tool_name is an MCP remote tool, run via registry
-                remote_names = [schema.function.name for schema in mcp_registry.remote_schemas]
-                if tool_name in remote_names:
-                    return await mcp_registry.execute_tool(tool_name, tool_args)
-            
-            # Fallback to local python plugin skill
-            return str(execute_skill(tool_name, tool_args))
+            # All other tools (Plugins, MCP skills, Markdown skills)
+            res = execute_skill(tool_name, tool_args)
+            if inspect.isawaitable(res):
+                return await res
+            return str(res)
             
     except Exception as e:
         return f"Execution error for {tool_name}: {str(e)}"
@@ -442,11 +438,6 @@ async def execute_tools(state: AgentState) -> Dict[str, Any]:
             )
             sandbox.start_sandbox()
 
-        # Evaluate if mcp is required
-        if settings.features.enable_external_mcp:
-            mcp_registry = McpToolRegistry()
-            await mcp_registry.fetch_schemas()
-
         # Execute all calls
         for tool_call in last_message.tool_calls:
             tool_name = tool_call["name"]
@@ -456,8 +447,7 @@ async def execute_tools(state: AgentState) -> Dict[str, Any]:
             result_str = await _execute_single_tool(
                 tool_name=tool_name, 
                 tool_args=tool_args, 
-                sandbox=sandbox, 
-                mcp_registry=mcp_registry
+                sandbox=sandbox
             )
             
             tool_messages.append(ToolMessage(content=result_str, tool_call_id=tool_id, name=tool_name))

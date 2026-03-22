@@ -4,6 +4,8 @@ from typing import List, Dict, Any
 from autocrab.core.models.config import settings
 from autocrab.core.models.api import FunctionSpec, ToolDefinition
 
+from autocrab.core.plugins.loader import skill
+
 class McpToolRegistry:
     """
     Connects to the external MCP (Model Context Protocol) provider (e.g., mcp.test)
@@ -67,7 +69,7 @@ class McpToolRegistry:
         Proxies the execution of the proxy tools to the external provider.
         """
         if not self.enabled or not self.provider_url:
-            return "Error: MCP provider disabled."
+            return "Error: MCP provider disabled (enable_external_mcp=false)."
             
         try:
             async with httpx.AsyncClient() as client:
@@ -106,3 +108,27 @@ class McpToolRegistry:
             return f"MCP Network error during {name}: {str(e)}"
         
         return f"Unknown MCP tool proxy: {name}"
+
+# ---------------------------------------------------------------------------
+# Skill Discovery (Searchable via search_skills)
+# ---------------------------------------------------------------------------
+
+_mcp_registry_instance = McpToolRegistry()
+
+@skill(name="mcp_list", description="List all available tools from the external MCP provider (e.g. mcp.test).")
+async def mcp_list_skill() -> str:
+    """List all available tools from the external MCP provider."""
+    return await _mcp_registry_instance.execute_tool("mcp_list", {})
+
+@skill(name="mcp_help", description="Get the manual and required arguments for a specific MCP tool (e.g. get_latest_price_of_forex, get_latest_price_of_commodity). Use this before running any new MCP tool.")
+async def mcp_help_skill(tool_name: str) -> str:
+    """Get the manual and required arguments for a specific MCP tool."""
+    return await _mcp_registry_instance.execute_tool("mcp_help", {"tool_name": tool_name})
+
+@skill(name="mcp_run", description="Execute a specific MCP tool (e.g. get_latest_price_of_commodity for Gold/XAU) with the required arguments discovered via mcp_help.")
+async def mcp_run_skill(tool_name: str, input_data: dict) -> str:
+    """Execute a specific MCP tool with the required arguments discovered via mcp_help."""
+    return await _mcp_registry_instance.execute_tool("mcp_run", {
+        "tool_name": tool_name,
+        "input_data": input_data
+    })

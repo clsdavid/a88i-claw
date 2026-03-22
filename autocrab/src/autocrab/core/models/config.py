@@ -145,19 +145,46 @@ class AutoCrabJsonSource(PydanticBaseSettingsSource):
         self._config_data = self._load_data()
 
     def _load_data(self) -> Dict[str, Any]:
-        config_path = self.config_root / "autocrab.json"
-        
-        # Priority 1: Direct path from ENV
+        """
+        Loads configuration with the following priority:
+        1. AUTOCRAB_CONFIG_PATH environment variable
+        2. ./autocrab.json (Current Working Directory)
+        3. ./config/autocrab.json (Local project config)
+        4. ~/.autocrab_v2/autocrab.json (Global legacy config)
+        """
+        # 1. ENV Path
         if env_path := os.environ.get("AUTOCRAB_CONFIG_PATH"):
             config_path = Path(env_path)
+            if config_path.exists():
+                return self._read_json5(config_path)
             
-        if config_path.exists():
-            try:
-                with open(config_path, "r", encoding="utf-8") as f:
-                    return json5.load(f)
-            except Exception as e:
-                print(f"Warning: Failed to parse {config_path}: {e}")
+        # 2. Local Paths
+        cwd = Path(os.getcwd())
+        search_paths = [
+            cwd / "autocrab.json",
+            cwd / "autocrab.json5",
+            cwd / "config" / "autocrab.json",
+            cwd / "config" / "autocrab.json5",
+            self.config_root / "autocrab.json",
+            self.config_root / "autocrab.json5",
+        ]
+        
+        for path in search_paths:
+            if path.exists():
+                data = self._read_json5(path)
+                if data:
+                    print(f"Loaded config from {path}", flush=True)
+                    return data
+                    
         return {}
+
+    def _read_json5(self, path: Path) -> Dict[str, Any]:
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json5.load(f)
+        except Exception as e:
+            print(f"Warning: Failed to parse {path}: {e}", flush=True)
+            return {}
 
     def get_field_value(self, field, field_name: str) -> Tuple[Any, str, bool]:
         return self._config_data.get(field_name), field_name, False

@@ -576,12 +576,19 @@ def create_app() -> FastAPI:
                             
                         agent_id = params.get("model", "main")
                         
-                        # sessionKey is the unique ID for the conversation thread
-                        session_key = params.get("sessionKey", "main")
+                        # runId should be the idempotencyKey or a generated UUID for this distinct run
+                        client_run_id = params.get("idempotencyKey", params.get("runId", str(uuid.uuid4())))
                         
                         # Persistence: Record Human message
                         store = HybridMemoryStore(session_id=session_key, agent_id=agent_id)
                         await store.add_interaction("human", content)
+                        
+                        # 0. Acknowledge the original request as STARTED (Parity with Node.js)
+                        await websocket.send_json(ResponseFrame(
+                            id=req.id, 
+                            ok=True, 
+                            payload={"runId": client_run_id, "status": "started"}
+                        ).model_dump())
                         
                         # Start streaming response
                         initial_state = {
@@ -593,12 +600,14 @@ def create_app() -> FastAPI:
                             "tool_choice": params.get("tool_choice")
                         }
                         
-                        print(f"WS: Starting astream_events for session_key={session_key} (conn={session_id}, flush=True)")
+                        print(f"WS: Starting astream_events for session_key={session_key} (run={client_run_id}, conn={session_id})", flush=True)
+                        seq = 0
                         try:
                             # Use agent_executor from module import. 
                             # If using a multi-agent system, we'd look up the specific executor here.
                             async for event_data in agent_executor.astream_events(initial_state, version="v2"):
                                 kind = event_data["event"]
+                                seq += 1
                                 # print(f"WS: Event kind={kind}", flush=True) # Aggressive debug
                                 
                                 # Real-time Token Streaming
@@ -614,8 +623,9 @@ def create_app() -> FastAPI:
                                                 "type": "event",
                                                 "event": "chat",
                                                 "payload": {
-                                                    "runId": session_key,
+                                                    "runId": client_run_id,
                                                     "sessionKey": session_key,
+                                                    "seq": seq,
                                                     "state": "delta",
                                                     "message": {
                                                         "role": "assistant",
@@ -638,8 +648,9 @@ def create_app() -> FastAPI:
                                         "type": "event",
                                         "event": "agent",
                                         "payload": {
-                                            "runId": session_key,
+                                            "runId": client_run_id,
                                             "sessionKey": session_key,
+                                            "seq": seq,
                                             "stream": "tool",
                                             "ts": int(time.time() * 1000),
                                             "data": {
@@ -663,8 +674,9 @@ def create_app() -> FastAPI:
                                         "type": "event",
                                         "event": "agent",
                                         "payload": {
-                                            "runId": session_key,
+                                            "runId": client_run_id,
                                             "sessionKey": session_key,
+                                            "seq": seq,
                                             "stream": "tool",
                                             "ts": int(time.time() * 1000),
                                             "data": {
@@ -691,20 +703,34 @@ def create_app() -> FastAPI:
                             print(f"WS: No response captured for session {session_key}", flush=True)
                             
                         # Send final chat event when done
+                        seq += 1
                         final_event = {
                             "type": "event",
                             "event": "chat",
                             "payload": {
-                                "runId": session_key,
+                                "runId": client_run_id,
                                 "sessionKey": session_key,
-                                "state": "final"
+                                "seq": seq,
+                                "state": "final",
+                                "message": {
+                                    "role": "assistant",
+                                    "text": full_ai_response,
+                                    "content": [{"type": "text", "text": full_ai_response}],
+                                    "timestamp": int(time.time() * 1000),
+                                    "usage": {"input": 0, "output": 0, "totalTokens": 0} # Stub usage
+                                }
                             }
                         }
                         await websocket.send_json(final_event)
-                        
-                        # Finally, acknowledge the original request is COMPLETE
-                        await websocket.send_json(ResponseFrame(id=req.id, ok=True).model_dump())
-                        print(f"WS: Sent ResponseFrame for chat.send {req.id}", flush=True)
+                        print(f"WS: Sent final event for chat.send {client_run_id}", flush=True)
+
+                        # Note: Node.js version doesn't send another ResponseFrame here 
+                        # because we already acknowledged it at the start.
+                        # However, for robustness if the UI expects it specifically after 'final', we keep it.
+                        # But wait, sending twice with same ID might be bad protocol. 
+                        # Actually, Node.js 'respond' marks it done.
+                        # Let's see if the UI needs it. The user said line 707 was called and didn't stop.
+                        # That means we ALREADY send it. The issue was the 'final' event missing the message.
 
                     elif method == "chat.history":
                         params = req.params or {}
