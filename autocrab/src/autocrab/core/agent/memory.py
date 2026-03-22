@@ -120,46 +120,52 @@ class HybridMemoryStore:
         self.workspace_dir = _resolve_workspace_dir(self.agent_id)
                 
     def load_permanent_memory(self) -> str:
-        """Looks for specific context .md configuration files in the workspace directory."""
+        """Recursively loads all .md files from the workspace directory."""
         if not self.workspace_dir or not self.workspace_dir.exists():
             return ""
             
         memories = []
-        seen_tags = set()
         
-        # We only load these explicit bootstrap configuration files to prevent
-        # flooding the context and mimicking Node.js exact dynamic loading.
-        target_files = [
-            ("memory.md", "PERMANENT_MEMORY"),
-            ("soul.md", "AGENT_SOUL"),
-            ("user.md", "USER_PROFILE"),
-            ("agents.md", "AGENTS"),
-            ("tools.md", "TOOLS"),
-            ("identity.md", "IDENTITY"),
-            ("heartbeat.md", "HEARTBEAT"),
-            ("bootstrap.md", "BOOTSTRAP")
-        ]
+        # Legacy mapping for core configuration tags
+        legacy_tags = {
+            "soul.md": "AGENT_SOUL",
+            "memory.md": "PERMANENT_MEMORY",
+            "user.md": "USER_PROFILE",
+            "agents.md": "AGENTS",
+            "tools.md": "TOOLS",
+            "identity.md": "IDENTITY",
+            "heartbeat.md": "HEARTBEAT",
+            "bootstrap.md": "BOOTSTRAP"
+        }
         
-        for file_name, tag in target_files:
-            if tag in seen_tags:
-                continue
-                
-            # Check lowercase and uppercase versions
-            candidates = [self.workspace_dir / file_name, self.workspace_dir / file_name.upper()]
-            
-            for md_file in candidates:
-                if md_file.exists() and md_file.is_file():
-                    if md_file.stat().st_size > 50000:
-                        break  # Skip this tag if file is too large
+        # Walk the workspace recursively and load all .md files
+        for root, _, files in os.walk(self.workspace_dir):
+            for file_name in files:
+                if not file_name.lower().endswith(".md"):
+                    continue
+                    
+                file_path = Path(root) / file_name
+                try:
+                    # Avoid extremely large files
+                    if file_path.stat().st_size > 100000:
+                        continue
                         
-                    try:
-                        content = md_file.read_text(encoding="utf-8").strip()
-                        if content:
-                            memories.append(f"<{tag}>\n{content}\n</{tag}>\n\n")
-                            seen_tags.add(tag)
-                    except Exception as e:
-                        logger.warning(f"Failed to read permanent memory at {md_file}: {e}")
-                    break  # Don't load uppercase if lowercase was already found
+                    content = file_path.read_text(encoding="utf-8").strip()
+                    if not content:
+                        continue
+                        
+                    relative_path = file_path.relative_to(self.workspace_dir)
+                    
+                    # Check if it's a legacy core config file
+                    legacy_tag = legacy_tags.get(file_name.lower())
+                    if legacy_tag and root == str(self.workspace_dir):
+                        memories.append(f"<{legacy_tag}>\n{content}\n</{legacy_tag}>\n\n")
+                    else:
+                        # Standard file injection similar to Node.js contextFiles
+                        memories.append(f'<FILE path="{relative_path}">\n{content}\n</FILE>\n\n')
+                        
+                except Exception as e:
+                    logger.warning(f"Failed to read memory file at {file_path}: {e}")
                     
         return "".join(memories)
 
@@ -171,14 +177,18 @@ class HybridMemoryStore:
         # 2. Opt-in Advanced Feature: Pushing to RAG
         if self.use_rag and self.rag_url:
             payload = {
-                "session_id": self.session_id,
-                "role": role,
-                "content": content,
-                "timestamp": int(time.time()),
+                "text": content,
+                "doc_id": f"{self.session_id}_{int(time.time())}",
+                "user_id": "autocrab",
+                "background": False,
+                "metadata": {
+                    "role": role,
+                    "session_id": self.session_id
+                }
             }
             try:
                 async with httpx.AsyncClient() as client:
-                    await client.post(f"{self.rag_url}/ingest", json=payload, timeout=2.0)
+                    await client.post(f"{self.rag_url}/api/v1/rag/ingest", json=payload, timeout=2.0)
             except Exception as e:
                 logger.debug(f"Failed to ingest interaction to RAG: {e}")
 
@@ -192,11 +202,17 @@ class HybridMemoryStore:
         
         if self.use_rag and self.rag_url and query:
             try:
+                payload = {
+                    "query": query,
+                    "top_k": 5,
+                    "user_id": "autocrab",
+                    "session_id": self.session_id
+                }
                 async with httpx.AsyncClient() as client:
-                    resp = await client.get(
-                        f"{self.rag_url}/search", 
-                        params={"session_id": self.session_id, "q": query}, 
-                        timeout=2.0
+                    resp = await client.post(
+                        f"{self.rag_url}/api/v1/rag/query", 
+                        json=payload, 
+                        timeout=5.0
                     )
                     resp.raise_for_status()
                     data = resp.json()

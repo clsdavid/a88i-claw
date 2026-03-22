@@ -216,12 +216,23 @@ def _build_system_prompt(
 
     parsed_files = {}
 
+    # 1. Parse legacy hardcoded tags
     for tag, filename in target_tags.items():
         if f"<{tag}>" in context:
             match = re.search(rf"<{tag}>(.*?)</{tag}>", context, flags=re.DOTALL)
             if match:
                 parsed_files[filename] = match.group(1).strip()
             context = re.sub(rf"<{tag}>.*?</{tag}>\n*", "", context, flags=re.DOTALL).strip()
+
+    # 2. Parse recursive <FILE path="..."> tags (added for Node.js parity)
+    file_matches = list(re.finditer(r'<FILE path="(.*?)">(.*?)</FILE>', context, flags=re.DOTALL))
+    for match in file_matches:
+        path_attr = match.group(1)
+        content_attr = match.group(2).strip()
+        parsed_files[path_attr] = content_attr
+        
+    # Remove the <FILE> tags from the context to avoid duplication
+    context = re.sub(r'<FILE path=".*?">.*?</FILE>\n*', "", context, flags=re.DOTALL).strip()
 
     soul_content = parsed_files.get("SOUL.md", "")
     if "SOUL.md" in parsed_files:

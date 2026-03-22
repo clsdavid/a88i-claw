@@ -1,14 +1,13 @@
+import json
 import httpx
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from autocrab.core.models.config import settings
 from autocrab.core.models.api import FunctionSpec, ToolDefinition
 
 class McpToolRegistry:
     """
     Connects to the external MCP (Model Context Protocol) provider (e.g., mcp.test)
-    to dynamically fetch live data schemas (Forex, Stock, Crypto).
-    
-    This replaces the bundled Node.js plugins and shifts maintenance to external providers.
+    by exposing proxy tools (mcp_list, mcp_help, mcp_run) for dynamic discovery.
     """
     def __init__(self):
         self.enabled = settings.features.enable_external_mcp
@@ -17,59 +16,93 @@ class McpToolRegistry:
 
     async def fetch_schemas(self) -> List[ToolDefinition]:
         """
-        Pulls the available JSON schemas from the MCP provider.
-        Returns empty list if the feature flag is disabled or unreachable.
+        Returns the three proxy tools necessary to interact with the MCP server dynamically.
         """
         if not self.enabled or not self.provider_url:
             return []
             
-        try:
-            async with httpx.AsyncClient() as client:
-                # Query the canonical MCP tools endpoint
-                resp = await client.get(f"{self.provider_url}/v1/tools", timeout=3.0)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    schemas = []
-                    # Map the MCP format to our precise API ToolDefinition format
-                    for tool in data.get("tools", []):
-                        if tool.get("type") == "function":
-                            fn_data = tool.get("function", {})
-                            spec = FunctionSpec(
-                                name=fn_data.get("name"),
-                                description=fn_data.get("description"),
-                                parameters=fn_data.get("parameters")
-                            )
-                            schemas.append(ToolDefinition(type="function", function=spec))
-                    
-                    self.remote_schemas = schemas
-                    return self.remote_schemas
-        except Exception as e:
-            # Silently fail on network issues to prevent Agent loop crashes
-            print(f"[Warning] Failed to fetch MCP tools: {e}")
-            
-        return []
+        self.remote_schemas = [
+            ToolDefinition(
+                type="function",
+                function=FunctionSpec(
+                    name="mcp_list",
+                    description="List all available tools from the external MCP provider.",
+                    parameters={"type": "object", "properties": {}}
+                )
+            ),
+            ToolDefinition(
+                type="function",
+                function=FunctionSpec(
+                    name="mcp_help",
+                    description="Get the manual and required arguments for a specific MCP tool. Use this before running any new MCP tool.",
+                    parameters={
+                        "type": "object", 
+                        "properties": {
+                            "tool_name": {"type": "string", "description": "Name of the tool to get help for"}
+                        },
+                        "required": ["tool_name"]
+                    }
+                )
+            ),
+            ToolDefinition(
+                type="function",
+                function=FunctionSpec(
+                    name="mcp_run",
+                    description="Execute a specific MCP tool with the required arguments discovered via mcp_help.",
+                    parameters={
+                        "type": "object", 
+                        "properties": {
+                            "tool_name": {"type": "string", "description": "Name of the tool to execute"},
+                            "input_data": {"type": "object", "description": "The exact JSON payload required by the tool"}
+                        },
+                        "required": ["tool_name", "input_data"]
+                    }
+                )
+            )
+        ]
+        return self.remote_schemas
 
     async def execute_tool(self, name: str, arguments: Dict[str, Any]) -> str:
         """
-        Proxies theological execution of the tool to the external provider.
+        Proxies the execution of the proxy tools to the external provider.
         """
         if not self.enabled or not self.provider_url:
             return "Error: MCP provider disabled."
             
-        payload = {
-            "name": name,
-            "arguments": arguments
-        }
         try:
             async with httpx.AsyncClient() as client:
-                resp = await client.post(
-                    f"{self.provider_url}/v1/execute", 
-                    json=payload, 
-                    timeout=10.0 # Tools may take time to calculate
-                )
-                if resp.status_code == 200:
-                    return resp.json().get("result", "Success")
-                else:
+                if name == "mcp_list":
+                    resp = await client.get(f"{self.provider_url}/mcp/tools", timeout=5.0)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        tools_list = data.get("tools", [])
+                        return f"Available MCP Tools ({data.get('count', len(tools_list))}):\n" + ", ".join(tools_list)
+                    return f"Error listing MCP tools: {resp.text}"
+                    
+                elif name == "mcp_help":
+                    tool_name = arguments.get("tool_name", "")
+                    resp = await client.get(f"{self.provider_url}/mcp/tools/{tool_name}", timeout=5.0)
+                    if resp.status_code == 200:
+                        return json.dumps(resp.json(), indent=2)
+                    return f"Error getting help for {tool_name}: {resp.text}"
+                    
+                elif name == "mcp_run":
+                    tool_name = arguments.get("tool_name", "")
+                    input_data = arguments.get("input_data", {})
+                    payload = {
+                        "tool": tool_name,
+                        "input_data": input_data
+                    }
+                    resp = await client.post(
+                        f"{self.provider_url}/mcp/run", 
+                        json=payload, 
+                        timeout=15.0
+                    )
+                    if resp.status_code == 200:
+                        return json.dumps(resp.json(), indent=2)
                     return f"MCP Provider execution error: {resp.text}"
+                    
         except Exception as e:
-            return f"MCP Network error during tool execution: {str(e)}"
+            return f"MCP Network error during {name}: {str(e)}"
+        
+        return f"Unknown MCP tool proxy: {name}"
