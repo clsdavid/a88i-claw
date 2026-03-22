@@ -202,21 +202,30 @@ def _build_system_prompt(
     """
     Builds the structured system prompt dynamically based on the current agent state.
     """
-    # Parse SOUL.md and MEMORY.md out of context if they were injected by load_permanent_memory
-    soul_content = ""
-    memory_content = ""
-    
-    if "<AGENT_SOUL>" in context:
-        soul_match = re.search(r"<AGENT_SOUL>(.*?)</AGENT_SOUL>", context, re.DOTALL)
-        if soul_match:
-            soul_content = soul_match.group(1).strip()
-        context = re.sub(r"<AGENT_SOUL>.*?</AGENT_SOUL>\n*", "", context, flags=re.DOTALL).strip()
-        
-    if "<PERMANENT_MEMORY>" in context:
-        mem_match = re.search(r"<PERMANENT_MEMORY>(.*?)</PERMANENT_MEMORY>", context, re.DOTALL)
-        if mem_match:
-            memory_content = mem_match.group(1).strip()
-        context = re.sub(r"<PERMANENT_MEMORY>.*?</PERMANENT_MEMORY>\n*", "", context, flags=re.DOTALL).strip()
+    # Parse configuration files out of context if they were injected by load_permanent_memory
+    target_tags = {
+        "AGENT_SOUL": "SOUL.md",
+        "PERMANENT_MEMORY": "MEMORY.md",
+        "USER_PROFILE": "USER.md",
+        "AGENTS": "AGENTS.md",
+        "TOOLS": "TOOLS.md",
+        "IDENTITY": "IDENTITY.md",
+        "HEARTBEAT": "HEARTBEAT.md",
+        "BOOTSTRAP": "BOOTSTRAP.md"
+    }
+
+    parsed_files = {}
+
+    for tag, filename in target_tags.items():
+        if f"<{tag}>" in context:
+            match = re.search(rf"<{tag}>(.*?)</{tag}>", context, flags=re.DOTALL)
+            if match:
+                parsed_files[filename] = match.group(1).strip()
+            context = re.sub(rf"<{tag}>.*?</{tag}>\n*", "", context, flags=re.DOTALL).strip()
+
+    soul_content = parsed_files.get("SOUL.md", "")
+    if "SOUL.md" in parsed_files:
+        del parsed_files["SOUL.md"]  # SOUL.md is placed at the very top of the prompt
     
     # Build tool name listing for system prompt
     tool_names = []
@@ -275,10 +284,11 @@ def _build_system_prompt(
         "Treat this directory as the single global workspace for file operations unless explicitly instructed otherwise."
     )
     
-    # ## Project Context (MEMORY.md) -- mirrors contextFiles injection in original
-    if memory_content:
+    # ## Project Context -- mirrors contextFiles injection in original Node.js version
+    if parsed_files:
         prompt_sections.append("\n# Project Context\nThe following project context files have been loaded:")
-        prompt_sections.append(f"## MEMORY.md\n\n{memory_content}\n")
+        for filename, content in parsed_files.items():
+            prompt_sections.append(f"## {filename}\n\n{content}\n")
     
     # ## Runtime
     rt_os = platform.system().lower()

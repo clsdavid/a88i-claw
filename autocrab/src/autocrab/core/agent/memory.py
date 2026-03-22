@@ -120,49 +120,46 @@ class HybridMemoryStore:
         self.workspace_dir = _resolve_workspace_dir(self.agent_id)
                 
     def load_permanent_memory(self) -> str:
-        """Looks for context .md configuration files in the workspace directory."""
+        """Looks for specific context .md configuration files in the workspace directory."""
         if not self.workspace_dir or not self.workspace_dir.exists():
             return ""
             
         memories = []
         seen_tags = set()
         
-        # Explicit tags required by the system prompt regex parser
-        special_configs = {
-            "memory.md": "PERMANENT_MEMORY",
-            "soul.md": "AGENT_SOUL",
-            "user.md": "USER_PROFILE"
-        }
-        
-        # Look at workspace root and subdirectories to mimic Node.js dynamic loading
-        directories_to_scan = [
-            self.workspace_dir, 
-            self.workspace_dir / "memory", 
-            self.workspace_dir / "instructions"
+        # We only load these explicit bootstrap configuration files to prevent
+        # flooding the context and mimicking Node.js exact dynamic loading.
+        target_files = [
+            ("memory.md", "PERMANENT_MEMORY"),
+            ("soul.md", "AGENT_SOUL"),
+            ("user.md", "USER_PROFILE"),
+            ("agents.md", "AGENTS"),
+            ("tools.md", "TOOLS"),
+            ("identity.md", "IDENTITY"),
+            ("heartbeat.md", "HEARTBEAT"),
+            ("bootstrap.md", "BOOTSTRAP")
         ]
         
-        for base in directories_to_scan:
-            if not base.exists():
+        for file_name, tag in target_files:
+            if tag in seen_tags:
                 continue
                 
-            for md_file in base.glob("*.md"):
-                # Safety limit: prevent loading massive RAG dump documents implicitly
-                if md_file.stat().st_size > 50000:  
-                    continue
-                    
-                name_lower = md_file.name.lower()
-                tag = special_configs.get(name_lower, md_file.stem.upper().replace("-", "_"))
-                
-                if tag in seen_tags:
-                    continue
-                    
-                try:
-                    content = md_file.read_text(encoding="utf-8").strip()
-                    if content:
-                        memories.append(f"<{tag}>\n{content}\n</{tag}>\n\n")
-                        seen_tags.add(tag)
-                except Exception as e:
-                    logger.warning(f"Failed to read permanent memory at {md_file}: {e}")
+            # Check lowercase and uppercase versions
+            candidates = [self.workspace_dir / file_name, self.workspace_dir / file_name.upper()]
+            
+            for md_file in candidates:
+                if md_file.exists() and md_file.is_file():
+                    if md_file.stat().st_size > 50000:
+                        break  # Skip this tag if file is too large
+                        
+                    try:
+                        content = md_file.read_text(encoding="utf-8").strip()
+                        if content:
+                            memories.append(f"<{tag}>\n{content}\n</{tag}>\n\n")
+                            seen_tags.add(tag)
+                    except Exception as e:
+                        logger.warning(f"Failed to read permanent memory at {md_file}: {e}")
+                    break  # Don't load uppercase if lowercase was already found
                     
         return "".join(memories)
 
